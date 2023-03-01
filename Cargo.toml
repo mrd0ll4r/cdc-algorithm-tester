@@ -1,0 +1,37 @@
+[package]
+name = "cdc-algorithm-tester"
+description = "A binary to test various content-defined chunking algorithms"
+version = "0.1.0"
+edition = "2021"
+authors = ["Leo Balduf <leobalduf@gmail.com>"]
+rust-version = "1.67"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/mrd0ll4r/cdc-algorithm-tester"
+keywords = ["cdc","chunking","algorithms"]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+[dependencies]
+cdchunking = { git = "https://github.com/mrd0ll4r/cdchunking-rs", branch = "new-algorithms" }
+
+## Error handling
+anyhow = "1.0.65"
+
+## Timestamps
+chrono = "0.4.19"
+
+## Logging
+log = "^0.4"
+flexi_logger = "0.22"
+
+## CLI parser
+clap = { version = "^4", features = ["cargo","derive"] }
+
+## SHA1 for fingerprinting
+sha1 = "0.10.5"
+
+## For reading/writing BFBC state with specified endianness.
+byteorder = "1.4.3"
