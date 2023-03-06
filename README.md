@@ -84,6 +84,8 @@ We use [std::hints::black_box](https://doc.rust-lang.org/std/hint/fn.black_box.h
 
 ## Building
 
+MSRV: `1.66`, because we use [std::hints::black_box](https://doc.rust-lang.org/std/hint/fn.black_box.html).
+
 The code is built with link-time optimization and `codegen-units=1` for the `release` profile, which is used to measure performance.
 This will take a while to build, but should produce fast code.
 
