@@ -8,19 +8,26 @@ A program that invokes a selectable chunking algorithm with given configuration 
 Usage: cdc-algorithm-tester [OPTIONS] --input-file <FILE> <COMMAND>
 
 Commands:
-  ae    Chunks the input file using AE
-  ram   Chunks the input file using RAM
-  bfbc  Subcommands relating to BFBC chunking
-  mii   Chunks the input file using MII
-  pci   Chunks the input file using PCI
-  help  Print this message or the help of the given subcommand(s)
+  ae      Chunks the input file using AE
+  ram     Chunks the input file using RAM
+  bfbc    Subcommands relating to BFBC chunking
+  mii     Chunks the input file using MII
+  pci     Chunks the input file using PCI
+  gear    Chunks the input file using Gear
+  gear64  Chunks the input file using 64-bit Gear
+  help    Print this message or the help of the given subcommand(s)
 
 Options:
-      --skip-fingerprinting     Whether to only perform chunking, not fingerprinting
-  -i, --input-file <FILE>       The file to operate on
-      --max-chunk-size <BYTES>  A max chunk size to optionally enforce
-  -h, --help                    Print help
-  -V, --version                 Print version
+      --skip-fingerprinting
+          Whether to only perform chunking, not fingerprinting
+  -i, --input-file <FILE>
+          The file to operate on
+      --max-chunk-size <BYTES>
+          A max chunk size to optionally enforce
+  -h, --help
+          Print help (see more with '--help')
+  -V, --version
+          Print version
 ```
 
 ## Usage
@@ -100,6 +107,7 @@ This will produce a binary in `target/release/`
 
 If performance is not a consideration, build without `--release`.
 This will also enable some assertions used to check correctness of the algorithms.
+The binary will be placed in `target/debug/` in this case.
 
 ## Implemented Algorithms
 
@@ -111,6 +119,11 @@ Currently, we implement:
   We extend the invocation of this algorithm with functionality to use the top `n` most frequent pairs, as well as to skip the `k` most frequent and use the `n` next ones afterwards.
 - Minimal Incremental Interval (MII)
 - Parity Check of Interval (PCI), including an optimized version that calculates a running popcount, instead of re-calculating the popcount of the window for each byte.
+- Gearhash (Gear)
+- 64-bit Gear (Gear64), with optional SIMD implementation, implemented in this repository (see [src/gear.rs](src/gear.rs)).
+  This uses the [gearhash](https://crates.io/crates/gearhash) crate.
+  In contrast to the algorithm described in the DDelta paper, this version uses a 64-bit internal hash (and 64-bit table entries).
+  This implementation is optionally SIMD-accelerated on CPUs supporting SSE4.2 or AVX2, controlled via a flag.
 
 ## License
 

@@ -1,3 +1,4 @@
+mod gear;
 mod logging;
 
 use anyhow::{ensure, Context};
@@ -98,6 +99,25 @@ enum Commands {
         /// Originally, the popcount of the entire window is calculated for each byte.
         #[arg(long)]
         running_popcount: bool,
+    },
+
+    /// Chunks the input file using Gear.
+    Gear {
+        /// The number of bits to use for the mask.
+        /// This sets the mean chunk sizes to be `2^mask_bits`.
+        mask_bits: u8,
+    },
+
+    /// Chunks the input file using 64-bit Gear.
+    Gear64 {
+        /// Whether to use the SIMD-ready implementation.
+        /// If unset, the default (scalar) implementation is used.
+        /// This does not control compiler autovectorization.
+        #[arg(long)]
+        allow_simd_impl: bool,
+        /// The number of bits to use for the mask.
+        /// This sets the mean chunk sizes to be `2^mask_bits`.
+        mask_bits: u8,
     },
 }
 
@@ -239,6 +259,43 @@ fn main() -> anyhow::Result<()> {
                 4,
                 5
             )
+        }
+        Commands::Gear { mask_bits } => {
+            // TODO is this correct?
+            let mask = u32::MAX ^ ((1 << (32 - mask_bits)) - 1);
+
+            let algo = cdchunking::Gear::new(mask);
+            chunk_with_algorithm_and_size_limit(
+                f,
+                algo,
+                cli.max_chunk_size,
+                cli.skip_fingerprinting,
+            )
+        }
+        Commands::Gear64 {
+            allow_simd_impl,
+            mask_bits,
+        } => {
+            // TODO is this correct?
+            let mask = u64::MAX ^ ((1 << (64 - mask_bits)) - 1);
+
+            if allow_simd_impl {
+                let algo = gear::MaybeSimdGear::new(mask);
+                chunk_with_algorithm_and_size_limit(
+                    f,
+                    algo,
+                    cli.max_chunk_size,
+                    cli.skip_fingerprinting,
+                )
+            } else {
+                let algo = gear::ScalarGear::new(mask);
+                chunk_with_algorithm_and_size_limit(
+                    f,
+                    algo,
+                    cli.max_chunk_size,
+                    cli.skip_fingerprinting,
+                )
+            }
         }
     }
 }
