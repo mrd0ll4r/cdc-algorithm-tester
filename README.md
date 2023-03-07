@@ -103,12 +103,12 @@ Options:
 ## Performance considerations
 
 We use the [cdchunking](https://crates.io/crates/cdchunking) crate as a framework to implement and use chunking algorithms.
-Specifically, we iterate over the file in buffered blocks, which avoids frequent `read()` operations.
+Specifically, we iterate over the file in buffered blocks, which avoids frequent `read()` operations and does not allocate.
 The CDC algorithms are fed these blocks and update their internal state accordingly.
 They produce cut-point indices.
 
 On a higher level, we iterate over the file using _the same_ buffered blocks, re-sliced according to the chunk boundaries produced by the chosen algorithm.
-This allows us to chunk a file without allocating.
+This allows us to then compute fingerprints and collect metadata about chunks without allocating.
 On an even higher level, it is then possible to load the file into a RAMDisk before chunking, to isolate from disk performance.
 
 The algorithms are, whenever applicable, implemented as described or shown in the respective publications.
