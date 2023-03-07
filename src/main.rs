@@ -108,6 +108,22 @@ enum Commands {
         mask_bits: u8,
     },
 
+    /// Chunks the input file using Gear with normalized chunking modifications.
+    NCGear {
+        /// The number of bits to use for the lower=larger mask.
+        ///
+        /// This is the mask used before the target chunk size is reached.
+        lower_mask_bits: u8,
+
+        /// The number of bits to use for the upper=smaller mask.
+        ///
+        /// This is the mask used after the target chunk size has been reached.
+        upper_mask_bits: u8,
+
+        /// The target chunk size.
+        target_chunk_size: usize,
+    },
+
     /// Chunks the input file using 64-bit Gear.
     Gear64 {
         /// Whether to use the SIMD-ready implementation.
@@ -264,7 +280,7 @@ fn main() -> anyhow::Result<()> {
             // TODO is this correct?
             let mask = u32::MAX ^ ((1 << (32 - mask_bits)) - 1);
 
-            let algo = cdchunking::Gear::new(mask);
+            let algo = cdchunking::GearChunker::new(mask);
             chunk_with_algorithm_and_size_limit(
                 f,
                 algo,
@@ -280,7 +296,7 @@ fn main() -> anyhow::Result<()> {
             let mask = u64::MAX ^ ((1 << (64 - mask_bits)) - 1);
 
             if allow_simd_impl {
-                let algo = gear::MaybeSimdGear::new(mask);
+                let algo = gear::MaybeSimdGear64::new(mask);
                 chunk_with_algorithm_and_size_limit(
                     f,
                     algo,
@@ -288,7 +304,7 @@ fn main() -> anyhow::Result<()> {
                     cli.skip_fingerprinting,
                 )
             } else {
-                let algo = gear::ScalarGear::new(mask);
+                let algo = gear::ScalarGear64::new(mask);
                 chunk_with_algorithm_and_size_limit(
                     f,
                     algo,
@@ -296,6 +312,19 @@ fn main() -> anyhow::Result<()> {
                     cli.skip_fingerprinting,
                 )
             }
+        }
+        Commands::NCGear { lower_mask_bits, upper_mask_bits, target_chunk_size } => {
+            // TODO is this correct?
+            let lower_mask = u32::MAX ^ ((1 << (32 - lower_mask_bits)) - 1);
+            let upper_mask = u32::MAX ^ ((1 << (32 - upper_mask_bits)) - 1);
+
+            let algo = cdchunking::NormalizedChunkingGearChunker::new(lower_mask,upper_mask,target_chunk_size);
+            chunk_with_algorithm_and_size_limit(
+                f,
+                algo,
+                cli.max_chunk_size,
+                cli.skip_fingerprinting,
+            )
         }
     }
 }

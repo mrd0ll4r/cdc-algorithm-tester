@@ -8,14 +8,15 @@ A program that invokes a selectable chunking algorithm with given configuration 
 Usage: cdc-algorithm-tester [OPTIONS] --input-file <FILE> <COMMAND>
 
 Commands:
-  ae      Chunks the input file using AE
-  ram     Chunks the input file using RAM
-  bfbc    Subcommands relating to BFBC chunking
-  mii     Chunks the input file using MII
-  pci     Chunks the input file using PCI
-  gear    Chunks the input file using Gear
-  gear64  Chunks the input file using 64-bit Gear
-  help    Print this message or the help of the given subcommand(s)
+  ae       Chunks the input file using AE
+  ram      Chunks the input file using RAM
+  bfbc     Subcommands relating to BFBC chunking
+  mii      Chunks the input file using MII
+  pci      Chunks the input file using PCI
+  gear     Chunks the input file using Gear
+  nc-gear  Chunks the input file using Gear with normalized chunking modifications
+  gear64   Chunks the input file using 64-bit Gear
+  help     Print this message or the help of the given subcommand(s)
 
 Options:
       --skip-fingerprinting
@@ -120,6 +121,7 @@ Currently, we implement:
 - Minimal Incremental Interval (MII)
 - Parity Check of Interval (PCI), including an optimized version that calculates a running popcount, instead of re-calculating the popcount of the window for each byte.
 - Gearhash (Gear)
+- Gearhash with normalized chunking (NC-Gear).
 - 64-bit Gear (Gear64), with optional SIMD implementation, implemented in this repository (see [src/gear.rs](src/gear.rs)).
   This uses the [gearhash](https://crates.io/crates/gearhash) crate.
   In contrast to the algorithm described in the DDelta paper, this version uses a 64-bit internal hash (and 64-bit table entries).

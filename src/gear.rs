@@ -11,14 +11,14 @@ use cdchunking::ChunkerImpl;
 /// Performance Evaluation 79 (2014): 258-272.
 /// PDF: https://cswxia.github.io/pub/DElta-PEVA-2014.pdf
 #[derive(Debug, Clone)]
-pub(crate) struct ScalarGear {
+pub(crate) struct ScalarGear64 {
     mask: u64,
-    state: GearState,
+    state: Gear64State,
 }
 
-impl ScalarGear {
-    pub(crate) fn new(mask: u64) -> ScalarGear {
-        ScalarGear {
+impl ScalarGear64 {
+    pub(crate) fn new(mask: u64) -> ScalarGear64 {
+        ScalarGear64 {
             mask,
             state: Default::default(),
         }
@@ -26,11 +26,11 @@ impl ScalarGear {
 }
 
 #[derive(Clone, Copy, Debug, Default)]
-struct GearState {
+struct Gear64State {
     hash: u64,
 }
 
-impl GearState {
+impl Gear64State {
     fn reset(&mut self) {
         self.hash = 0
     }
@@ -44,7 +44,7 @@ impl GearState {
     }
 }
 
-impl ChunkerImpl for ScalarGear {
+impl ChunkerImpl for ScalarGear64 {
     fn find_boundary(&mut self, data: &[u8]) -> Option<usize> {
         for (i, &b) in data.iter().enumerate() {
             self.state.ingest(b);
@@ -66,21 +66,21 @@ impl ChunkerImpl for ScalarGear {
 ///
 /// See the documentation on `ScalarGear` for more information.
 #[derive(Debug, Clone)]
-pub(crate) struct MaybeSimdGear<'t> {
+pub(crate) struct MaybeSimdGear64<'t> {
     mask: u64,
     hasher: gearhash::Hasher<'t>,
 }
 
-impl MaybeSimdGear<'_> {
-    pub(crate) fn new(mask: u64) -> MaybeSimdGear<'static> {
-        MaybeSimdGear {
+impl MaybeSimdGear64<'_> {
+    pub(crate) fn new(mask: u64) -> MaybeSimdGear64<'static> {
+        MaybeSimdGear64 {
             mask,
             hasher: Default::default(),
         }
     }
 }
 
-impl<'t> ChunkerImpl for MaybeSimdGear<'t> {
+impl<'t> ChunkerImpl for MaybeSimdGear64<'t> {
     fn find_boundary(&mut self, data: &[u8]) -> Option<usize> {
         let a = self.hasher.next_match(data, self.mask);
         if let Some(pos) = a {
