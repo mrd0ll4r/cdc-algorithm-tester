@@ -21,12 +21,44 @@ Commands:
 Options:
       --skip-fingerprinting
           Whether to only perform chunking, not fingerprinting
+
   -i, --input-file <FILE>
           The file to operate on
+
       --max-chunk-size <BYTES>
-          A max chunk size to optionally enforce
+          A max chunk size to optionally enforce.
+
+          This is currently not possible while also using the QuickCDC wrapper.
+
+      --quickcdc-min-chunk-size <BYTES>
+          Enable the QuickCDC wrapper around the selected algorithm using the given minimum chunk size.
+
+          Note that the minimum chunk size will be skipped and not processed by the inner CDC algorithm. From the perspective of the inner algorithm, chunks are `min_chunk_size` smaller than they actually are. You need to adjust the parameters of the inner algorithm accordingly.
+
+          Setting this to zero will enable only the caching functionality of the QuickCDC wrapper, and not skip any bytes for unique chunks.
+
+          Chunks that are smaller than the sum of both feature vector lengths (e.g., 3+3=6 by default) will not be cached.
+
+      --quickcdc-front-feature-vector-length <BYTES>
+          The number of bytes to use for the front feature vector of the QuickCDC wrapper.
+
+          Only implemented for 1,2,3, or 4 bytes. Note that a large value may cause large consumptions of memory.
+
+          [default: 3]
+
+      --quickcdc-end-feature-vector-length <BYTES>
+          The number of bytes to use for the end feature vector of the QuickCDC wrapper.
+
+          Only implemented for 1,2,3, or 4 bytes. Note that a large value may cause large consumptions of memory.
+
+          [default: 3]
+
+      --quickcdc-use-hashmap
+          Use the hashmap-based implementation of the QuickCDC wrapper
+
   -h, --help
-          Print help (see more with '--help')
+          Print help (see a summary with '-h')
+
   -V, --version
           Print version
 ```
@@ -90,9 +122,12 @@ By default, we produce SHA1 fingerprints for the chunks.
 The `--skip-fingerprinting` flag can be provided to instead provide empty strings as fingerprints, to isolate the performance of the CDC algorithms.
 We use [std::hints::black_box](https://doc.rust-lang.org/std/hint/fn.black_box.html) to ensure that the compiler still assumes chunk data to be used in either case.
 
+We use compile-time constants whenever applicable with reasonable effort.
+In particular, we use constants for the feature vector sizes of QuickCDC and the size of the window for PCI.
+
 ## Building
 
-MSRV: `1.66`, because we use [std::hints::black_box](https://doc.rust-lang.org/std/hint/fn.black_box.html).
+MSRV: `nightly`, because we use `#![feature(generic_const_exprs)]`.
 
 The code is built with link-time optimization and `codegen-units=1` for the `release` profile, which is used to measure performance.
 This will take a while to build, but should produce fast code.
@@ -100,9 +135,9 @@ This will take a while to build, but should produce fast code.
 Preferably and most easily: build id docker using the [build-in-docker.sh](./build-in-docker.sh) script.
 The binary will be placed in `out/`.
 
-Alternatively, on a host with an up-to-date version of Rust installed:
+Alternatively, on a host with an up-to-date __nightly__ Rust installed:
 ```
-cargo build --release --locked
+cargo +nightly build --release --locked
 ```
 This will produce a binary in `target/release/`
 
@@ -126,6 +161,28 @@ Currently, we implement:
   This uses the [gearhash](https://crates.io/crates/gearhash) crate.
   In contrast to the algorithm described in the DDelta paper, this version uses a 64-bit internal hash (and 64-bit table entries).
   This implementation is optionally SIMD-accelerated on CPUs supporting SSE4.2 or AVX2, controlled via a flag.
+
+### QuickCDC
+
+QuickCDC is implemented as a generic caching and jumping wrapper around any inner CDC algorithm.
+To replicate the configuration presented in the paper, use the normalized-chunking Gearhash implementation as the inner algorithm.
+
+The cache stores 32-bit unsigned integers as chunk sizes to skip.
+This limits chunk sizes to `2^32`, which is probably fine in practice, while saving a considerable amount of memory.
+
+There are two implementations:
+1. Using `HashMap<[u8;N], u32>`s for the front and end indices.
+   These start out small and get filled gradually.
+   Benchmarking has shown that this can be slow in some cases, especially when producing many small chunks, which leads to frequent accesses of the hashmap.
+2. Using preallocated arrays of `[u32; 256.pow(N)]`.
+   This is faster, at least for cases where the cache is accessed frequently.
+   The arrays are heap-allocated, and the downside of preallocating them completely is their size:
+   For `N=3`, as suggested in the paper, the tables are `256^3 * 4 (bytes per entry) = 64M` _per table_.
+   As such, for `N=M=3`, the tables (which are frequently accessed) potentially evict up to 128M of cache, which is probably all of it.
+   A choice of `N=M=2` reduces the combined size of the tables to 512K, which is much more manageable.
+   This, of course, comes at the expense of more frequent collisions.
+   A possible performance optimization here would be to limit chunk sizes to `2^16=64K`, which would reduce the size of the tables by half.
+   This might not be acceptable in all situations.
 
 ## License
 

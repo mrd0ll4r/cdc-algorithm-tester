@@ -4,7 +4,6 @@ description = "A binary to test various content-defined chunking algorithms"
 version = "0.1.0"
 edition = "2021"
 authors = ["Leo Balduf <leobalduf@gmail.com>"]
-rust-version = "1.66"
 readme = "README.md"
 license = "MIT"
 repository = "https://github.com/mrd0ll4r/cdc-algorithm-tester"
