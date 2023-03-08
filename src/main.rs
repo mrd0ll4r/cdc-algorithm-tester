@@ -570,24 +570,19 @@ where
         // Make sure that the compiler cannot optimize out anything about the chunks produced.
         std::hint::black_box(&chunk);
 
-        match chunk {
-            quickcdc::ChunkInput::Data(d) => {
-                debug!("got {} bytes of data for the current chunk...", d.len());
-                chunk_size += d.len();
-                if !quiet {
+        if !quiet {
+            match chunk {
+                quickcdc::ChunkInput::Data(d) => {
+                    debug!("got {} bytes of data for the current chunk...", d.len());
+                    chunk_size += d.len();
                     chunk_hasher.update(d);
                 }
-            }
-            quickcdc::ChunkInput::End => {
-                let digest = if quiet {
-                    // This does not allocate.
-                    String::new()
-                } else {
+                quickcdc::ChunkInput::End => {
                     format!("{:x}", chunk_hasher.finalize_reset())
-                };
-                debug!("chunk complete, size: {}, digest: {}", chunk_size, digest);
-                println!("{},{}", digest, chunk_size);
-                chunk_size = 0;
+                    debug!("chunk complete, size: {}, digest: {}", chunk_size, digest);
+                    println!("{},{}", digest, chunk_size);
+                    chunk_size = 0;
+                }
             }
         }
     }
