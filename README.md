@@ -119,7 +119,7 @@ In general, we chose to operate on a single file, which in practice means that w
 Keep in mind that there is considerable overhead implied with launching a process, which could affect results when chunking many (small) files.
 
 By default, we produce SHA1 fingerprints for the chunks.
-The `--skip-fingerprinting` flag can be provided to instead provide empty strings as fingerprints, to isolate the performance of the CDC algorithms.
+The `--quiet` flag can be provided to skip the computation of the fingerprint and omit output to std, to isolate the performance of the CDC algorithms.
 We use [std::hints::black_box](https://doc.rust-lang.org/std/hint/fn.black_box.html) to ensure that the compiler still assumes chunk data to be used in either case.
 
 We use compile-time constants whenever applicable with reasonable effort.

@@ -19,14 +19,14 @@ use std::path::PathBuf;
 use std::f64::consts;
 
 macro_rules! impl_pci_test_with_size {
-    ($running_popcount:expr,$window_size:literal,$thresh:expr,$f:expr,$max_chunk_size:expr,$skip_fingerprinting:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {
+    ($running_popcount:expr,$window_size:literal,$thresh:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {
         if $running_popcount {
             let algo = cdchunking::PCIChunkerRunningPopcount::<$window_size>::new($thresh);
             chunk_with_algorithm_and_size_limit(
                 $f,
                 algo,
                 $max_chunk_size,
-                $skip_fingerprinting,
+                $quiet,
                 $quickcdc_min_chunk_size,
                 $quickcdc_use_hashmap,
                 $quickcdc_n,
@@ -38,7 +38,7 @@ macro_rules! impl_pci_test_with_size {
                 $f,
                 algo,
                 $max_chunk_size,
-                $skip_fingerprinting,
+                $quiet,
                 $quickcdc_min_chunk_size,
                 $quickcdc_use_hashmap,
                 $quickcdc_n,
@@ -49,10 +49,10 @@ macro_rules! impl_pci_test_with_size {
 }
 
 macro_rules! impl_pci_test_for_sizes {
-    ($running_popcount:expr,$window_size:expr,$thresh:expr,$f:expr,$max_chunk_size:expr,$skip_fingerprinting:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
+    ($running_popcount:expr,$window_size:expr,$thresh:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
         match $window_size {
             $(
-            $x => impl_pci_test_with_size!($running_popcount,$x,$thresh,$f,$max_chunk_size,$skip_fingerprinting,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
+            $x => impl_pci_test_with_size!($running_popcount,$x,$thresh,$f,$max_chunk_size,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
             )*
             _ => unreachable!(),
         }
@@ -60,7 +60,7 @@ macro_rules! impl_pci_test_for_sizes {
 }
 
 macro_rules! impl_quickcdc_for_sizes {
-    ($algo:expr,$f:expr,$min_chunk_size:expr,$skip_fingerprinting:expr,$p_n:expr,$p_m:expr,$( ($n:expr,$m:expr) ),*) => {
+    ($algo:expr,$f:expr,$min_chunk_size:expr,$quiet:expr,$p_n:expr,$p_m:expr,$( ($n:expr,$m:expr) ),*) => {
         match ($p_n,$p_m) {
             $(
             ($n,$m) => {
@@ -68,7 +68,7 @@ macro_rules! impl_quickcdc_for_sizes {
                         $algo,
                         $f,
                         $min_chunk_size,
-                        $skip_fingerprinting,
+                        $quiet,
                     )
             },
             )*
@@ -78,7 +78,7 @@ macro_rules! impl_quickcdc_for_sizes {
 }
 
 macro_rules! impl_quickcdc_hashmap_for_sizes {
-    ($algo:expr,$f:expr,$min_chunk_size:expr,$skip_fingerprinting:expr,$p_n:expr,$p_m:expr,$( ($n:expr,$m:expr) ),*) => {
+    ($algo:expr,$f:expr,$min_chunk_size:expr,$quiet:expr,$p_n:expr,$p_m:expr,$( ($n:expr,$m:expr) ),*) => {
         match ($p_n,$p_m) {
             $(
             ($n,$m) => {
@@ -86,7 +86,7 @@ macro_rules! impl_quickcdc_hashmap_for_sizes {
                         $algo,
                         $f,
                         $min_chunk_size,
-                        $skip_fingerprinting,
+                        $quiet,
                     )
             },
             )*
@@ -107,7 +107,7 @@ struct Cli {
 
     /// Whether to only perform chunking, not fingerprinting.
     #[arg(long)]
-    skip_fingerprinting: bool,
+    quiet: bool,
 
     /// The file to operate on.
     #[arg(short, long, value_name = "FILE")]
@@ -266,7 +266,7 @@ fn main() -> anyhow::Result<()> {
                 f,
                 algo,
                 cli.max_chunk_size,
-                cli.skip_fingerprinting,
+                cli.quiet,
                 cli.quickcdc_min_chunk_size,
                 cli.quickcdc_use_hashmap,
                 cli.quickcdc_front_feature_vector_length,
@@ -285,7 +285,7 @@ fn main() -> anyhow::Result<()> {
                     f,
                     algo,
                     cli.max_chunk_size,
-                    cli.skip_fingerprinting,
+                    cli.quiet,
                     cli.quickcdc_min_chunk_size,
                     cli.quickcdc_use_hashmap,
                     cli.quickcdc_front_feature_vector_length,
@@ -297,7 +297,7 @@ fn main() -> anyhow::Result<()> {
                     f,
                     algo,
                     cli.max_chunk_size,
-                    cli.skip_fingerprinting,
+                    cli.quiet,
                     cli.quickcdc_min_chunk_size,
                     cli.quickcdc_use_hashmap,
                     cli.quickcdc_front_feature_vector_length,
@@ -328,7 +328,7 @@ fn main() -> anyhow::Result<()> {
                     f,
                     algo,
                     cli.max_chunk_size,
-                    cli.skip_fingerprinting,
+                    cli.quiet,
                     cli.quickcdc_min_chunk_size,
                     cli.quickcdc_use_hashmap,
                     cli.quickcdc_front_feature_vector_length,
@@ -348,7 +348,7 @@ fn main() -> anyhow::Result<()> {
                 f,
                 algo,
                 cli.max_chunk_size,
-                cli.skip_fingerprinting,
+                cli.quiet,
                 cli.quickcdc_min_chunk_size,
                 cli.quickcdc_use_hashmap,
                 cli.quickcdc_front_feature_vector_length,
@@ -378,7 +378,7 @@ fn main() -> anyhow::Result<()> {
                 one_bits_threshold,
                 f,
                 cli.max_chunk_size,
-                cli.skip_fingerprinting,
+                cli.quiet,
                 cli.quickcdc_min_chunk_size,
                 cli.quickcdc_use_hashmap,
                 cli.quickcdc_front_feature_vector_length,
@@ -398,7 +398,7 @@ fn main() -> anyhow::Result<()> {
                 f,
                 algo,
                 cli.max_chunk_size,
-                cli.skip_fingerprinting,
+                cli.quiet,
                 cli.quickcdc_min_chunk_size,
                 cli.quickcdc_use_hashmap,
                 cli.quickcdc_front_feature_vector_length,
@@ -418,7 +418,7 @@ fn main() -> anyhow::Result<()> {
                     f,
                     algo,
                     cli.max_chunk_size,
-                    cli.skip_fingerprinting,
+                    cli.quiet,
                     cli.quickcdc_min_chunk_size,
                     cli.quickcdc_use_hashmap,
                     cli.quickcdc_front_feature_vector_length,
@@ -430,7 +430,7 @@ fn main() -> anyhow::Result<()> {
                     f,
                     algo,
                     cli.max_chunk_size,
-                    cli.skip_fingerprinting,
+                    cli.quiet,
                     cli.quickcdc_min_chunk_size,
                     cli.quickcdc_use_hashmap,
                     cli.quickcdc_front_feature_vector_length,
@@ -458,7 +458,7 @@ fn main() -> anyhow::Result<()> {
                 f,
                 algo,
                 cli.max_chunk_size,
-                cli.skip_fingerprinting,
+                cli.quiet,
                 cli.quickcdc_min_chunk_size,
                 cli.quickcdc_use_hashmap,
                 cli.quickcdc_front_feature_vector_length,
@@ -472,7 +472,7 @@ fn chunk_with_algorithm_and_size_limit<C: ChunkerImpl + Debug>(
     f: File,
     cdc_algo: C,
     size_limit: Option<usize>,
-    skip_fingerprinting: bool,
+    quiet: bool,
     quickcdc_min_chunk_size: Option<usize>,
     quickcdc_use_hashmap: bool,
     quickcdc_n: u16,
@@ -493,7 +493,7 @@ fn chunk_with_algorithm_and_size_limit<C: ChunkerImpl + Debug>(
                 cdc_algo,
                 f,
                 quickcdc_min_chunk_size,
-                skip_fingerprinting,
+                quiet,
                 quickcdc_n,
                 quickcdc_m,
                 (1, 1),
@@ -518,7 +518,7 @@ fn chunk_with_algorithm_and_size_limit<C: ChunkerImpl + Debug>(
                 cdc_algo,
                 f,
                 quickcdc_min_chunk_size,
-                skip_fingerprinting,
+                quiet,
                 quickcdc_n,
                 quickcdc_m,
                 (1, 1),
@@ -542,10 +542,10 @@ fn chunk_with_algorithm_and_size_limit<C: ChunkerImpl + Debug>(
     } else {
         if let Some(size_limit) = size_limit {
             let chunker = Chunker::new(cdc_algo).max_size(size_limit);
-            process_chunk_stream(chunker.stream(f), skip_fingerprinting)
+            process_chunk_stream(chunker.stream(f), quiet)
         } else {
             let chunker = Chunker::new(cdc_algo);
-            process_chunk_stream(chunker.stream(f), skip_fingerprinting)
+            process_chunk_stream(chunker.stream(f), quiet)
         }
     }
 }
@@ -554,7 +554,7 @@ fn process_quickcdc_wrapper<const N: usize, const M: usize, C: ChunkerImpl, R: R
     algo: C,
     file: R,
     min_chunk_size: usize,
-    skip_fingerprinting: bool,
+    quiet: bool,
 ) -> anyhow::Result<()>
 where
     [(); 256_usize.pow(N as u32)]:,
@@ -574,12 +574,12 @@ where
             quickcdc::ChunkInput::Data(d) => {
                 debug!("got {} bytes of data for the current chunk...", d.len());
                 chunk_size += d.len();
-                if !skip_fingerprinting {
+                if !quiet {
                     chunk_hasher.update(d);
                 }
             }
             quickcdc::ChunkInput::End => {
-                let digest = if skip_fingerprinting {
+                let digest = if quiet {
                     // This does not allocate.
                     String::new()
                 } else {
@@ -599,7 +599,7 @@ fn process_quickcdc_wrapper_hashmap<const N: usize, const M: usize, C: ChunkerIm
     algo: C,
     file: R,
     min_chunk_size: usize,
-    skip_fingerprinting: bool,
+    quiet: bool,
 ) -> anyhow::Result<()> {
     let mut wrapper = QuickCDCWrapperWithHashMap::<N, M, _, _>::new(algo, file, min_chunk_size);
     let mut chunk_size = 0;
@@ -611,24 +611,19 @@ fn process_quickcdc_wrapper_hashmap<const N: usize, const M: usize, C: ChunkerIm
         // Make sure that the compiler cannot optimize out anything about the chunks produced.
         std::hint::black_box(&chunk);
 
-        match chunk {
-            quickcdc::ChunkInput::Data(d) => {
-                debug!("got {} bytes of data for the current chunk...", d.len());
-                chunk_size += d.len();
-                if !skip_fingerprinting {
+        if !quiet {
+            match chunk {
+                quickcdc::ChunkInput::Data(d) => {
+                    debug!("got {} bytes of data for the current chunk...", d.len());
+                    chunk_size += d.len();
                     chunk_hasher.update(d);
                 }
-            }
-            quickcdc::ChunkInput::End => {
-                let digest = if skip_fingerprinting {
-                    // This does not allocate.
-                    String::new()
-                } else {
-                    format!("{:x}", chunk_hasher.finalize_reset())
-                };
-                debug!("chunk complete, size: {}, digest: {}", chunk_size, digest);
-                println!("{},{}", digest, chunk_size);
-                chunk_size = 0;
+                quickcdc::ChunkInput::End => {
+                    let digest = format!("{:x}", chunk_hasher.finalize_reset());
+                    debug!("chunk complete, size: {}, digest: {}", chunk_size, digest);
+                    println!("{},{}", digest, chunk_size);
+                    chunk_size = 0;
+                }
             }
         }
     }
@@ -638,7 +633,7 @@ fn process_quickcdc_wrapper_hashmap<const N: usize, const M: usize, C: ChunkerIm
 
 fn process_chunk_stream<C: ChunkerImpl, R: Read>(
     mut chunk_iterator: ChunkStream<R, C>,
-    skip_fingerprinting: bool,
+    quiet: bool,
 ) -> anyhow::Result<()> {
     let mut chunk_size = 0;
     let mut chunk_hasher = Sha1::new();
@@ -649,24 +644,19 @@ fn process_chunk_stream<C: ChunkerImpl, R: Read>(
         // Make sure that the compiler cannot optimize out anything about the chunks produced.
         std::hint::black_box(&chunk);
 
-        match chunk {
-            ChunkInput::Data(d) => {
-                debug!("got {} bytes of data for the current chunk...", d.len());
-                chunk_size += d.len();
-                if !skip_fingerprinting {
+        if !quiet {
+            match chunk {
+                ChunkInput::Data(d) => {
+                    debug!("got {} bytes of data for the current chunk...", d.len());
+                    chunk_size += d.len();
                     chunk_hasher.update(d);
                 }
-            }
-            ChunkInput::End => {
-                let digest = if skip_fingerprinting {
-                    // This does not allocate.
-                    String::new()
-                } else {
-                    format!("{:x}", chunk_hasher.finalize_reset())
-                };
-                debug!("chunk complete, size: {}, digest: {}", chunk_size, digest);
-                println!("{},{}", digest, chunk_size);
-                chunk_size = 0;
+                ChunkInput::End => {
+                    let digest = format!("{:x}", chunk_hasher.finalize_reset());
+                    debug!("chunk complete, size: {}, digest: {}", chunk_size, digest);
+                    println!("{},{}", digest, chunk_size);
+                    chunk_size = 0;
+                }
             }
         }
     }
