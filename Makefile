@@ -4,8 +4,12 @@ build:
 
 # Run speed benchmark on all chunkers.
 speed:
-	./scripts/speed-benchmark.sh
+	./scripts/speed-bench.sh
 
-# Applied on a chunker's CSV output, this will return the average of produced chunk sizes (last chunk is omitted).
+# Get average of produced chunk sizes (last chunk is omitted).
 avg:
 	head -n -1 | awk -F, '{ sum += $2 } END { print sum/NR }'
+
+# Sanity check to validate that the blocks add up to the original file.
+validate:
+	awk -F',' '{print $2}' | paste -sd+ | bc

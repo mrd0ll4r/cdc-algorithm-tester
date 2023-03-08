@@ -7,3 +7,6 @@
 
 # Binaries built in docker
 /out/
+
+# Datasets
+/data/
