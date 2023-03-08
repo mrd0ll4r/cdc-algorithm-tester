@@ -90,10 +90,10 @@ Use `help <command>` to get a list for each of them, for example:
 $ cdc-algorithm-tester help ae
 Chunks the input file using AE
 
-Usage: cdc-algorithm-tester --input-file <FILE> ae <WINDOW_SIZE>
+Usage: cdc-algorithm-tester --input-file <FILE> ae <TARGET_CHUNK_SIZE>
 
 Arguments:
-  <WINDOW_SIZE>  The size of the fixed window
+  <TARGET_CHUNK_SIZE>  The target chunk size
 
 Options:
   -h, --help     Print help

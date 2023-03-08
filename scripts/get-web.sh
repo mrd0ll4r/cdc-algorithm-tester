@@ -8,3 +8,6 @@ for day in {01..30}
 do
   wget -E -H -k -p -l3 -q -P 202206${day} https://web.archive.org/web/202206${day}id_/https://nytimes.com
 done
+
+tar -cf ../web.tar .
+cd .. && rm -r web

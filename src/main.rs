@@ -16,6 +16,7 @@ use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::PathBuf;
+use std::f64::consts;
 
 macro_rules! impl_pci_test_with_size {
     ($running_popcount:expr,$window_size:literal,$thresh:expr,$f:expr,$max_chunk_size:expr,$skip_fingerprinting:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {
@@ -156,14 +157,14 @@ struct Cli {
 enum Commands {
     /// Chunks the input file using AE.
     AE {
-        /// The size of the fixed window.
-        window_size: usize,
+        /// The target chunk size.
+        target_chunk_size: usize,
     },
 
     /// Chunks the input file using RAM.
     RAM {
-        /// The size of the fixed window.
-        window_size: usize,
+        /// The target chunk size.
+        target_chunk_size: usize,
         /// Whether to use a potentially optimized version of the algorithm.
         #[arg(long)]
         use_optimized_version: bool,
@@ -196,23 +197,12 @@ enum Commands {
 
     /// Chunks the input file using Gear.
     Gear {
-        /// The number of bits to use for the mask.
-        /// This sets the mean chunk sizes to be `2^mask_bits`.
-        mask_bits: u8,
+        /// The target chunk size.
+        target_chunk_size: usize,
     },
 
     /// Chunks the input file using Gear with normalized chunking modifications.
     NCGear {
-        /// The number of bits to use for the lower=larger mask.
-        ///
-        /// This is the mask used before the target chunk size is reached.
-        lower_mask_bits: u8,
-
-        /// The number of bits to use for the upper=smaller mask.
-        ///
-        /// This is the mask used after the target chunk size has been reached.
-        upper_mask_bits: u8,
-
         /// The target chunk size.
         target_chunk_size: usize,
     },
@@ -224,9 +214,9 @@ enum Commands {
         /// This does not control compiler autovectorization.
         #[arg(long)]
         allow_simd_impl: bool,
-        /// The number of bits to use for the mask.
-        /// This sets the mean chunk sizes to be `2^mask_bits`.
-        mask_bits: u8,
+
+        /// The target chunk size.
+        target_chunk_size: usize,
     },
 }
 
@@ -265,7 +255,9 @@ fn main() -> anyhow::Result<()> {
     let f = File::open(cli.input_file).context("unable to open input file")?;
 
     match cli.command {
-        Commands::AE { window_size } => {
+        Commands::AE { target_chunk_size } => {
+            ensure!(target_chunk_size > 0, "target chunk size needs to be at least 1");
+            let window_size = (target_chunk_size as f64 / (consts::E - 1 as f64)) as usize;
             let algo = cdchunking::AEChunker::new(window_size);
             chunk_with_algorithm_and_size_limit(
                 f,
@@ -279,10 +271,11 @@ fn main() -> anyhow::Result<()> {
             )
         }
         Commands::RAM {
-            window_size,
+            target_chunk_size,
             use_optimized_version,
         } => {
-            ensure!(window_size > 0, "window size needs to be at least 1");
+            ensure!(target_chunk_size > 0, "target chunk size needs to be at least 1");
+            let window_size = (target_chunk_size as f64 / (consts::E - 1 as f64)) as usize;
             if use_optimized_version {
                 let algo = cdchunking::MaybeOptimizedRAMChunker::new(window_size);
                 chunk_with_algorithm_and_size_limit(
@@ -393,9 +386,9 @@ fn main() -> anyhow::Result<()> {
                 5
             )
         }
-        Commands::Gear { mask_bits } => {
-            // TODO is this correct?
-            let mask = u32::MAX ^ ((1 << (32 - mask_bits)) - 1);
+        Commands::Gear { target_chunk_size } => {
+            let mask_bits = (target_chunk_size as f64).log2().round() as u32;
+            let mask = u32::MAX << (32 - mask_bits);
 
             let algo = cdchunking::GearChunker::new(mask);
             chunk_with_algorithm_and_size_limit(
@@ -411,10 +404,10 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Gear64 {
             allow_simd_impl,
-            mask_bits,
+            target_chunk_size,
         } => {
-            // TODO is this correct?
-            let mask = u64::MAX ^ ((1 << (64 - mask_bits)) - 1);
+            let mask_bits = (target_chunk_size as f64).log2().round() as u64;
+            let mask = u64::MAX << (64 - mask_bits);
 
             if allow_simd_impl {
                 let algo = gear::MaybeSimdGear64::new(mask);
@@ -443,13 +436,12 @@ fn main() -> anyhow::Result<()> {
             }
         }
         Commands::NCGear {
-            lower_mask_bits,
-            upper_mask_bits,
             target_chunk_size,
         } => {
-            // TODO is this correct?
-            let lower_mask = u32::MAX ^ ((1 << (32 - lower_mask_bits)) - 1);
-            let upper_mask = u32::MAX ^ ((1 << (32 - upper_mask_bits)) - 1);
+            let mask_bits = (target_chunk_size as f64).log2().round() as u32;
+            let mask = u32::MAX << (32 - mask_bits);
+            let lower_mask = mask << 1;
+            let upper_mask = (mask_bits >> 1) | (1u32 << 31);
 
             let algo = cdchunking::NormalizedChunkingGearChunker::new(
                 lower_mask,
