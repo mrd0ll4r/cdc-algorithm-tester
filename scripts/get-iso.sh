@@ -23,3 +23,8 @@ wget http://ftp-stud.hs-esslingen.de/pub/fedora-secondary/releases/36/Everything
 wget http://ftp-stud.hs-esslingen.de/pub/fedora-secondary/releases/36/Everything/ppc64le/iso/Fedora-Everything-netinst-ppc64le-36-1.5.iso
 wget http://ftp-stud.hs-esslingen.de/pub/fedora-secondary/releases/34/Everything/s390x/iso/Fedora-Everything-netinst-s390x-34-1.2.iso
 wget http://ftp-stud.hs-esslingen.de/pub/fedora-secondary/releases/35/Everything/ppc64le/iso/Fedora-Everything-netinst-ppc64le-35-1.2.iso
+
+# tarring
+echo "Creating TAR archive..."
+tar -cf ../lnx.tar .
+cd .. && rm -r lnx
