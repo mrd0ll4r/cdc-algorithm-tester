@@ -29,12 +29,15 @@ for dataset in "${DATASETS[@]}"; do rm "$FAST_DATA_PATH/$dataset"; done
 
 for algo in "${ALGOS[@]}"
 do
-  # warm-up run
-  $(get_cmd $algo random.bin $CS_RANGE_START)
-
   for dataset in "${DATASETS[@]}"
   do
+    # copy dataset to ramdisk
     cp $DATA_PATH/$dataset $FAST_DATA_PATH/
+    
+    # warm-up run
+    $(get_cmd $algo $dataset $CS_RANGE_START)
+
+    # produce result for each chunk size
     for (( cs=CS_RANGE_START; cs<=CS_RANGE_END; cs=cs*2 )); do
         time_sum=$(
             (
@@ -47,6 +50,8 @@ do
         time_avg=$(echo "$time_in_ms / $ITER" | bc)
         printf "%s,%s,%d,%s\n" $algo ${dataset%%.*} $cs $time_avg
     done
+
+    # remove dataset from ramdisk to free space
     rm $FAST_DATA_PATH/$dataset
   done
 done
