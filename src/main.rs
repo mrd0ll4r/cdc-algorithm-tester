@@ -205,6 +205,9 @@ enum Commands {
     NCGear {
         /// The target chunk size.
         target_chunk_size: usize,
+
+        // The NC level to apply.
+        level: u8,
     },
 
     /// Chunks the input file using 64-bit Gear.
@@ -437,11 +440,14 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::NCGear {
             target_chunk_size,
+            level,
         } => {
+            ensure!(level < 32, "level needs to be smaller than 32");
+
             let mask_bits = (target_chunk_size as f64).log2().round() as u32;
             let mask = u32::MAX << (32 - mask_bits);
-            let lower_mask = mask << 1;
-            let upper_mask = (mask_bits >> 1) | (1u32 << 31);
+            let lower_mask = mask << level;
+            let upper_mask = (mask_bits >> level) | (1u32 << (32 - level));
 
             let algo = cdchunking::NormalizedChunkingGearChunker::new(
                 lower_mask,
