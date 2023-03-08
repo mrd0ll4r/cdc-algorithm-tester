@@ -13,11 +13,6 @@ speed:
 avg:
 	head -n -1 | awk -F, '{ sum += $$2 } END { print sum/NR }'
 
-# Get total size of all produced chunks.
-# Usage: cdc-algorithm-tester ... | make total
-total:
-	awk -F',' '{print $$2}' | paste -sd+ | bc
-
 # Validate that the produced chunks add up to the original file size.
 # Usage: cdc-algorithm-tester --input-file <input-file> ... | make validate <input-file>
 validate:
