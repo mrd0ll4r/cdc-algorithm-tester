@@ -1,3 +1,5 @@
+.SILENT:
+
 # Produces an optimized and fast release build.
 build:
 	cargo +nightly build --release --locked
@@ -7,9 +9,16 @@ speed:
 	./scripts/speed-bench.sh
 
 # Get average of produced chunk sizes (last chunk is omitted).
+# Usage: cdc-algorithm-tester ... | make avg
 avg:
-	head -n -1 | awk -F, '{ sum += $2 } END { print sum/NR }'
+	head -n -1 | awk -F, '{ sum += $$2 } END { print sum/NR }'
 
-# Sanity check to validate that the blocks add up to the original file.
+# Get total size of all produced chunks.
+# Usage: cdc-algorithm-tester ... | make total
+total:
+	awk -F',' '{print $$2}' | paste -sd+ | bc
+
+# Validate that the produced chunks add up to the original file size.
+# Usage: cdc-algorithm-tester --input-file <input-file> ... | make validate <input-file>
 validate:
-	awk -F',' '{print $2}' | paste -sd+ | bc
+	./scripts/validate.sh $(word 2, $(MAKECMDGOALS))

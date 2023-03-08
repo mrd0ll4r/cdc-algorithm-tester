@@ -20,7 +20,7 @@ CS_RANGE_START=4096
 CS_RANGE_END=CS_RANGE_START*2*2*2*2
 BIN=./target/release/cdc-algorithm-tester
 ALGOS=("ae" "ram" "bfbc" "mii" "pci" "gear" "nc-gear" "gear64")
-DATASETS=("random.bin", "web.tar", "code.tar", "pdf.tar", "lnx.tar")
+DATASETS=("random.bin" "web.tar" "code.tar" "pdf.tar" "lnx.tar")
 
 for algo in "${ALGOS[@]}"
 do
@@ -38,7 +38,7 @@ do
             ) 2>&1 >/dev/null | grep real | awk '{print $2}'
         )
         time_in_ms=$(time_to_ms $time)
-        printf "%s,%d,%s\n" $algo $cs $time_in_ms
+        printf "%s,%s,%d,%s\n" $algo ${dataset%%.*} $cs $time_in_ms
     done
   done
 done
