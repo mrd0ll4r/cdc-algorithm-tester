@@ -1,4 +1,4 @@
-use cdchunking::ChunkerImpl;
+use cdchunking::{ChunkInput, ChunkerImpl};
 use log::debug;
 use std::collections::{HashMap, VecDeque};
 use std::io::Read;
@@ -28,12 +28,6 @@ impl Default for State {
     fn default() -> Self {
         Self::Init
     }
-}
-
-#[derive(Debug)]
-pub(crate) enum ChunkInput<'a> {
-    Data(&'a [u8]),
-    End,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -239,7 +233,7 @@ impl<const N: usize, const M: usize, R: Read, T: ChunkerImpl>
         }
     }
 
-    pub(crate) fn get_next_chunk(&mut self) -> Option<std::io::Result<ChunkInput>> {
+    pub(crate) fn read(&mut self) -> Option<std::io::Result<ChunkInput>> {
         debug!(
             "current state is {:?}, buffer has {} byte remaining",
             self.state,
@@ -587,7 +581,7 @@ where
         }
     }
 
-    pub(crate) fn get_next_chunk(&mut self) -> Option<std::io::Result<ChunkInput>> {
+    pub(crate) fn read(&mut self) -> Option<std::io::Result<ChunkInput>> {
         debug!(
             "current state is {:?}, buffer has {} byte remaining",
             self.state,
