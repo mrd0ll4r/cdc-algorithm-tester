@@ -27,10 +27,8 @@ FAST_DATA_PATH=/media/ramdisk
 # clean up on ramdisk from previous runs
 for dataset in "${DATASETS[@]}"; do rm -f "$FAST_DATA_PATH/$dataset"; done
 
-for algo in "${ALGOS[@]}"
-do
-  for dataset in "${DATASETS[@]}"
-  do
+for algo in "${ALGOS[@]}"; do
+  for dataset in "${DATASETS[@]}"; do
     # copy dataset to ramdisk
     cp $DATA_PATH/$dataset $FAST_DATA_PATH/
     
@@ -39,16 +37,10 @@ do
 
     # produce result for each chunk size
     for (( cs=CS_RANGE_START; cs<=CS_RANGE_END; cs=cs*2 )); do
-        time_sum=$(
-            (
-                time for a in $(seq 1 $ITER); do
-                    ($(get_cmd $algo $dataset $cs) 2>&1 >/dev/null)
-                done
-            ) 2>&1 >/dev/null | grep real | awk '{print $2}'
-        )
-        time_in_ms=$(time_to_ms $time_sum)
-        time_avg=$(echo "$time_in_ms / $ITER" | bc)
-        printf "%s,%s,%d,%s\n" $algo ${dataset%%.*} $cs $time_avg
+      for i in $(seq 1 $ITER); do
+        time=$( { time $(get_cmd $algo $dataset $cs) >/dev/null ; } 2>&1 | grep real | awk '{print $2}' )
+        printf "%s,%s,%d,%d,%s\n" $algo ${dataset%%.*} $cs $i $(time_to_ms $time)
+      done
     done
 
     # remove dataset from ramdisk to free space
