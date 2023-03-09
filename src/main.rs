@@ -12,11 +12,11 @@ use clap::{Parser, Subcommand};
 use log::debug;
 use sha1::{Digest, Sha1};
 use std::collections::HashMap;
+use std::f64::consts;
 use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::PathBuf;
-use std::f64::consts;
 
 macro_rules! impl_pci_test_with_size {
     ($running_popcount:expr,$window_size:literal,$thresh:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {
@@ -259,8 +259,11 @@ fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Commands::AE { target_chunk_size } => {
-            ensure!(target_chunk_size > 0, "target chunk size needs to be at least 1");
-            let window_size = (target_chunk_size as f64 / (consts::E - 1 as f64)) as usize;
+            ensure!(
+                target_chunk_size > 0,
+                "target chunk size needs to be at least 1"
+            );
+            let window_size = (target_chunk_size as f64 / (consts::E - 1_f64)) as usize;
             let algo = cdchunking::AEChunker::new(window_size);
             chunk_with_algorithm_and_size_limit(
                 f,
@@ -277,8 +280,11 @@ fn main() -> anyhow::Result<()> {
             target_chunk_size,
             use_optimized_version,
         } => {
-            ensure!(target_chunk_size > 0, "target chunk size needs to be at least 1");
-            let window_size = (target_chunk_size as f64 / (consts::E - 1 as f64)) as usize;
+            ensure!(
+                target_chunk_size > 0,
+                "target chunk size needs to be at least 1"
+            );
+            let window_size = (target_chunk_size as f64 / (consts::E - 1_f64)) as usize;
             if use_optimized_version {
                 let algo = cdchunking::MaybeOptimizedRAMChunker::new(window_size);
                 chunk_with_algorithm_and_size_limit(
@@ -550,6 +556,45 @@ fn chunk_with_algorithm_and_size_limit<C: ChunkerImpl + Debug>(
     }
 }
 
+macro_rules! impl_chunk_consumer {
+    ($driver:expr,$quiet:expr) => {
+        let mut total_size = 0;
+        let mut chunk_size = 0;
+        let mut chunk_hasher = Sha1::new();
+
+        while let Some(chunk) = $driver.read() {
+            let chunk = chunk.context("unable to read file")?;
+
+            // Make sure that the compiler cannot optimize out anything about the chunks produced.
+            std::hint::black_box(&chunk);
+
+            match chunk {
+                ChunkInput::Data(d) => {
+                    debug!("got {} bytes of data for the current chunk...", d.len());
+                    chunk_size += d.len();
+                    if !$quiet {
+                        chunk_hasher.update(d);
+                    }
+                }
+                ChunkInput::End => {
+                    if !$quiet {
+                        let digest = format!("{:x}", chunk_hasher.finalize_reset());
+                        debug!("chunk complete, size: {}, digest: {}", chunk_size, digest);
+                        println!("{},{}", digest, chunk_size);
+                    } else {
+                        debug!("chunk complete, size: {}", chunk_size);
+                    }
+                    total_size += chunk_size;
+                    chunk_size = 0;
+                }
+            }
+        }
+        if $quiet {
+            println!("{}", total_size);
+        }
+    };
+}
+
 fn process_quickcdc_wrapper<const N: usize, const M: usize, C: ChunkerImpl, R: Read>(
     algo: C,
     file: R,
@@ -561,31 +606,8 @@ where
     [(); 256_usize.pow(M as u32)]:,
 {
     let mut wrapper = QuickCDCWrapperDeque::<N, M, _, _>::new(algo, file, min_chunk_size);
-    let mut chunk_size = 0;
-    let mut chunk_hasher = Sha1::new();
 
-    while let Some(chunk) = wrapper.get_next_chunk() {
-        let chunk = chunk.context("unable to read file")?;
-
-        // Make sure that the compiler cannot optimize out anything about the chunks produced.
-        std::hint::black_box(&chunk);
-
-        if !quiet {
-            match chunk {
-                quickcdc::ChunkInput::Data(d) => {
-                    debug!("got {} bytes of data for the current chunk...", d.len());
-                    chunk_size += d.len();
-                    chunk_hasher.update(d);
-                }
-                quickcdc::ChunkInput::End => {
-                    format!("{:x}", chunk_hasher.finalize_reset())
-                    debug!("chunk complete, size: {}, digest: {}", chunk_size, digest);
-                    println!("{},{}", digest, chunk_size);
-                    chunk_size = 0;
-                }
-            }
-        }
-    }
+    impl_chunk_consumer!(wrapper, quiet);
 
     Ok(())
 }
@@ -597,31 +619,8 @@ fn process_quickcdc_wrapper_hashmap<const N: usize, const M: usize, C: ChunkerIm
     quiet: bool,
 ) -> anyhow::Result<()> {
     let mut wrapper = QuickCDCWrapperWithHashMap::<N, M, _, _>::new(algo, file, min_chunk_size);
-    let mut chunk_size = 0;
-    let mut chunk_hasher = Sha1::new();
 
-    while let Some(chunk) = wrapper.get_next_chunk() {
-        let chunk = chunk.context("unable to read file")?;
-
-        // Make sure that the compiler cannot optimize out anything about the chunks produced.
-        std::hint::black_box(&chunk);
-
-        if !quiet {
-            match chunk {
-                quickcdc::ChunkInput::Data(d) => {
-                    debug!("got {} bytes of data for the current chunk...", d.len());
-                    chunk_size += d.len();
-                    chunk_hasher.update(d);
-                }
-                quickcdc::ChunkInput::End => {
-                    let digest = format!("{:x}", chunk_hasher.finalize_reset());
-                    debug!("chunk complete, size: {}, digest: {}", chunk_size, digest);
-                    println!("{},{}", digest, chunk_size);
-                    chunk_size = 0;
-                }
-            }
-        }
-    }
+    impl_chunk_consumer!(wrapper, quiet);
 
     Ok(())
 }
@@ -630,31 +629,7 @@ fn process_chunk_stream<C: ChunkerImpl, R: Read>(
     mut chunk_iterator: ChunkStream<R, C>,
     quiet: bool,
 ) -> anyhow::Result<()> {
-    let mut chunk_size = 0;
-    let mut chunk_hasher = Sha1::new();
-
-    while let Some(chunk) = chunk_iterator.read() {
-        let chunk = chunk.context("unable to read file")?;
-
-        // Make sure that the compiler cannot optimize out anything about the chunks produced.
-        std::hint::black_box(&chunk);
-
-        if !quiet {
-            match chunk {
-                ChunkInput::Data(d) => {
-                    debug!("got {} bytes of data for the current chunk...", d.len());
-                    chunk_size += d.len();
-                    chunk_hasher.update(d);
-                }
-                ChunkInput::End => {
-                    let digest = format!("{:x}", chunk_hasher.finalize_reset());
-                    debug!("chunk complete, size: {}, digest: {}", chunk_size, digest);
-                    println!("{},{}", digest, chunk_size);
-                    chunk_size = 0;
-                }
-            }
-        }
-    }
+    impl_chunk_consumer!(chunk_iterator, quiet);
 
     Ok(())
 }
