@@ -17,15 +17,15 @@ get_cmd() {
 # Global settings
 ITER=10
 CS_RANGE_START=4096
-CS_RANGE_END=CS_RANGE_START*2*2*2*2
+CS_RANGE_END=$((CS_RANGE_START * 2**4))
 BIN=./target/release/cdc-algorithm-tester
 ALGOS=("ae" "ram" "bfbc" "mii" "pci" "gear" "nc-gear" "gear64")
 DATASETS=("random.bin" "web.tar" "code.tar" "pdf.tar" "lnx.tar")
-DATA_PATH=/media/ramdisk
+DATA_PATH=data
 FAST_DATA_PATH=/media/ramdisk
 
 # clean up on ramdisk from previous runs
-for dataset in "${DATASETS[@]}"; do rm "$FAST_DATA_PATH/$dataset"; done
+for dataset in "${DATASETS[@]}"; do rm -f "$FAST_DATA_PATH/$dataset"; done
 
 for algo in "${ALGOS[@]}"
 do
@@ -42,7 +42,7 @@ do
         time_sum=$(
             (
                 time for a in $(seq 1 $ITER); do
-                    $(get_cmd $algo $dataset $cs)
+                    ($(get_cmd $algo $dataset $cs) 2>&1 >/dev/null)
                 done
             ) 2>&1 >/dev/null | grep real | awk '{print $2}'
         )
