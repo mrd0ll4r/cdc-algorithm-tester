@@ -184,8 +184,8 @@ enum Commands {
 
     /// Chunks the input file using PCI.
     PCI {
-        /// The size of the window. Currently, only windows between 2 and 5 bytes are implemented.
-        #[arg(value_parser = clap::value_parser!(u16).range(2..=5))]
+        /// The size of the window. Currently, only windows between 2 and 16 bytes are implemented.
+        #[arg(value_parser = clap::value_parser!(u16).range(2..=16))]
         window_size: u16,
         /// The threshold for the number of one bits in the window.
         one_bits_threshold: u32,
@@ -392,7 +392,18 @@ fn main() -> anyhow::Result<()> {
                 2,
                 3,
                 4,
-                5
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16
             )
         }
         Commands::Gear { target_chunk_size } => {
