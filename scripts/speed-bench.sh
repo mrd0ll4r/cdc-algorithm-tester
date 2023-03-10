@@ -27,8 +27,13 @@ FAST_DATA_PATH=/media/ramdisk
 # clean up on ramdisk from previous runs
 for dataset in "${DATASETS[@]}"; do rm -f "$FAST_DATA_PATH/$dataset"; done
 
+# CSV header
+echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,time_ms"
+
 for algo in "${ALGOS[@]}"; do
   for dataset in "${DATASETS[@]}"; do
+    dataset_size=$(stat -c "%s" $DATA_PATH/$dataset)
+
     # copy dataset to ramdisk
     cp $DATA_PATH/$dataset $FAST_DATA_PATH/
     
@@ -39,7 +44,7 @@ for algo in "${ALGOS[@]}"; do
     for (( cs=CS_RANGE_START; cs<=CS_RANGE_END; cs=cs*2 )); do
       for i in $(seq 1 $ITER); do
         time=$( { time $(get_cmd $algo $dataset $cs) >/dev/null ; } 2>&1 | grep real | awk '{print $2}' )
-        printf "%s,%s,%d,%d,%s\n" $algo ${dataset%%.*} $cs $i $(time_to_ms $time)
+        printf "%s,%s,%d,%d,%d,%s\n" $algo ${dataset%%.*} $dataset_size $cs $i $(time_to_ms $time)
       done
     done
 
