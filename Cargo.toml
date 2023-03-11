@@ -12,10 +12,12 @@ keywords = ["cdc", "chunking", "algorithms"]
 [profile.release]
 lto = "thin"
 codegen-units = 1
+#debug=1
 
 [dependencies]
 # Chunking algorithms we implemented ourselves
 cdchunking = { git = "https://github.com/mrd0ll4r/cdchunking-rs", branch = "new-algorithms" }
+#cdchunking = { path = "../cdchunking-rs"}
 
 # Gearhash, SIMD-optimized
 gearhash = "0.1.3"

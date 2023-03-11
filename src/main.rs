@@ -184,8 +184,9 @@ enum Commands {
 
     /// Chunks the input file using PCI.
     PCI {
-        /// The size of the window. Currently, only windows between 2 and 16 bytes are implemented.
-        #[arg(value_parser = clap::value_parser!(u16).range(2..=16))]
+        /// The size of the window. Currently, not all possible window sizes are implemented.
+        ///
+        /// Windows between 2 and 16 bytes, as well as some larger ones are implemented.
         window_size: u16,
         /// The threshold for the number of one bits in the window.
         one_bits_threshold: u32,
@@ -193,6 +194,14 @@ enum Commands {
         /// Originally, the popcount of the entire window is calculated for each byte.
         #[arg(long)]
         running_popcount: bool,
+    },
+
+    /// Chunks the input file using PCI, implemented without compile-time constant size.
+    PCINonConst {
+        /// The size of the window.
+        window_size: usize,
+        /// The threshold for the number of one bits in the window.
+        one_bits_threshold: u32,
     },
 
     /// Chunks the input file using Gear.
@@ -206,7 +215,10 @@ enum Commands {
         /// The target chunk size.
         target_chunk_size: usize,
 
-        // The NC level to apply.
+        /// The level of normalized chunking to apply. Needs to be in [1;16].
+        ///
+        /// This controls how much the two bitmasks are shifted away from each other.
+        #[arg(value_parser = clap::value_parser!(u8).range(1..=16))]
         level: u8,
     },
 
@@ -403,7 +415,13 @@ fn main() -> anyhow::Result<()> {
                 13,
                 14,
                 15,
-                16
+                16,
+                342,
+                603,
+                285,
+                88,
+                183,
+                48
             )
         }
         Commands::Gear { target_chunk_size } => {
@@ -459,8 +477,6 @@ fn main() -> anyhow::Result<()> {
             target_chunk_size,
             level,
         } => {
-            ensure!(level < 32, "level needs to be smaller than 32");
-
             let mask_bits = (target_chunk_size as f64).log2().round() as u32;
             let mask = u32::MAX << (32 - mask_bits);
             let lower_mask = mask << level;
@@ -471,6 +487,22 @@ fn main() -> anyhow::Result<()> {
                 upper_mask,
                 target_chunk_size,
             );
+            chunk_with_algorithm_and_size_limit(
+                f,
+                algo,
+                cli.max_chunk_size,
+                cli.quiet,
+                cli.quickcdc_min_chunk_size,
+                cli.quickcdc_use_hashmap,
+                cli.quickcdc_front_feature_vector_length,
+                cli.quickcdc_end_feature_vector_length,
+            )
+        }
+        Commands::PCINonConst {
+            window_size,
+            one_bits_threshold,
+        } => {
+            let algo = cdchunking::PCIChunkerNonConst::new(window_size, one_bits_threshold);
             chunk_with_algorithm_and_size_limit(
                 f,
                 algo,
