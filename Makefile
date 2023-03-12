@@ -6,7 +6,15 @@ build:
 
 # Run speed benchmark on all chunkers.
 speed:
-	./scripts/speed-bench.sh
+	./scripts/chunk-sizes.sh
+
+# Produce comprehensive results on chunk size distribution.
+csd:
+	./scripts/chunk-sizes.sh
+
+# Produce comprehensive dedup results (values in [0,1], the higher the better).
+dedup:
+	./scripts/dedup.sh
 
 # Get average of produced chunk sizes (last chunk is omitted).
 # Usage: cdc-algorithm-tester ... | make avg
