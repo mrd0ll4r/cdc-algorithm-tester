@@ -6,6 +6,4 @@ DATA_PATH=data
 rm -rf $DATA_PATH/bfbc
 mkdir $DATA_PATH/bfbc
 
-for file in $DATA_PATH/*; do
-  $($BIN -i $file bfbc analyze $DATA_PATH/bfbc/$(basename $file).stats)
-done
+find $DATA_PATH/ -type f | parallel --jobs $(nproc) "$BIN -i {} bfbc analyze $DATA_PATH/bfbc/{/.}.stats"
