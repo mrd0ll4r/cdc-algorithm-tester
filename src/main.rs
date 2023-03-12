@@ -106,7 +106,7 @@ struct Cli {
     command: Commands,
 
     /// Whether to only perform chunking, not fingerprinting.
-    #[arg(long)]
+    #[arg(short, long)]
     quiet: bool,
 
     /// The file to operate on.

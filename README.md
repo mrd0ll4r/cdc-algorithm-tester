@@ -101,7 +101,7 @@ Options:
   -V, --version  Print version
 ```
 
-## Performance considerations
+## Performance Considerations
 
 We use the [cdchunking](https://crates.io/crates/cdchunking) crate as a framework to implement and use chunking algorithms.
 Specifically, we iterate over the file in buffered blocks, which avoids frequent `read()` operations and does not allocate.
