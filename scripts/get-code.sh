@@ -43,6 +43,10 @@ curl -s https://api.github.com/repos/emacs-mirror/emacs/tags \
 | sed 's/,$//' \
 | wget -i -
 
+# untar downloaded emac archives
+for file in *.tar.gz; do tar -xvzf "$file"; done
+rm -f *.tar.gz
+
 # tarring
 echo "Creating TAR archive..."
 tar -cf ../code.tar .
