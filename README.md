@@ -8,6 +8,7 @@ A program that invokes a selectable chunking algorithm with given configuration 
 Usage: cdc-algorithm-tester [OPTIONS] --input-file <FILE> <COMMAND>
 
 Commands:
+  fsc      Chunks the input file using a fixed-size chunker (FSC)
   ae       Chunks the input file using AE
   ram      Chunks the input file using RAM
   bfbc     Subcommands relating to BFBC chunking
@@ -147,6 +148,7 @@ The binary will be placed in `target/debug/` in this case.
 
 See our fork of the `cdchunking-rs` crate [here](https://github.com/mrd0ll4r/cdchunking-rs/tree/new-algorithms).
 Currently, we implement:
+- Fixed-size chunking (FSC)
 - Asymmetric Extremum (AE)
 - Rapid Asymmetric Extremum (RAM), with optional optimizations made to the implementation
 - Byte Frequency-Based Chunking (BFBC), including functionality to derive byte frequencies from an input file.

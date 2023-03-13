@@ -140,6 +140,9 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Chunks the input file using a fixed-size chunker (FSC).
+    FSC { target_chunk_size: usize },
+
     /// Chunks the input file using AE.
     AE {
         /// The target chunk size.
@@ -248,6 +251,23 @@ fn main() -> anyhow::Result<()> {
     let f = File::open(cli.input_file).context("unable to open input file")?;
 
     match cli.command {
+        Commands::FSC { target_chunk_size } => {
+            ensure!(
+                target_chunk_size > 0,
+                "target chunk size needs to be at least 1"
+            );
+            let algo = cdchunking::FixedSizeChunker::new(target_chunk_size);
+            chunk_with_algorithm_and_size_limit(
+                f,
+                algo,
+                cli.max_chunk_size,
+                cli.quiet,
+                cli.quickcdc_min_chunk_size,
+                cli.quickcdc_use_hashmap,
+                cli.quickcdc_front_feature_vector_length,
+                cli.quickcdc_end_feature_vector_length,
+            )
+        }
         Commands::AE { target_chunk_size } => {
             ensure!(
                 target_chunk_size > 0,
