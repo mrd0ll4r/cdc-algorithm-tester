@@ -230,6 +230,11 @@ enum Commands {
 #[derive(Subcommand)]
 enum BFBCCommands {
     /// Analyzes the input file for byte pair frequencies for subsequent application of BFBC.
+    ///
+    /// This moves a sliding window of two bytes over the input file and records how often each
+    /// byte pair occurs.
+    /// The result is store in a binary output file.
+    /// Statistics in CSV format are output to stdout.
     Analyze {
         /// The file to store frequency results in.
         output: PathBuf,
@@ -684,12 +689,19 @@ fn derive_bfbc_frequencies_to_file(f: File, output: PathBuf) -> anyhow::Result<(
     let frequencies = calculate_bfbc_frequencies(f)
         .context("unable to calculate byte pair frequencies from input file")?;
 
+    let sum = frequencies.iter().map(|(_, c)| *c).sum::<u64>() as f64;
+
     // Create output file.
     let out_file = File::create(output).context("unable to create output file")?;
     let mut out_writer = BufWriter::new(out_file);
 
+    // Write CSV header
+    println!("b1,b2,count,share");
+
     // Write results to file.
     for (pair, count) in frequencies {
+        println!("{},{},{},{}", pair.0, pair.1, count, (count as f64 / sum));
+
         out_writer
             .write_u8(pair.0)
             .context("unable to write to file")?;
