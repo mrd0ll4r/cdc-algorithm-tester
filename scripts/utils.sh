@@ -101,7 +101,7 @@ get_algo_name() {
 # Global settings
 BIN=./target/release/cdc-algorithm-tester
 DATA_PATH=data
-FAST_DATA_PATH=/media/ramdisk
+FAST_DATA_PATH=fast_data
 
 if [ -z "${TARGET_CHUNK_SIZES}" ]; then
   TARGET_CHUNK_SIZES=(512 1024 2048 4096 8192)

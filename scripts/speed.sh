@@ -28,6 +28,7 @@ for dataset in "${DATASETS[@]}"; do rm -f "$FAST_DATA_PATH/$dataset"; done
 
 # CSV header
 echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,time_ms"
+echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,event,value" > perf.csv
 
 for algo in "${ALGOS[@]}"; do
   readarray -t subalgos < <(get_subalgos "$algo")
@@ -48,7 +49,11 @@ for algo in "${ALGOS[@]}"; do
       for cs in "${TARGET_CHUNK_SIZES[@]}"; do
         for i in $(seq 1 $ITER); do
           time=$( { time $(get_cmd $subalgo $dataset $cs) >/dev/null ; } 2>&1 | grep real | awk '{print $2}' )
-          printf "%s,%s,%d,%d,%d,%s\n" $(get_algo_name $subalgo) ${dataset%%.*} $dataset_size $cs $i $(time_to_ms $time)
+          time=$(time_to_ms $time)
+          header=$(printf "%s,%s,%d,%d,%d" $(get_algo_name $subalgo) ${dataset%%.*} $dataset_size $cs $i)
+          echo $header,$time
+          perf_result=$( perf stat -x, -e task-clock,context-switches,page-faults,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-misses,cache-references,cache-misses $(get_cmd $subalgo $dataset $cs) 2> /dev/stdout 1> /dev/null | awk -F',' '{print $3","$1}')
+          for l in $perf_result; do echo $header,$l >> perf.csv; done
         done
 
         # as nop is agnostic to target chunk sizes, one iteration is enough

@@ -36,16 +36,18 @@ done
 
 # emacs
 echo "Downloading Emacs..."
-curl -s https://api.github.com/repos/emacs-mirror/emacs/tags \
+emacs_tarball_urls=$(curl -s https://api.github.com/repos/emacs-mirror/emacs/tags \
 | grep "tarball_url" \
 | cut -d : -f 2,3 \
 | tr -d \" \
-| sed 's/,$//' \
-| wget -i -
+| sed 's/,$//')
 
-# untar downloaded emac archives
-for file in *.tar.gz; do tar -xvzf "$file"; done
-rm -f *.tar.gz
+for u in $emacs_tarball_urls; do
+    tag=$(echo $u | awk -F'/' '{print $NF}')
+    wget "$u" -O "$tag"
+    tar -xzf $tag
+    rm $tag
+done
 
 # tarring
 echo "Creating TAR archive..."
