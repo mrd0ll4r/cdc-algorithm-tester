@@ -50,6 +50,11 @@ for algo in "${ALGOS[@]}"; do
           time=$( { time $(get_cmd $subalgo $dataset $cs) >/dev/null ; } 2>&1 | grep real | awk '{print $2}' )
           printf "%s,%s,%d,%d,%d,%s\n" $(get_algo_name $subalgo) ${dataset%%.*} $dataset_size $cs $i $(time_to_ms $time)
         done
+
+        # as nop is agnostic to target chunk sizes, one iteration is enough
+        if [ $algo = "nop" ]; then
+          break
+        fi
       done
 
       # remove dataset from ramdisk to free space
