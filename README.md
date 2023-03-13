@@ -8,28 +8,25 @@ A program that invokes a selectable chunking algorithm with given configuration 
 Usage: cdc-algorithm-tester [OPTIONS] --input-file <FILE> <COMMAND>
 
 Commands:
-  ae             Chunks the input file using AE
-  ram            Chunks the input file using RAM
-  bfbc           Subcommands relating to BFBC chunking
-  mii            Chunks the input file using MII
-  pci            Chunks the input file using PCI
-  pci-non-const  Chunks the input file using PCI, implemented without compile-time constant size
-  gear           Chunks the input file using Gear
-  nc-gear        Chunks the input file using Gear with normalized chunking modifications
-  gear64         Chunks the input file using 64-bit Gear
-  help           Print this message or the help of the given subcommand(s)
+  ae       Chunks the input file using AE
+  ram      Chunks the input file using RAM
+  bfbc     Subcommands relating to BFBC chunking
+  mii      Chunks the input file using MII
+  pci      Chunks the input file using PCI
+  gear     Chunks the input file using Gear
+  nc-gear  Chunks the input file using Gear with normalized chunking modifications
+  gear64   Chunks the input file using 64-bit Gear
+  help     Print this message or the help of the given subcommand(s)
 
 Options:
-      --quiet
+  -q, --quiet
           Whether to only perform chunking, not fingerprinting
 
   -i, --input-file <FILE>
           The file to operate on
 
       --max-chunk-size <BYTES>
-          A max chunk size to optionally enforce.
-
-          This is currently not possible while also using the QuickCDC wrapper.
+          A max chunk size to optionally enforce
 
       --quickcdc-min-chunk-size <BYTES>
           Enable the QuickCDC wrapper around the selected algorithm using the given minimum chunk size.
@@ -155,8 +152,7 @@ Currently, we implement:
 - Byte Frequency-Based Chunking (BFBC), including functionality to derive byte frequencies from an input file.
   We extend the invocation of this algorithm with functionality to use the top `n` most frequent pairs, as well as to skip the `k` most frequent and use the `n` next ones afterwards.
 - Minimal Incremental Interval (MII)
-- Parity Check of Interval (PCI), including an optimized version that calculates a running popcount, instead of re-calculating the popcount of the window for each byte.
-- PCI with non-const window size. (PCI-NonConst) This uses a `VecDeque<u8>` with the size being set at runtime.
+- Parity Check of Interval (PCI), implemented in a way that calculates a running popcount, instead of re-calculating the popcount of the window for each byte.
 - Gearhash (Gear)
 - Gearhash with normalized chunking (NC-Gear).
 - 64-bit Gear (Gear64), with optional SIMD implementation, implemented in this repository (see [src/gear.rs](src/gear.rs)).

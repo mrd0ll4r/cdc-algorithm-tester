@@ -5,7 +5,8 @@ mod logging;
 mod quickcdc;
 
 use crate::quickcdc::{QuickCDCWrapperDeque, QuickCDCWrapperWithHashMap};
-use anyhow::{anyhow, ensure, Context};
+use anyhow::bail;
+use anyhow::{ensure, Context};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use cdchunking::{ChunkInput, ChunkStream, Chunker, ChunkerImpl};
 use clap::{Parser, Subcommand};
@@ -17,7 +18,6 @@ use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::PathBuf;
-use anyhow::bail;
 
 macro_rules! impl_pci_test_with_size {
     ($window_size:literal,$thresh:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {{
@@ -101,8 +101,6 @@ struct Cli {
     input_file: PathBuf,
 
     /// A max chunk size to optionally enforce.
-    ///
-    /// This is currently not possible while also using the QuickCDC wrapper.
     #[arg(long, value_name = "BYTES")]
     max_chunk_size: Option<usize>,
 
@@ -495,59 +493,25 @@ fn chunk_with_algorithm_and_size_limit<C: ChunkerImpl + Debug>(
     );
     if let Some(quickcdc_min_chunk_size) = quickcdc_min_chunk_size {
         if size_limit.is_some() {
-            return Err(anyhow!(
-                "it is currently impossible to employ both a size limit and the QuickCDC wrapper"
-            ));
-        }
-        if quickcdc_use_hashmap {
-            impl_quickcdc_hashmap_for_sizes!(
-                cdc_algo,
+            let cdc_algo = cdchunking::SizeLimited::new(cdc_algo, size_limit.unwrap());
+            quickcdc_chunk_with_algorithm(
                 f,
-                quickcdc_min_chunk_size,
+                cdc_algo,
                 quiet,
+                quickcdc_min_chunk_size,
+                quickcdc_use_hashmap,
                 quickcdc_n,
                 quickcdc_m,
-                (1, 1),
-                (1, 2),
-                (1, 3),
-                (1, 4),
-                (2, 1),
-                (2, 2),
-                (2, 3),
-                (2, 4),
-                (3, 1),
-                (3, 2),
-                (3, 3),
-                (3, 4),
-                (4, 1),
-                (4, 2),
-                (4, 3),
-                (4, 4)
             )
         } else {
-            impl_quickcdc_for_sizes!(
-                cdc_algo,
+            quickcdc_chunk_with_algorithm(
                 f,
-                quickcdc_min_chunk_size,
+                cdc_algo,
                 quiet,
+                quickcdc_min_chunk_size,
+                quickcdc_use_hashmap,
                 quickcdc_n,
                 quickcdc_m,
-                (1, 1),
-                (1, 2),
-                (1, 3),
-                (1, 4),
-                (2, 1),
-                (2, 2),
-                (2, 3),
-                (2, 4),
-                (3, 1),
-                (3, 2),
-                (3, 3),
-                (3, 4),
-                (4, 1),
-                (4, 2),
-                (4, 3),
-                (4, 4)
             )
         }
     } else {
@@ -558,6 +522,68 @@ fn chunk_with_algorithm_and_size_limit<C: ChunkerImpl + Debug>(
             let chunker = Chunker::new(cdc_algo);
             process_chunk_stream(chunker.stream(f), quiet)
         }
+    }
+}
+
+fn quickcdc_chunk_with_algorithm<C: ChunkerImpl>(
+    f: File,
+    cdc_algo: C,
+    quiet: bool,
+    quickcdc_min_chunk_size: usize,
+    quickcdc_use_hashmap: bool,
+    quickcdc_n: u16,
+    quickcdc_m: u16,
+) -> anyhow::Result<()> {
+    if quickcdc_use_hashmap {
+        impl_quickcdc_hashmap_for_sizes!(
+            cdc_algo,
+            f,
+            quickcdc_min_chunk_size,
+            quiet,
+            quickcdc_n,
+            quickcdc_m,
+            (1, 1),
+            (1, 2),
+            (1, 3),
+            (1, 4),
+            (2, 1),
+            (2, 2),
+            (2, 3),
+            (2, 4),
+            (3, 1),
+            (3, 2),
+            (3, 3),
+            (3, 4),
+            (4, 1),
+            (4, 2),
+            (4, 3),
+            (4, 4)
+        )
+    } else {
+        impl_quickcdc_for_sizes!(
+            cdc_algo,
+            f,
+            quickcdc_min_chunk_size,
+            quiet,
+            quickcdc_n,
+            quickcdc_m,
+            (1, 1),
+            (1, 2),
+            (1, 3),
+            (1, 4),
+            (2, 1),
+            (2, 2),
+            (2, 3),
+            (2, 4),
+            (3, 1),
+            (3, 2),
+            (3, 3),
+            (3, 4),
+            (4, 1),
+            (4, 2),
+            (4, 3),
+            (4, 4)
+        )
     }
 }
 
