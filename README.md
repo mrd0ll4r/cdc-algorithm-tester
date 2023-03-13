@@ -8,6 +8,7 @@ A program that invokes a selectable chunking algorithm with given configuration 
 Usage: cdc-algorithm-tester [OPTIONS] --input-file <FILE> <COMMAND>
 
 Commands:
+  nop      Chunks the input using a no-op chunker, which produces one huge chunk
   fsc      Chunks the input file using a fixed-size chunker (FSC)
   ae       Chunks the input file using AE
   ram      Chunks the input file using RAM
@@ -148,6 +149,7 @@ The binary will be placed in `target/debug/` in this case.
 
 See our fork of the `cdchunking-rs` crate [here](https://github.com/mrd0ll4r/cdchunking-rs/tree/new-algorithms).
 Currently, we implement:
+- No-op chunker, that produces one huge chunk (NOP)
 - Fixed-size chunking (FSC)
 - Asymmetric Extremum (AE)
 - Rapid Asymmetric Extremum (RAM), with optional optimizations made to the implementation

@@ -2,6 +2,7 @@
 
 mod gear;
 mod logging;
+mod nop;
 mod quickcdc;
 
 use crate::quickcdc::{QuickCDCWrapperDeque, QuickCDCWrapperWithHashMap};
@@ -140,6 +141,9 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Chunks the input using a no-op chunker, which produces one huge chunk.
+    NOP,
+
     /// Chunks the input file using a fixed-size chunker (FSC).
     FSC { target_chunk_size: usize },
 
@@ -251,6 +255,19 @@ fn main() -> anyhow::Result<()> {
     let f = File::open(cli.input_file).context("unable to open input file")?;
 
     match cli.command {
+        Commands::NOP {} => {
+            let algo = nop::NopChunker::new();
+            chunk_with_algorithm_and_size_limit(
+                f,
+                algo,
+                cli.max_chunk_size,
+                cli.quiet,
+                cli.quickcdc_min_chunk_size,
+                cli.quickcdc_use_hashmap,
+                cli.quickcdc_front_feature_vector_length,
+                cli.quickcdc_end_feature_vector_length,
+            )
+        }
         Commands::FSC { target_chunk_size } => {
             ensure!(
                 target_chunk_size > 0,
