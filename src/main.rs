@@ -196,14 +196,6 @@ enum Commands {
         running_popcount: bool,
     },
 
-    /// Chunks the input file using PCI, implemented without compile-time constant size.
-    PCINonConst {
-        /// The size of the window.
-        window_size: usize,
-        /// The threshold for the number of one bits in the window.
-        one_bits_threshold: u32,
-    },
-
     /// Chunks the input file using Gear.
     Gear {
         /// The target chunk size.
@@ -487,22 +479,6 @@ fn main() -> anyhow::Result<()> {
                 upper_mask,
                 target_chunk_size,
             );
-            chunk_with_algorithm_and_size_limit(
-                f,
-                algo,
-                cli.max_chunk_size,
-                cli.quiet,
-                cli.quickcdc_min_chunk_size,
-                cli.quickcdc_use_hashmap,
-                cli.quickcdc_front_feature_vector_length,
-                cli.quickcdc_end_feature_vector_length,
-            )
-        }
-        Commands::PCINonConst {
-            window_size,
-            one_bits_threshold,
-        } => {
-            let algo = cdchunking::PCIChunkerNonConst::new(window_size, one_bits_threshold);
             chunk_with_algorithm_and_size_limit(
                 f,
                 algo,
