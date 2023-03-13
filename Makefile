@@ -2,11 +2,11 @@
 
 # Produces an optimized and fast release build.
 build:
-	cargo +nightly build --release --locked
+	cargo +nightly build --release --locked && chmod +x scripts/*
 
 # Run speed benchmark on all chunkers.
 speed:
-	./scripts/chunk-sizes.sh
+	./scripts/speed.sh
 
 # Produce comprehensive results on chunk size distribution.
 csd:

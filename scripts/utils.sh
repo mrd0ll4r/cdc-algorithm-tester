@@ -111,6 +111,10 @@ fi
 
 if [ -z "${ALGOS}" ]; then
   ALGOS=("ae" "ram" "mii" "pci" "gear" "nc-gear" "gear64" "bfbc")
+  # detect if we are running speed tests
+  if [[ "$0" == *"speed"* ]]; then
+    ALGOS=("nop" "${ALGOS[@]}")
+  fi
 else
   ALGOS=($(echo "$ALGOS" | tr ',' ' '))
 fi

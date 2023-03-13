@@ -5,11 +5,17 @@ source scripts/utils.sh
 # Get command string for chunker. Pass arguments in the following order: algorithm, dataset, target chunk size.
 get_cmd() {
   local params="$3"
-  if [ $3 = "pci" ]; then
-    params="$(get_w_and_t_for_pci $3)"
-  elif [ $3 = "mii" ]; then
-    params="$(get_w_for_mii $3)"
-  fi
+  case "$1" in
+    "pci")
+      params="$(get_w_and_t_for_pci $3)"
+      ;;
+    "mii")
+      params="$(get_w_for_mii $3)"
+      ;;
+    "nop")
+      params=""
+      ;;
+  esac
   echo "$BIN -q -i $FAST_DATA_PATH/$2 $1 $params"
 }
 
