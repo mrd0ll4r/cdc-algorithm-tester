@@ -17,44 +17,31 @@ use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::PathBuf;
+use anyhow::bail;
 
 macro_rules! impl_pci_test_with_size {
-    ($running_popcount:expr,$window_size:literal,$thresh:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {
-        if $running_popcount {
-            let algo = cdchunking::PCIChunkerRunningPopcount::<$window_size>::new($thresh);
-            chunk_with_algorithm_and_size_limit(
-                $f,
-                algo,
-                $max_chunk_size,
-                $quiet,
-                $quickcdc_min_chunk_size,
-                $quickcdc_use_hashmap,
-                $quickcdc_n,
-                $quickcdc_m,
-            )
-        } else {
-            let algo = cdchunking::PCIChunker::<$window_size>::new($thresh);
-            chunk_with_algorithm_and_size_limit(
-                $f,
-                algo,
-                $max_chunk_size,
-                $quiet,
-                $quickcdc_min_chunk_size,
-                $quickcdc_use_hashmap,
-                $quickcdc_n,
-                $quickcdc_m,
-            )
-        }
-    };
+    ($window_size:literal,$thresh:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {{
+        let algo = cdchunking::PCIChunker::<$window_size>::new($thresh);
+        chunk_with_algorithm_and_size_limit(
+            $f,
+            algo,
+            $max_chunk_size,
+            $quiet,
+            $quickcdc_min_chunk_size,
+            $quickcdc_use_hashmap,
+            $quickcdc_n,
+            $quickcdc_m,
+        )
+    }};
 }
 
 macro_rules! impl_pci_test_for_sizes {
-    ($running_popcount:expr,$window_size:expr,$thresh:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
+    ($window_size:expr,$thresh:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
         match $window_size {
             $(
-            $x => impl_pci_test_with_size!($running_popcount,$x,$thresh,$f,$max_chunk_size,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
+            $x => impl_pci_test_with_size!($x,$thresh,$f,$max_chunk_size,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
             )*
-            _ => unreachable!(),
+            _ => bail!("window size not implemented"),
         }
     };
 }
@@ -190,10 +177,6 @@ enum Commands {
         window_size: u16,
         /// The threshold for the number of one bits in the window.
         one_bits_threshold: u32,
-        /// Whether to keep a running popcount while ingesting bytes.
-        /// Originally, the popcount of the entire window is calculated for each byte.
-        #[arg(long)]
-        running_popcount: bool,
     },
 
     /// Chunks the input file using Gear.
@@ -373,7 +356,6 @@ fn main() -> anyhow::Result<()> {
         Commands::PCI {
             window_size,
             one_bits_threshold,
-            running_popcount,
         } => {
             ensure!(
                 one_bits_threshold > 0,
@@ -388,7 +370,6 @@ fn main() -> anyhow::Result<()> {
             );
 
             impl_pci_test_for_sizes!(
-                running_popcount,
                 window_size,
                 one_bits_threshold,
                 f,
