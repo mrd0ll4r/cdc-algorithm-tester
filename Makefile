@@ -2,7 +2,12 @@
 
 # Produces an optimized and fast release build.
 build:
-	cargo +nightly build --release --locked && chmod +x scripts/*
+	cargo +nightly build --release --locked
+	chmod +x scripts/*
+
+# Run BFBC analysis on all datasets. Ouput is stored in ./data/bfbc/.
+bfbc:
+	./scripts/bfbc-analyze.sh
 
 # Run speed benchmark on all chunkers.
 speed:

@@ -34,7 +34,7 @@ get_w_for_mii() {
 }
 
 # Finds the best match for parameters w and t in PCI to achieve given target chunk size.
-get_w_and_t_for_pcii() {
+get_w_and_t_for_pci() {
   case $1 in
     512)
         echo "342 776"
@@ -75,7 +75,7 @@ get_subalgos() {
       subalgos=($1)
       ;;
   esac
-  echo "${subalgos[@]}"
+  for subalgo in "${subalgos[@]}"; do echo $subalgo; done
 }
 
 get_algo_name() {
@@ -110,7 +110,7 @@ else
 fi
 
 if [ -z "${ALGOS}" ]; then
-  ALGOS=("ae" "ram" "mii" "pci" "gear" "nc-gear" "gear64" "bfbc")
+  ALGOS=("fsc" "ae" "ram" "mii" "pci" "gear" "nc-gear" "gear64" "bfbc")
   # detect if we are running speed tests
   if [[ "$0" == *"speed"* ]]; then
     ALGOS=("nop" "${ALGOS[@]}")
