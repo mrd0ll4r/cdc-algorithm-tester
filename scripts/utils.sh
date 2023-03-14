@@ -80,13 +80,13 @@ get_subalgos() {
 
 get_algo_name() {
   case $1 in
-    "nc-gear --level=1")
+    "nc-gear 1")
       echo "gear_nc_1"
       ;;
-    "nc-gear --level=2")
+    "nc-gear 2")
       echo "gear_nc_2"
       ;;
-    "nc-gear --level=3")
+    "nc-gear 3")
       echo "gear_nc_3"
       ;;
     "gear64 --allow-simd-impl")
