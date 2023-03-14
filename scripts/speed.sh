@@ -48,7 +48,7 @@ for algo in "${ALGOS[@]}"; do
       # produce result for each chunk size
       for cs in "${TARGET_CHUNK_SIZES[@]}"; do
         for i in $(seq 1 $ITER); do
-          time=$( { time $(get_cmd $subalgo $dataset $cs) >/dev/null ; } 2>&1 | grep real | awk '{print $2}' )
+          time=$( { time $(get_cmd "$subalgo" $dataset $cs) >/dev/null ; } 2>&1 | grep real | awk '{print $2}' )
           time=$(time_to_ms $time)
           header=$(printf "%s,%s,%d,%d,%d" $(get_algo_name "$subalgo") ${dataset%%.*} $dataset_size $cs $i)
           echo $header,$time
