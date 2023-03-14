@@ -43,7 +43,7 @@ for algo in "${ALGOS[@]}"; do
       cp $DATA_PATH/$dataset $FAST_DATA_PATH/
       
       # warm-up run
-      $(get_cmd "$algo" $dataset ${TARGET_CHUNK_SIZES[0]}) >/dev/null
+      $(get_cmd "$subalgo" $dataset ${TARGET_CHUNK_SIZES[0]}) >/dev/null
 
       # produce result for each chunk size
       for cs in "${TARGET_CHUNK_SIZES[@]}"; do
@@ -57,14 +57,14 @@ for algo in "${ALGOS[@]}"; do
         done
 
         # as nop is agnostic to target chunk sizes, one iteration is enough
-        if [ $algo = "nop" ]; then
+        if [ "$algo" = "nop" ]; then
           break
         fi
       done
 
       # remove dataset from ramdisk to free space
       rm $FAST_DATA_PATH/$dataset
-      if [ $algo = "bfbc" ]; then rm $FAST_DATA_PATH/$dataset.stats; fi
+      if [ "$algo" = "bfbc" ]; then rm $FAST_DATA_PATH/$dataset.stats; fi
     done
   done
 done
