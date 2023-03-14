@@ -43,7 +43,7 @@ for algo in "${ALGOS[@]}"; do
       cp $DATA_PATH/$dataset $FAST_DATA_PATH/
       
       # warm-up run
-      $(get_cmd $algo $dataset ${TARGET_CHUNK_SIZES[0]}) >/dev/null
+      $(get_cmd "$algo" $dataset ${TARGET_CHUNK_SIZES[0]}) >/dev/null
 
       # produce result for each chunk size
       for cs in "${TARGET_CHUNK_SIZES[@]}"; do
