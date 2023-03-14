@@ -67,6 +67,14 @@ get_subalgos() {
     "gear64")
       subalgos=("gear64" "gear64 --allow-simd-impl")
       ;;
+    "quickcdc")
+      subalgos=(
+        "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 gear" \
+        "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 gear" \
+        "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 gear" \
+        "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 gear"
+      )
+      ;;
     "bfbc")
       for dataset in "${DATASETS[@]}"; do $(get_cmd "bfbc" "$dataset" "analyze $FAST_DATA_PATH/$dataset.stats"); done
       subalgos=("bfbc chunk $FAST_DATA_PATH/$dataset.stats 0 0 0") # TODO
@@ -92,6 +100,18 @@ get_algo_name() {
     "gear64 --allow-simd-impl")
       echo "gear64_simd"
       ;;
+    "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 gear")
+      echo "quick_2"
+      ;;
+    "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 gear")
+      echo "quick_3"
+      ;;
+    "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 gear")
+      echo "quick_hash_2"
+      ;;
+    "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 gear")
+      echo "quick_hash_3"
+      ;;
     *)
       echo "$subalgo"
       ;;
@@ -110,7 +130,7 @@ else
 fi
 
 if [ -z "${ALGOS}" ]; then
-  ALGOS=("fsc" "ae" "ram" "mii" "pci" "gear" "nc-gear" "gear64" "bfbc")
+  ALGOS=("fsc" "ae" "ram" "mii" "pci" "gear" "nc-gear" "gear64" "quickcdc" "bfbc")
   # detect if we are running speed tests
   if [[ "$0" == *"speed"* ]]; then
     ALGOS=("nop" "${ALGOS[@]}")

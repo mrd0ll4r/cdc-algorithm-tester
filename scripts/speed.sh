@@ -4,6 +4,7 @@ source scripts/utils.sh
 
 # Get command string for chunker. Pass arguments in the following order: algorithm, dataset, target chunk size.
 get_cmd() {
+  local args_and_algo="$1"
   local params="$3"
   case "$1" in
     "pci")
@@ -15,8 +16,11 @@ get_cmd() {
     "nop")
       params=""
       ;;
+    "quickcdc"*)
+      args_and_algo="--quickcdc-min-chunk-size $(($3/2)) $1"
+      ;;
   esac
-  echo "$BIN -q -i $FAST_DATA_PATH/$2 $1 $params"
+  echo "$BIN -q -i $FAST_DATA_PATH/$2 $args_and_algo $params"
 }
 
 if [ -z "${ITER}" ]; then
