@@ -62,7 +62,7 @@ get_subalgos() {
   local subalgos=()
   case $1 in
     "nc-gear")
-      subalgos=("nc-gear --level=1" "nc-gear --level=2" "nc-gear --level=3")
+      subalgos=("nc-gear 1" "nc-gear 2" "nc-gear 3")
       ;;
     "gear64")
       subalgos=("gear64" "gear64 --allow-simd-impl")

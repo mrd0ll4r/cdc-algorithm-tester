@@ -192,14 +192,14 @@ enum Commands {
 
     /// Chunks the input file using Gear with normalized chunking modifications.
     NCGear {
-        /// The target chunk size.
-        target_chunk_size: usize,
-
         /// The level of normalized chunking to apply. Needs to be in [1;16].
         ///
         /// This controls how much the two bitmasks are shifted away from each other.
         #[arg(value_parser = clap::value_parser!(u8).range(1..=16))]
         level: u8,
+
+        /// The target chunk size.
+        target_chunk_size: usize,
     },
 
     /// Chunks the input file using 64-bit Gear.
@@ -487,8 +487,8 @@ fn main() -> anyhow::Result<()> {
             }
         }
         Commands::NCGear {
-            target_chunk_size,
             level,
+            target_chunk_size,
         } => {
             let mask_bits = (target_chunk_size as f64).log2().round() as u32;
             let mask = u32::MAX << (32 - mask_bits);
