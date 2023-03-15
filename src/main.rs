@@ -4,6 +4,7 @@ mod gear;
 mod logging;
 mod nop;
 mod quickcdc;
+mod rabin;
 
 use crate::quickcdc::{QuickCDCWrapperDeque, QuickCDCWrapperWithHashMap};
 use anyhow::bail;
@@ -147,6 +148,16 @@ enum Commands {
     /// Chunks the input file using a fixed-size chunker (FSC).
     FSC { target_chunk_size: usize },
 
+    /// Chunks the input file using Rabin.
+    Rabin {
+        /// The size of the window, in bytes.
+        #[arg(long)]
+        window_size: usize,
+
+        /// The target chunk size.
+        target_chunk_size: usize,
+    },
+
     /// Chunks the input file using AE.
     AE {
         /// The target chunk size.
@@ -278,6 +289,30 @@ fn main() -> anyhow::Result<()> {
                 "target chunk size needs to be at least 1"
             );
             let algo = cdchunking::FixedSizeChunker::new(target_chunk_size);
+            chunk_with_algorithm_and_size_limit(
+                f,
+                algo,
+                cli.max_chunk_size,
+                cli.quiet,
+                cli.quickcdc_min_chunk_size,
+                cli.quickcdc_use_hashmap,
+                cli.quickcdc_front_feature_vector_length,
+                cli.quickcdc_end_feature_vector_length,
+            )
+        }
+        Commands::Rabin {
+            window_size,
+            target_chunk_size,
+        } => {
+            ensure!(window_size >= 1, "window size needs to be at least 2");
+            ensure!(
+                target_chunk_size > 0,
+                "target chunk size needs to be at least 1"
+            );
+            let mask_bits = (target_chunk_size as f64).log2().round() as u64;
+            let mask = (1 << mask_bits) - 1;
+
+            let algo = rabin::Rabin::new(window_size, mask);
             chunk_with_algorithm_and_size_limit(
                 f,
                 algo,

@@ -10,6 +10,7 @@ Usage: cdc-algorithm-tester [OPTIONS] --input-file <FILE> <COMMAND>
 Commands:
   nop      Chunks the input using a no-op chunker, which produces one huge chunk
   fsc      Chunks the input file using a fixed-size chunker (FSC)
+  rabin    Chunks the input file using Rabin
   ae       Chunks the input file using AE
   ram      Chunks the input file using RAM
   bfbc     Subcommands relating to BFBC chunking
@@ -151,6 +152,8 @@ See our fork of the `cdchunking-rs` crate [here](https://github.com/mrd0ll4r/cdc
 Currently, we implement:
 - No-op chunker, that produces one huge chunk (NOP)
 - Fixed-size chunking (FSC)
+- Rabin fingerprinting, following popular implementations in [C](https://github.com/fd0/rabin-cdc), [Rust](https://github.com/rustic-rs/rustic/tree/main/src/cdc) (adapted from [Rust](https://github.com/green-coder/cdc)), [C++](https://github.com/lemire/rollinghashcpp).
+  This uses some optimizations in pre-computing two tables of constants.
 - Asymmetric Extremum (AE)
 - Rapid Asymmetric Extremum (RAM), with optional optimizations made to the implementation
 - Byte Frequency-Based Chunking (BFBC), including functionality to derive byte frequencies from an input file.
