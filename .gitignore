@@ -10,3 +10,6 @@
 
 # Datasets
 /data/
+
+# Vim undo files
+*.un~
