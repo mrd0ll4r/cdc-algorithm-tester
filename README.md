@@ -154,7 +154,7 @@ Currently, we implement:
 - Asymmetric Extremum (AE)
 - Rapid Asymmetric Extremum (RAM), with optional optimizations made to the implementation
 - Byte Frequency-Based Chunking (BFBC), including functionality to derive byte frequencies from an input file.
-  We extend the invocation of this algorithm with functionality to use the top `n` most frequent pairs, as well as to skip the `k` most frequent and use the `n` next ones afterwards.
+  We extend the invocation of this algorithm with functionality to specify the indices to use, including skipping most-frequent byte pairs.
 - Minimal Incremental Interval (MII)
 - Parity Check of Interval (PCI), implemented in a way that calculates a running popcount, instead of re-calculating the popcount of the window for each byte.
 - Gearhash (Gear)

@@ -233,12 +233,16 @@ enum BFBCCommands {
     /// the original algorithm.
     Chunk {
         /// The file to read frequency results from.
+        #[arg(long)]
         frequency_file: PathBuf,
-        /// The number of most frequent byte pairs to skip.
-        num_byte_pairs_to_skip: usize,
-        /// The number of most frequent byte pairs to use.
-        num_byte_pairs: usize,
+
+        /// The byte pair indices to use, 0-based.
+        // This is u16 because there can only be 2^16 byte-pairs.
+        #[clap(required=true,long,num_args(1..))]
+        byte_pair_indices: Vec<u16>,
+
         /// The minimum chunk size.
+        #[arg(long)]
         min_chunk_size: usize,
     },
 }
@@ -342,20 +346,15 @@ fn main() -> anyhow::Result<()> {
             BFBCCommands::Analyze { output } => derive_bfbc_frequencies_to_file(f, output),
             BFBCCommands::Chunk {
                 frequency_file,
-                num_byte_pairs_to_skip,
-                num_byte_pairs,
+                byte_pair_indices,
                 min_chunk_size,
             } => {
                 ensure!(
-                    num_byte_pairs > 0,
+                    byte_pair_indices.len() > 0,
                     "need to operate on at least one byte pair"
                 );
-                let byte_pairs = read_bfbc_frequencies_from_file(
-                    frequency_file,
-                    num_byte_pairs_to_skip,
-                    num_byte_pairs,
-                )
-                .context("unable to read BFBC byte pair frequencies from file")?;
+                let byte_pairs = read_bfbc_frequencies_from_file(frequency_file, byte_pair_indices)
+                    .context("unable to read BFBC byte pair frequencies from file")?;
                 let algo = cdchunking::BFBCChunker::new(byte_pairs, min_chunk_size);
                 chunk_with_algorithm_and_size_limit(
                     f,
@@ -704,26 +703,28 @@ fn process_chunk_stream<C: ChunkerImpl, R: Read>(
 
 fn read_bfbc_frequencies_from_file(
     input: PathBuf,
-    skip: usize,
-    count: usize,
+    indices: Vec<u16>,
 ) -> anyhow::Result<Vec<(u8, u8)>> {
     let f = File::open(input).context("unable to open file")?;
     let mut reader = BufReader::new(f);
-    let mut byte_pairs = Vec::with_capacity(count + skip);
+    let mut byte_pairs = Vec::with_capacity(indices.len());
+    let max_index = indices.iter().max().unwrap();
 
-    for _i in 0..(count + skip) {
+    for i in 0..(*max_index as usize + 1) {
         let p0 = reader.read_u8().context("unable to read from file")?;
         let p1 = reader.read_u8().context("unable to read from file")?;
         let cnt = reader
             .read_u64::<BigEndian>()
             .context("unable to read from file")?;
-        debug!("read pair ({},{}), count {}", p0, p1, cnt);
+        debug!("read pair ({},{}) at index {}, count {}", p0, p1, i, cnt);
 
-        byte_pairs.push((p0, p1));
+        assert!(i <= u16::MAX as usize);
+        if indices.contains(&(i as u16)) {
+            byte_pairs.push((p0, p1));
+        }
     }
 
-    let byte_pairs = byte_pairs.into_iter().skip(skip).collect::<Vec<_>>();
-    assert_eq!(byte_pairs.len(), count);
+    assert_eq!(byte_pairs.len(), indices.len());
 
     Ok(byte_pairs)
 }
