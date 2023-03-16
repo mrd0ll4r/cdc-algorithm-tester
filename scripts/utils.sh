@@ -86,7 +86,7 @@ get_divisors_for_bfbc() {
     for d in "${divisors[@]}"; do
       total_chunk_count=$((total_chunk_count + bp_counts[d]))
     done
-    echo "scale=2; ($dataset_size - $min * $total_chunk_count) / $total_chunk_count" | bc
+    echo "scale=2; $dataset_size / $total_chunk_count + $min" | bc
   }
 
   local divisors=()
