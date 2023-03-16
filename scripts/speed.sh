@@ -19,6 +19,11 @@ get_cmd() {
     "quickcdc"*)
       args_and_algo="--quickcdc-min-chunk-size $(($3/2)) $1"
       ;;
+    "bfbc")
+      local divisors="$(get_divisors_for_bfbc $3 0 $2)"
+      args_and_algo="bfbc chunk --frequency-file $FAST_DATA_PATH/$2 --byte-pair-indices $divisors --min-chunk-size 0"
+      params=""
+      ;;
   esac
   echo "$BIN -q -i $FAST_DATA_PATH/$2 $args_and_algo $params"
 }
@@ -28,11 +33,16 @@ if [ -z "${ITER}" ]; then
 fi
 
 # clean up on ramdisk from previous runs
-for dataset in "${DATASETS[@]}"; do rm -f "$FAST_DATA_PATH/$dataset"; done
+for dataset in "${DATASETS[@]}"; do 
+  rm -f "$FAST_DATA_PATH/$dataset" "$FAST_DATA_PATH/$dataset.stats"
+done
 
 # CSV header
 echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,time_ms"
 echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,event,value" > perf.csv
+
+# BFBC stats
+cp $DATA_PATH/bfbc/* $FAST_DATA_PATH/
 
 for algo in "${ALGOS[@]}"; do
   readarray -t subalgos < <(get_subalgos "$algo")
@@ -41,10 +51,13 @@ for algo in "${ALGOS[@]}"; do
   for subalgo in "${subalgos[@]}"; do
 
     for dataset in "${DATASETS[@]}"; do
-      dataset_size=$(stat -c "%s" $DATA_PATH/$dataset)
-
       # copy dataset to ramdisk
       cp $DATA_PATH/$dataset $FAST_DATA_PATH/
+      if [ "$algo" = "bfbc" ]; then 
+        cp $DATA_PATH/bfbc/$dataset.stats $FAST_DATA_PATH/
+      fi
+
+      dataset_size=$(stat -c "%s" $FAST_DATA_PATH/$dataset)
       
       # warm-up run
       $(get_cmd "$subalgo" $dataset ${TARGET_CHUNK_SIZES[0]}) >/dev/null
@@ -68,7 +81,9 @@ for algo in "${ALGOS[@]}"; do
 
       # remove dataset from ramdisk to free space
       rm $FAST_DATA_PATH/$dataset
-      if [ "$algo" = "bfbc" ]; then rm $FAST_DATA_PATH/$dataset.stats; fi
+      if [ "$algo" = "bfbc" ]; then 
+        rm $FAST_DATA_PATH/$dataset.stats
+      fi
     done
   done
 done

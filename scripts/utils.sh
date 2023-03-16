@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Utility function to get the absolute value of a number $1.
+abs() {
+  if (( $(echo "$1 < 0" | bc -l) )); then
+    echo "$1 * -1" | bc -l
+  else
+    echo $1
+  fi
+}
+
 # Convert time string to milliseconds (e.g., "1m23.456s" -> 82345).
 time_to_ms() {
   local time="$1"
@@ -58,6 +67,57 @@ get_w_and_t_for_pci() {
   esac
 }
 
+# Find the right set of divisors to use for BFBC to achieve given target chunk size; $1 is target chunk size, $2 is minimum chunk size, $3 is dataset.
+get_divisors_for_bfbc() {
+  local target=$1
+  local min=$2
+  local dataset=$3
+  local dataset_size=$(stat -c "%s" $DATA_PATH/$dataset)
+
+  bp_counts=() # bp index => count
+  while IFS=, read -r b1 b2 count share; do
+    bp_counts+=($count)
+  done < <(tail -n +2 "$DATA_PATH/bfbc/$dataset.csv")
+
+  # Get the chunk size for a given set of divisors.
+  get_chunk_size() {
+    local divisors=("$@")
+    local total_chunk_count=1
+    for d in "${divisors[@]}"; do
+      total_chunk_count=$((total_chunk_count + bp_counts[d]))
+    done
+    echo "scale=2; ($dataset_size - $min * $total_chunk_count) / $total_chunk_count" | bc
+  }
+
+  local divisors=()
+  local i=0
+
+  for index in "${!bp_counts[@]}"; do
+    local potential_divisors=("${divisors[@]}" "$index")
+    local cs=$(get_chunk_size "${potential_divisors[@]}")
+
+    if [ $(echo "$cs >= $target" | bc -l) -eq 1 ]; then
+      divisors=("${divisors[@]}" "$index")
+      if [ $(echo "$(abs $(echo "$target - $cs" | bc -l)) <= 0.01 * $target" | bc -l) -eq 1 ]; then
+        break
+      fi
+    fi
+  done
+
+  if ! echo "${divisors[@]}" | grep -q "\b$index\b"; then
+    local potential_divisors=("${divisors[@]}" "$index")
+    local potential_distance=$(echo "$target - $(get_chunk_size "${potential_divisors[@]}")" | bc)
+    local current_distance=$(echo "$target - $(get_chunk_size "${divisors[@]}")" | bc)
+    potential_distance=$(abs $potential_distance)
+    current_distance=$(abs $current_distance)
+    if [ $(echo "$potential_distance < $current_distance" | bc -l) -eq 1 ]; then
+      divisors+=($index)
+    fi
+  fi
+
+  echo "${divisors[@]}"
+}
+
 get_subalgos() {
   local subalgos=()
   case $1 in
@@ -74,10 +134,6 @@ get_subalgos() {
         "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 gear" \
         "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 gear"
       )
-      ;;
-    "bfbc")
-      for dataset in "${DATASETS[@]}"; do $(get_cmd "bfbc" "$dataset" "analyze $FAST_DATA_PATH/$dataset.stats"); done
-      subalgos=("bfbc chunk $FAST_DATA_PATH/$dataset.stats 0 0 0") # TODO
       ;;
     *)
       subalgos=($1)
@@ -121,7 +177,7 @@ get_algo_name() {
 # Global settings
 BIN=./target/release/cdc-algorithm-tester
 DATA_PATH=data
-FAST_DATA_PATH=fast_data
+FAST_DATA_PATH=/media/ramdisk
 
 if [ -z "${TARGET_CHUNK_SIZES}" ]; then
   TARGET_CHUNK_SIZES=(512 1024 2048 4096 8192)
@@ -130,7 +186,7 @@ else
 fi
 
 if [ -z "${ALGOS}" ]; then
-  ALGOS=("fsc" "ae" "ram" "mii" "pci" "gear" "nc-gear" "gear64" "quickcdc" "bfbc")
+  ALGOS=("fsc" "ae" "ram" "mii" "pci" "rabin" "gear" "nc-gear" "gear64" "quickcdc" "bfbc")
   # detect if we are running speed tests
   if [[ "$0" == *"speed"* ]]; then
     ALGOS=("nop" "${ALGOS[@]}")
