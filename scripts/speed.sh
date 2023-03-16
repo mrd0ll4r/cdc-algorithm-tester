@@ -24,6 +24,11 @@ get_cmd() {
       args_and_algo="bfbc chunk --frequency-file $FAST_DATA_PATH/$2 --byte-pair-indices $divisors --min-chunk-size 0"
       params=""
       ;;
+    "rabin")
+      local w=$(echo "l($3)/l(2)" | bc -l)
+      w=$(printf "%.0f" $(echo "$w+0.5" | bc))
+      params="--window-size $w $3"
+      ;;
   esac
   echo "$BIN -q -i $FAST_DATA_PATH/$2 $args_and_algo $params"
 }
