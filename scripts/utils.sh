@@ -196,7 +196,9 @@ get_cmd_args() {
       params=""
       ;;
     "quickcdc"*)
-      args_and_algo="--quickcdc-min-chunk-size $(($3/2)) $1"
+      local min=$(($3/2))
+      args_and_algo="--quickcdc-min-chunk-size $min $1"
+      params="$(($3-$min))"
       ;;
     "bfbc")
       args_and_algo="bfbc chunk --frequency-file $FAST_DATA_PATH/$2 --byte-pair-indices 0 1 2 --min-chunk-size $(($3-128))"
