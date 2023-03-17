@@ -129,11 +129,14 @@ get_subalgos() {
       ;;
     "quickcdc")
       subalgos=(
-        "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 gear" \
-        "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 gear" \
-        "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 gear" \
-        "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 gear"
+        "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1" \
+        "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1" \
+        "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1" \
+        "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1"
       )
+      ;;
+    "bfbc")
+      subalgos=("bfbc" "bfbc_custom_div") # the name bfbc_custom_div is just a marker and will be evaluated in get_cmd
       ;;
     *)
       subalgos=($1)
@@ -156,22 +159,61 @@ get_algo_name() {
     "gear64 --allow-simd-impl")
       echo "gear64_simd"
       ;;
-    "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 gear")
+    "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1")
       echo "quick_2"
       ;;
-    "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 gear")
+    "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1")
       echo "quick_3"
       ;;
-    "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 gear")
+    "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1")
       echo "quick_hash_2"
       ;;
-    "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 gear")
+    "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1")
       echo "quick_hash_3"
+      ;;
+    "bfbc_custom_div")
+      echo "bfbc_custom_div"
       ;;
     *)
       echo "$subalgo"
       ;;
   esac
+}
+
+# Get cmd args for execution of algorithm. Pass arguments in the following order: algorithm, dataset, target chunk size.
+get_cmd_args() {
+  local args_and_algo="$1"
+  local params="$3"
+  case "$1" in
+    "pci")
+      params="$(get_w_and_t_for_pci $3)"
+      ;;
+    "mii")
+      args_and_algo="--max-chunk-size $((2*$3)) $1"
+      params="$(get_w_for_mii $3)"
+      ;;
+    "nop")
+      params=""
+      ;;
+    "quickcdc"*)
+      args_and_algo="--quickcdc-min-chunk-size $(($3/2)) $1"
+      ;;
+    "bfbc")
+      args_and_algo="bfbc chunk --frequency-file $FAST_DATA_PATH/$2 --byte-pair-indices 0 1 2 --min-chunk-size $(($3-128))"
+      params=""
+      ;;
+    "bfbc_custom_div")
+      local divisors="$(get_divisors_for_bfbc $3 0 $2)"
+      args_and_algo="bfbc chunk --frequency-file $FAST_DATA_PATH/$2 --byte-pair-indices $divisors --min-chunk-size 0"
+      params=""
+      ;;
+    "rabin")
+      local w=$(echo "l($3)/l(2)" | bc -l)
+      w=$(printf "%.0f" $(echo "$w+0.5" | bc))
+      params="--window-size $w $3"
+      ;;
+  esac
+  echo "$args_and_algo $params"
 }
 
 # Global settings

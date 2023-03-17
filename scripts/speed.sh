@@ -2,35 +2,10 @@
 
 source scripts/utils.sh
 
-# Get command string for chunker. Pass arguments in the following order: algorithm, dataset, target chunk size.
+# Get command string for chunker. Pass arguments in the following order: algoname, dataset, target chunk size.
 get_cmd() {
-  local args_and_algo="$1"
-  local params="$3"
-  case "$1" in
-    "pci")
-      params="$(get_w_and_t_for_pci $3)"
-      ;;
-    "mii")
-      params="$(get_w_for_mii $3)"
-      ;;
-    "nop")
-      params=""
-      ;;
-    "quickcdc"*)
-      args_and_algo="--quickcdc-min-chunk-size $(($3/2)) $1"
-      ;;
-    "bfbc")
-      local divisors="$(get_divisors_for_bfbc $3 0 $2)"
-      args_and_algo="bfbc chunk --frequency-file $FAST_DATA_PATH/$2 --byte-pair-indices $divisors --min-chunk-size 0"
-      params=""
-      ;;
-    "rabin")
-      local w=$(echo "l($3)/l(2)" | bc -l)
-      w=$(printf "%.0f" $(echo "$w+0.5" | bc))
-      params="--window-size $w $3"
-      ;;
-  esac
-  echo "$BIN -q -i $FAST_DATA_PATH/$2 $args_and_algo $params"
+  local args="$(get_cmd_args $1 $2 $3)"
+  echo "$BIN -q -i $FAST_DATA_PATH/$2 $args"
 }
 
 if [ -z "${ITER}" ]; then

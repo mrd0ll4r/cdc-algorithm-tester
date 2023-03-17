@@ -2,15 +2,10 @@
 
 source scripts/utils.sh
 
-# Get command string for chunker. Pass arguments in the following order: algorithm, dataset, target chunk size.
+# Get command string for chunker. Pass arguments in the following order: algoname, dataset, target chunk size.
 get_cmd() {
-  local params="$3"
-  if [ $3 = "pci" ]; then
-    params="$(get_w_and_t_for_pci $3)"
-  elif [ $3 = "mii" ]; then
-    params="$(get_w_for_mii $3)"
-  fi
-  echo "$BIN -i $DATA_PATH/$2 $1 $params"
+  local args="$(get_cmd_args $1 $2 $3)"
+  echo "$BIN -i $DATA_PATH/$2 $args"
 }
 
 # CSV header

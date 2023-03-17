@@ -24,7 +24,7 @@ dedup:
 # Get average of produced chunk sizes (last chunk is omitted).
 # Usage: cdc-algorithm-tester ... | make avg
 avg:
-	head -n -1 | awk -F, '{ sum += $$2 } END { print sum/NR }'
+	tail -n +2 | head -n -1 | awk -F, '{ sum += $$2 } END { print sum/NR }'
 
 # Validate that the produced chunks add up to the original file size.
 # Usage: cdc-algorithm-tester --input-file <input-file> ... | make validate <input-file>
