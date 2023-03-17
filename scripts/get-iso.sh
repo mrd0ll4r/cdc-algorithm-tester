@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 mkdir -p data/lnx
 cd data/lnx
@@ -27,4 +27,5 @@ wget http://ftp-stud.hs-esslingen.de/pub/fedora-secondary/releases/35/Everything
 # tarring
 echo "Creating TAR archive..."
 tar -cf ../lnx.tar .
-cd .. && rm -r lnx
+cd ..
+rm -r lnx
