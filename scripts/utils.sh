@@ -210,9 +210,8 @@ get_cmd_args() {
     params=""
     ;;
   "rabin")
-    local w=$(echo "l($3)/l(2)" | bc -l)
-    w=$(printf "%.0f" $(echo "$w+0.5" | bc))
-    params="--window-size $w $3"
+    local w=48
+    params="--window-size $w $(($3 - $w))"
     ;;
   esac
   echo "$args_and_algo $params"
