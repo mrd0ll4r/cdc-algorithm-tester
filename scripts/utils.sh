@@ -129,10 +129,10 @@ get_subalgos() {
     ;;
   "quickcdc")
     subalgos=(
-      "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear --level 1"
-      "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear --level 1"
-      "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear --level 1"
-      "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear --level 1"
+      "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1"
+      "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1"
+      "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1"
+      "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1"
     )
     ;;
   "bfbc")
@@ -159,16 +159,16 @@ get_algo_name() {
   "gear64 --allow-simd-impl")
     echo "gear64_simd"
     ;;
-  "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear --level 1")
+  "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1")
     echo "quick_2"
     ;;
-  "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear --level 1")
+  "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1")
     echo "quick_3"
     ;;
-  "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear --level 1")
+  "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1")
     echo "quick_hash_2"
     ;;
-  "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear --level 1")
+  "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1")
     echo "quick_hash_3"
     ;;
   "bfbc_custom_div")

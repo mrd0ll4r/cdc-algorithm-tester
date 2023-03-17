@@ -24,7 +24,7 @@ echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,time_ms"
 echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,event,value" >perf.csv
 
 # BFBC stats
-cp "$DATA_PATH/bfbc/*" "$FAST_DATA_PATH/"
+cp "$DATA_PATH"/bfbc/* "$FAST_DATA_PATH/"
 
 for algo in "${ALGOS[@]}"; do
   readarray -t subalgos < <(get_subalgos "$algo")
