@@ -49,7 +49,7 @@ for i in range(len(byte_pairs)):
     divisors.append(i)
 
 lastI = len(byte_pairs) - 1
-if lastI not in divisors and get_chunk_size(divisors + [lastI]) >= target: 
+if lastI not in divisors and abs(target - get_chunk_size(divisors + [lastI])) < (target - get_chunk_size(divisors)): 
     divisors.append(lastI)
 
 #print("Divisors: ", len(divisors), divisors)
