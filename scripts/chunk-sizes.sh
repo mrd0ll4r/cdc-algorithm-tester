@@ -13,11 +13,8 @@ echo "algorithm,dataset,target_chunk_size,chunk_size"
 
 for algo in "${ALGOS[@]}"; do
   readarray -t subalgos < <(get_subalgos "$algo")
-  # for each algorithm configuration
   for subalgo in "${subalgos[@]}"; do
-    # for each dataset
     for dataset in "${DATASETS[@]}"; do
-      # for each target chunk size
       for cs in "${TARGET_CHUNK_SIZES[@]}"; do
         # cut last chunk | get unique chunks | get size
         chunk_sizes=($($(get_cmd "$subalgo" "$dataset" "$cs") | head -n -1 | awk -F, '!seen[$1]++ {print $2}'))
