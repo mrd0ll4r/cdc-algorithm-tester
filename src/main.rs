@@ -526,8 +526,11 @@ fn main() -> anyhow::Result<()> {
         } => {
             let mask_bits = (target_chunk_size as f64).log2().round() as u32;
             let mask = u32::MAX << (32 - mask_bits);
-            let lower_mask = mask << level;
-            let upper_mask = (mask_bits >> level) | (1u32 << (32 - level));
+            // Note: lower_mask is the one applied for blocks below the target chunk size.
+            // It needs to have more 1-bits, i.e., reject more chunk boundaries.
+            // Also note: these are MSB masks, i.e., they build 1-bits from the left.
+            let upper_mask = mask << level;
+            let lower_mask = (mask >> level) | mask;
 
             let algo = cdchunking::NormalizedChunkingGearChunker::new(
                 lower_mask,
