@@ -67,57 +67,6 @@ get_w_and_t_for_pci() {
   esac
 }
 
-# Find the right set of divisors to use for BFBC to achieve given target chunk size; $1 is target chunk size, $2 is minimum chunk size, $3 is dataset.
-get_divisors_for_bfbc() {
-  local target=$1
-  local min=$2
-  local dataset=$3
-  local dataset_size=$(stat -c "%s" "$DATA_PATH/$dataset")
-
-  bp_counts=() # bp index => count
-  while IFS=, read -r b1 b2 count share; do
-    bp_counts+=($count)
-  done < <(tail -n +2 "$DATA_PATH/bfbc/$dataset.csv")
-
-  # Get the chunk size for a given set of divisors.
-  get_chunk_size() {
-    local divisors=("$@")
-    local total_chunk_count=1
-    for d in "${divisors[@]}"; do
-      total_chunk_count=$((total_chunk_count + bp_counts[d]))
-    done
-    echo "scale=2; $dataset_size / $total_chunk_count + $min" | bc
-  }
-
-  local divisors=()
-  local i=0
-
-  for index in "${!bp_counts[@]}"; do
-    local potential_divisors=("${divisors[@]}" "$index")
-    local cs=$(get_chunk_size "${potential_divisors[@]}")
-
-    if [ $(echo "$cs >= $target" | bc -l) -eq 1 ]; then
-      divisors=("${divisors[@]}" "$index")
-      if [ $(echo "$(abs $(echo "$target - $cs" | bc -l)) <= 0.01 * $target" | bc -l) -eq 1 ]; then
-        break
-      fi
-    fi
-  done
-
-  if ! echo "${divisors[@]}" | grep -q "\b$index\b"; then
-    local potential_divisors=("${divisors[@]}" "$index")
-    local potential_distance=$(echo "$target - $(get_chunk_size "${potential_divisors[@]}")" | bc)
-    local current_distance=$(echo "$target - $(get_chunk_size "${divisors[@]}")" | bc)
-    potential_distance=$(abs $potential_distance)
-    current_distance=$(abs $current_distance)
-    if [ $(echo "$potential_distance < $current_distance" | bc -l) -eq 1 ]; then
-      divisors+=($index)
-    fi
-  fi
-
-  echo "${divisors[@]}"
-}
-
 get_subalgos() {
   local subalgos=()
   case $1 in
@@ -205,7 +154,7 @@ get_cmd_args() {
     params=""
     ;;
   "bfbc_custom_div")
-    local divisors="$(get_divisors_for_bfbc $3 0 $2)"
+    local divisors="$(python3 scripts/get-bfbc-divisors.py $2 $3 0)"
     args_and_algo="bfbc chunk --frequency-file $FAST_DATA_PATH/$2 --byte-pair-indices $divisors --min-chunk-size 0"
     params=""
     ;;
@@ -218,9 +167,9 @@ get_cmd_args() {
 }
 
 # Global settings
-BIN=./target/release/cdc-algorithm-tester
-DATA_PATH=data
-FAST_DATA_PATH=/media/ramdisk
+export BIN=./target/release/cdc-algorithm-tester
+export DATA_PATH=data
+export FAST_DATA_PATH=fast_data
 
 if [ -z "${TARGET_CHUNK_SIZES}" ]; then
   TARGET_CHUNK_SIZES=(512 1024 2048 4096 8192)
