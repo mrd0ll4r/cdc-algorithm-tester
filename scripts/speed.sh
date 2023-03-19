@@ -23,23 +23,15 @@ done
 echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,time_ms"
 echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,event,value" >perf.csv
 
-# BFBC stats
-cp "$DATA_PATH"/bfbc/* "$FAST_DATA_PATH/"
+for dataset in "${DATASETS[@]}"; do
+  # copy dataset to ramdisk
+  cp "$DATA_PATH/$dataset" "$FAST_DATA_PATH/"
 
-for algo in "${ALGOS[@]}"; do
-  readarray -t subalgos < <(get_subalgos "$algo")
+  dataset_size=$(stat -c "%s" "$FAST_DATA_PATH/$dataset")
 
-  # run for each sub-algorithm
-  for subalgo in "${subalgos[@]}"; do
-
-    for dataset in "${DATASETS[@]}"; do
-      # copy dataset to ramdisk
-      cp "$DATA_PATH/$dataset" "$FAST_DATA_PATH/"
-      if [ "$algo" = "bfbc" ]; then
-        cp "$DATA_PATH/bfbc/$dataset.stats" "$FAST_DATA_PATH/"
-      fi
-
-      dataset_size=$(stat -c "%s" "$FAST_DATA_PATH/$dataset")
+  for algo in "${ALGOS[@]}"; do
+    readarray -t subalgos < <(get_subalgos "$algo")
+    for subalgo in "${subalgos[@]}"; do
 
       # warm-up run
       $(get_cmd "$subalgo" "$dataset" "${TARGET_CHUNK_SIZES[0]}") >/dev/null
@@ -61,12 +53,8 @@ for algo in "${ALGOS[@]}"; do
           break
         fi
       done
-
-      # remove dataset from ramdisk to free space
-      rm "$FAST_DATA_PATH/$dataset"
-      if [ "$algo" = "bfbc" ]; then
-        rm "$FAST_DATA_PATH/$dataset.stats"
-      fi
     done
   done
+  # remove dataset from ramdisk to free space
+  rm "$FAST_DATA_PATH/$dataset"
 done

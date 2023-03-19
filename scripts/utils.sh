@@ -150,12 +150,12 @@ get_cmd_args() {
     params="$(($3 - $min))"
     ;;
   "bfbc")
-    args_and_algo="bfbc chunk --frequency-file $FAST_DATA_PATH/$2.stats --byte-pair-indices 0 1 2 --min-chunk-size $(($3 - 128))"
+    args_and_algo="bfbc chunk --frequency-file $DATA_PATH/$2.stats --byte-pair-indices 0 1 2 --min-chunk-size $(($3 - 128))"
     params=""
     ;;
   "bfbc_custom_div")
-    local divisors="$(python3 scripts/get-bfbc-divisors.py $2 $3 0)"
-    args_and_algo="bfbc chunk --frequency-file $FAST_DATA_PATH/$2.stats --byte-pair-indices $divisors --min-chunk-size 0"
+    local divisors="$(python3 scripts/get-bfbc-divisors.py "$2" "$3" 0)"
+    args_and_algo="bfbc chunk --frequency-file $DATA_PATH/$2.stats --byte-pair-indices $divisors --min-chunk-size 0"
     params=""
     ;;
   "rabin")
@@ -174,7 +174,8 @@ export FAST_DATA_PATH=fast_data
 if [ -z "${TARGET_CHUNK_SIZES}" ]; then
   TARGET_CHUNK_SIZES=(512 1024 2048 4096 8192)
 else
-  TARGET_CHUNK_SIZES=("$(echo "$TARGET_CHUNK_SIZES" | tr ',' ' ')")
+  # shellcheck disable=SC2207
+  TARGET_CHUNK_SIZES=($(echo "$TARGET_CHUNK_SIZES" | tr ',' ' '))
 fi
 
 if [ -z "${ALGOS}" ]; then
@@ -184,11 +185,13 @@ if [ -z "${ALGOS}" ]; then
     ALGOS=("nop" "${ALGOS[@]}")
   fi
 else
-  ALGOS=("$(echo "$ALGOS" | tr ',' ' ')")
+  # shellcheck disable=SC2207
+  ALGOS=($(echo "$ALGOS" | tr ',' ' '))
 fi
 
 if [ -z "${DATASETS}" ]; then
   DATASETS=("random.bin" "web.tar" "code.tar" "pdf.tar" "lnx.tar")
 else
-  DATASETS=("$(echo "$DATASETS" | tr ',' ' ')")
+  # shellcheck disable=SC2207
+  DATASETS=($(echo "$DATASETS" | tr ',' ' '))
 fi

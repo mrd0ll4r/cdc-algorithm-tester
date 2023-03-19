@@ -11,16 +11,21 @@ get_cmd() {
 # CSV header
 echo "algorithm,dataset,target_chunk_size,chunk_size"
 
-for algo in "${ALGOS[@]}"; do
-  readarray -t subalgos < <(get_subalgos "$algo")
-  for subalgo in "${subalgos[@]}"; do
-    for dataset in "${DATASETS[@]}"; do
+for dataset in "${DATASETS[@]}"; do
+  dataset_name="${dataset%%.*}"
+
+  for algo in "${ALGOS[@]}"; do
+    readarray -t subalgos < <(get_subalgos "$algo")
+    for subalgo in "${subalgos[@]}"; do
+      subalgo_name=$(get_algo_name "$subalgo")
+
       for cs in "${TARGET_CHUNK_SIZES[@]}"; do
+        prefix=$(printf "%s,%s,%d" "$subalgo_name" "$dataset_name" "$cs")
+        cmd=$(get_cmd "$subalgo" "$dataset" "$cs")
         # cut last chunk | get unique chunks | get size
-        chunk_sizes=($($(get_cmd "$subalgo" "$dataset" "$cs") | head -n -1 | awk -F, '!seen[$1]++ {print $2}'))
         # for each produced chunk
-        for l in "${chunk_sizes[@]}"; do
-          printf "%s,%s,%d,%d\n" $(get_algo_name "$subalgo") ${dataset%%.*} $cs $l
+        for l in $($cmd | head -n -1 | sort -u | awk -F, '{print $2}'); do
+          echo "$prefix,$l"
         done
       done
     done
