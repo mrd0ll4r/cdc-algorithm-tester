@@ -48,13 +48,9 @@ for i in range(len(byte_pairs)):
   if get_chunk_size(divisors + [i]) >= target: 
     divisors.append(i)
 
-lastI = len(byte_pairs) - 1
-if lastI not in divisors and abs(target - get_chunk_size(divisors + [lastI])) < (target - get_chunk_size(divisors)): 
-    divisors.append(lastI)
-
-#print("Divisors: ", len(divisors), divisors)
-#print("Dataset size: ", dataset_size)
-#cs = get_chunk_size(divisors)
-#print(f"Chunk size: {cs} ({(cs - target) / target*100.0:.2f}%)")
+# print("Divisors: ", len(divisors), divisors)
+# print("Dataset size: ", dataset_size)
+# cs = get_chunk_size(divisors)
+# print(f"Chunk size: {cs} ({(cs - target) / target*100.0:.2f}%)")
 
 print(' '.join(str(i) for i in divisors))
