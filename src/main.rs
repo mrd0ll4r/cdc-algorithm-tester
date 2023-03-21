@@ -388,6 +388,10 @@ fn main() -> anyhow::Result<()> {
                     byte_pair_indices.len() > 0,
                     "need to operate on at least one byte pair"
                 );
+                ensure!(
+                    min_chunk_size >= 2,
+                    "min-chunk-size needs to be at least 2 (the size of the sliding window)"
+                );
                 let byte_pairs = read_bfbc_frequencies_from_file(frequency_file, byte_pair_indices)
                     .context("unable to read BFBC byte pair frequencies from file")?;
                 let algo = cdchunking::BFBCChunker::new(byte_pairs, min_chunk_size);

@@ -155,7 +155,7 @@ get_cmd_args() {
     ;;
   "bfbc_custom_div")
     local divisors="$(python3 scripts/get-bfbc-divisors.py "$2" "$3" 0)"
-    args_and_algo="bfbc chunk --frequency-file $DATA_PATH/bfbc/$2.stats --byte-pair-indices $divisors --min-chunk-size 0"
+    args_and_algo="bfbc chunk --frequency-file $DATA_PATH/bfbc/$2.stats --byte-pair-indices $divisors --min-chunk-size 2"
     params=""
     ;;
   "rabin")
