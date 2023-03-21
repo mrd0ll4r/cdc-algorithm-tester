@@ -46,19 +46,25 @@ get_w_for_mii() {
 get_w_and_t_for_pci() {
   case $1 in
   512)
-    echo "342 776"
+    echo "56 255"
     ;;
   1024)
-    echo "603 2672"
+    echo "20 100"
     ;;
-  2048)
-    echo "285 1344"
+  2048) # 2045
+    echo "43 203"
     ;;
-  4096)
-    echo "2 15"
+  4096) # 4103
+    echo "55 257"
     ;;
-  8192)
-    echo "88 396"
+  8192) # 8203
+    echo "95 431"
+    ;;
+  731)
+    echo "59 269"
+    ;;
+  5145)
+    echo "72 331"
     ;;
   *)
     echo "Error: Target chunk size not supported for PCI."
