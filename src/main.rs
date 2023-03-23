@@ -104,6 +104,33 @@ macro_rules! impl_adler32_test_for_sizes {
     };
 }
 
+macro_rules! impl_rabin_test_with_size {
+    ($window_size:literal,$mask:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {{
+        let algo = rabin::RabinChunker::<$window_size>::new($mask);
+        chunk_with_algorithm_and_size_limit(
+            $f,
+            algo,
+            $max_chunk_size,
+            $quiet,
+            $quickcdc_min_chunk_size,
+            $quickcdc_use_hashmap,
+            $quickcdc_n,
+            $quickcdc_m,
+        )
+    }};
+}
+
+macro_rules! impl_rabin_test_for_sizes {
+    ($window_size:expr,$mask:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
+        match $window_size {
+            $(
+            $x => impl_rabin_test_with_size!($x,$mask,$f,$max_chunk_size,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
+            )*
+            _ => bail!("window size not implemented"),
+        }
+    };
+}
+
 macro_rules! impl_quickcdc_for_sizes {
     ($algo:expr,$f:expr,$min_chunk_size:expr,$quiet:expr,$p_n:expr,$p_m:expr,$( ($n:expr,$m:expr) ),*) => {
         match ($p_n,$p_m) {
@@ -207,6 +234,7 @@ enum Commands {
     /// Chunks the input file using Rabin.
     Rabin {
         /// The size of the window, in bytes.
+        /// Only 16, 32, 64, 128, and 256 bytes are implemented.
         window_size: usize,
 
         /// The target chunk size.
@@ -380,7 +408,7 @@ fn main() -> anyhow::Result<()> {
             window_size,
             target_chunk_size,
         } => {
-            ensure!(window_size >= 1, "window size needs to be at least 2");
+            ensure!(window_size >= 16, "window size needs to be at least 16");
             ensure!(
                 target_chunk_size > 0,
                 "target chunk size needs to be at least 1"
@@ -388,16 +416,21 @@ fn main() -> anyhow::Result<()> {
             let mask_bits = (target_chunk_size as f64).log2().round() as u64;
             let mask = (1 << mask_bits) - 1;
 
-            let algo = rabin::Rabin::new(window_size, mask);
-            chunk_with_algorithm_and_size_limit(
+            impl_rabin_test_for_sizes!(
+                window_size,
+                mask,
                 f,
-                algo,
                 cli.max_chunk_size,
                 cli.quiet,
                 cli.quickcdc_min_chunk_size,
                 cli.quickcdc_use_hashmap,
                 cli.quickcdc_front_feature_vector_length,
                 cli.quickcdc_end_feature_vector_length,
+                16,
+                32,
+                64,
+                128,
+                256
             )
         }
         Commands::AE { target_chunk_size } => {

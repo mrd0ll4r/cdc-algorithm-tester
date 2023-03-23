@@ -128,9 +128,7 @@ We use [std::hints::black_box](https://doc.rust-lang.org/std/hint/fn.black_box.h
 We use compile-time constants whenever applicable with reasonable effort.
 In particular, we use constants for:
 - the feature vector sizes of QuickCDC
-- the size of the window for PCI
-- the size of the window for Buzhash
-- the size of the window for Adler32.
+- the size of the window for Rabin, Buzhash, Adler32, and PCI. These are implemented using stack-allocated arrays.
 
 ## Building
 

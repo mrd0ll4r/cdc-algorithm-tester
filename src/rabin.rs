@@ -56,30 +56,26 @@ mod tests {
 }
 
 #[derive(Clone, Debug)]
-pub struct Rabin64 {
-    // Configuration
-    window_size: usize, // The size of the data window used in the hash calculation.
-
+pub(crate) struct Rabin64<const W: usize> {
     // Precalculations
     polynom_shift: i32,
     out_table: [Polynomial64; 256],
     mod_table: [Polynomial64; 256],
 
     // Current state
-    window_data: Vec<u8>,
+    window_data: [u8; W],
     window_index: usize,
     pub hash: Polynomial64,
 }
 
-impl Rabin64 {
+impl<const W: usize> Rabin64<W> {
     pub fn calculate_out_table(
-        window_size: usize,
         mod_polynom: Polynomial64,
     ) -> [Polynomial64; 256] {
         (0_u64..256)
             .map(|b| {
                 let mut hash = (b as Polynomial64).modulo(mod_polynom);
-                for _ in 0..window_size - 1 {
+                for _ in 0..W - 1 {
                     hash <<= 8;
                     hash = hash.modulo(mod_polynom);
                 }
@@ -103,15 +99,12 @@ impl Rabin64 {
             .unwrap()
     }
 
-    pub fn new_with_polynom(window_size: usize, mod_polynom: Polynomial64) -> Rabin64 {
-        let window_data = vec![0; window_size];
-
+    pub fn new_with_polynom(mod_polynom: Polynomial64) -> Rabin64<W> {
         Rabin64 {
-            window_size,
             polynom_shift: mod_polynom.degree() - 8,
-            out_table: Self::calculate_out_table(window_size, mod_polynom),
+            out_table: Self::calculate_out_table(mod_polynom),
             mod_table: Self::calculate_mod_table(mod_polynom),
-            window_data,
+            window_data: [0; W],
             window_index: 0,
             hash: 0,
         }
@@ -135,7 +128,7 @@ impl Rabin64 {
         self.hash ^= self.mod_table[mod_index as usize];
 
         // Move the windowIndex to the next position.
-        self.window_index = (self.window_index + 1) % self.window_size;
+        self.window_index = (self.window_index + 1) % W;
     }
 
     #[inline]
@@ -150,28 +143,28 @@ impl Rabin64 {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct Rabin {
-    inner: Rabin64,
+pub(crate) struct RabinChunker<const W: usize> {
+    inner: Rabin64<W>,
     pos: usize,
     mask: Polynomial64,
 }
 
-impl Rabin {
-    pub(crate) fn new(window_size: usize, mask: u64) -> Rabin {
-        Rabin {
+impl<const W: usize> RabinChunker<W> {
+    pub(crate) fn new(mask: u64) -> RabinChunker<W> {
+        RabinChunker {
             // This is the default polynom from https://github.com/fd0/rabin-cdc/blob/master/rabin.h
             // There's also some discussion here: https://github.com/lemire/rollinghashcpp/issues/6
-            inner: Rabin64::new_with_polynom(window_size, 0x3DA3358B4DC173),
+            inner: Rabin64::new_with_polynom(0x3DA3358B4DC173),
             pos: 0,
             mask,
         }
     }
 }
 
-impl ChunkerImpl for Rabin {
+impl<const W: usize> ChunkerImpl for RabinChunker<W> {
     fn find_boundary(&mut self, data: &[u8]) -> Option<usize> {
         for (i, &b) in data.iter().enumerate() {
-            if self.pos < self.inner.window_size {
+            if self.pos < W {
                 // Prefill window
                 self.inner.eat(b)
             } else {
