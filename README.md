@@ -161,6 +161,8 @@ These are original implementations derived from their respective publications:
 - Rapid Asymmetric Extremum (RAM), with optional optimizations made to the implementation
 - Byte Frequency-Based Chunking (BFBC), including functionality to derive byte frequencies from an input file.
   We extend the invocation of this algorithm with functionality to specify the indices to use, including skipping most-frequent byte pairs.
+  Our implementation stores the list of most-frequent byte pairs as a bitmap of 8KiB on the stack, which makes it run
+  in constant time irregardless of the number of byte pairs.
 - Minimal Incremental Interval (MII)
 - Parity Check of Interval (PCI), implemented in a way that calculates a running popcount, instead of re-calculating the popcount of the window for each byte.
 
