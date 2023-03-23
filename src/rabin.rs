@@ -69,9 +69,7 @@ pub(crate) struct Rabin64<const W: usize> {
 }
 
 impl<const W: usize> Rabin64<W> {
-    pub fn calculate_out_table(
-        mod_polynom: Polynomial64,
-    ) -> [Polynomial64; 256] {
+    pub fn calculate_out_table(mod_polynom: Polynomial64) -> [Polynomial64; 256] {
         (0_u64..256)
             .map(|b| {
                 let mut hash = (b as Polynomial64).modulo(mod_polynom);
