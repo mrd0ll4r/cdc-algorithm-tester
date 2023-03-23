@@ -112,7 +112,9 @@ impl<const W: usize> BuzHash<W> {
             self.buf[self.index] = in_val;
 
             self.index = (self.index + 1) % W;
-            self.window_full = self.index >= W;
+
+            // The window is full once we wrapped around.
+            self.window_full |= self.index == 0;
         }
     }
 
