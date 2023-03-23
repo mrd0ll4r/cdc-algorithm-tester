@@ -207,7 +207,6 @@ enum Commands {
     /// Chunks the input file using Rabin.
     Rabin {
         /// The size of the window, in bytes.
-        #[arg(long)]
         window_size: usize,
 
         /// The target chunk size.
@@ -284,7 +283,7 @@ enum Commands {
 
     /// Chunks the input file using 32-bit Adler.
     Adler32 {
-        /// The window size of the rolling hash/sliding window.
+        /// The window size of the rolling hash/sliding window, in bytes.
         /// Only 16, 32, 64, 128, and 256 bytes are implemented.
         window_size: usize,
 
@@ -294,7 +293,7 @@ enum Commands {
 
     /// Chunks the input file using Buzhash.
     Buzhash {
-        /// The size of the rolling has/sliding window.
+        /// The size of the rolling has/sliding window, in bytes.
         /// Only 16, 32, 64, 128, and 256 bytes are implemented.
         window_size: usize,
 

@@ -166,7 +166,7 @@ get_cmd_args() {
     ;;
   "rabin")
     local w=48
-    params="--window-size $w $(($3 - $w))"
+    params="$w $(($3 - $w))"
     ;;
   esac
   echo "$args_and_algo $params"
