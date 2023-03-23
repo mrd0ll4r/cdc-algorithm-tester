@@ -20,7 +20,7 @@ time_to_ms() {
 
 # Finds the best match for parameter w in MII to achieve given target chunk size.
 get_w_for_mii() {
-  MII_AVGS=(1 1 2 6 24 121 731 5145 41440 375901 3792342) # mapping from w to average chunk size for w=0..10
+  MII_AVGS=(1 2 4 9 28 126 737 5152 41448 375910 3792352) # mapping from w to average chunk size for w=0..10
   target=$1
   closest=0
   distance=$(($target - ${MII_AVGS[0]}))
@@ -46,25 +46,25 @@ get_w_for_mii() {
 get_w_and_t_for_pci() {
   case $1 in
   512)
-    echo "56 255"
+    echo "62 270"
     ;;
   1024)
-    echo "20 100"
+    echo "62 274"
     ;;
-  2048) # 2045
-    echo "43 203"
+  2048)
+    echo "60 269"
     ;;
-  4096) # 4103
-    echo "55 257"
+  4096)
+    echo "61 276"
     ;;
-  8192) # 8203
-    echo "95 431"
+  8192)
+    echo "62 283"
     ;;
-  731)
-    echo "59 269"
+  737)
+    echo "60 264"
     ;;
-  5145)
-    echo "72 331"
+  5152)
+    echo "61 277"
     ;;
   *)
     echo "Error: Target chunk size not supported for PCI."

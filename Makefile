@@ -26,6 +26,14 @@ dedup:
 avg:
 	tail -n +2 | head -n -1 | awk -F, '{ sum += $$2 } END { print sum/NR }'
 
+# Prints a CSV with the entropy of each dataset.
+ent:
+	./scripts/datasets-entropy.sh
+
+# Print a CSV with the optimal divisors for each target chunk size in each dataset.
+bfbc_divisors:
+	./scripts/bfbc-divisors.sh
+
 # Validate that the produced chunks add up to the original file size.
 # Usage: cdc-algorithm-tester --input-file <input-file> ... | make validate <input-file>
 validate:
