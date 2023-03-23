@@ -1,5 +1,7 @@
 #![feature(generic_const_exprs)]
 
+mod adler;
+mod buzhash;
 mod gear;
 mod logging;
 mod nop;
@@ -42,6 +44,60 @@ macro_rules! impl_pci_test_for_sizes {
         match $window_size {
             $(
             $x => impl_pci_test_with_size!($x,$thresh,$f,$max_chunk_size,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
+            )*
+            _ => bail!("window size not implemented"),
+        }
+    };
+}
+
+macro_rules! impl_buzhash_test_with_size {
+    ($window_size:literal,$mask:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {{
+        let algo = buzhash::BuzHashChunker::<$window_size>::new($mask);
+        chunk_with_algorithm_and_size_limit(
+            $f,
+            algo,
+            $max_chunk_size,
+            $quiet,
+            $quickcdc_min_chunk_size,
+            $quickcdc_use_hashmap,
+            $quickcdc_n,
+            $quickcdc_m,
+        )
+    }};
+}
+
+macro_rules! impl_buzhash_test_for_sizes {
+    ($window_size:expr,$mask:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
+        match $window_size {
+            $(
+            $x => impl_buzhash_test_with_size!($x,$mask,$f,$max_chunk_size,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
+            )*
+            _ => bail!("window size not implemented"),
+        }
+    };
+}
+
+macro_rules! impl_adler32_test_with_size {
+    ($window_size:literal,$mask:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {{
+        let algo = adler::Adler32Chunker::<$window_size>::new($mask);
+        chunk_with_algorithm_and_size_limit(
+            $f,
+            algo,
+            $max_chunk_size,
+            $quiet,
+            $quickcdc_min_chunk_size,
+            $quickcdc_use_hashmap,
+            $quickcdc_n,
+            $quickcdc_m,
+        )
+    }};
+}
+
+macro_rules! impl_adler32_test_for_sizes {
+    ($window_size:expr,$mask:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
+        match $window_size {
+            $(
+            $x => impl_adler32_test_with_size!($x,$mask,$f,$max_chunk_size,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
             )*
             _ => bail!("window size not implemented"),
         }
@@ -221,6 +277,26 @@ enum Commands {
         /// This does not control compiler autovectorization.
         #[arg(long)]
         allow_simd_impl: bool,
+
+        /// The target chunk size.
+        target_chunk_size: usize,
+    },
+
+    /// Chunks the input file using 32-bit Adler.
+    Adler32 {
+        /// The window size of the rolling hash/sliding window.
+        /// Only 16, 32, 64, 128, and 256 bytes are implemented.
+        window_size: usize,
+
+        /// The target chunk size.
+        target_chunk_size: usize,
+    },
+
+    /// Chunks the input file using Buzhash.
+    Buzhash {
+        /// The size of the rolling has/sliding window.
+        /// Only 16, 32, 64, 128, and 256 bytes are implemented.
+        window_size: usize,
 
         /// The target chunk size.
         target_chunk_size: usize,
@@ -541,6 +617,64 @@ fn main() -> anyhow::Result<()> {
                 cli.quickcdc_use_hashmap,
                 cli.quickcdc_front_feature_vector_length,
                 cli.quickcdc_end_feature_vector_length,
+            )
+        }
+        Commands::Adler32 {
+            window_size,
+            target_chunk_size,
+        } => {
+            ensure!(window_size >= 16, "window size needs to be at least 16");
+            ensure!(
+                target_chunk_size > 0,
+                "target chunk size needs to be at least 1"
+            );
+            let mask_bits = (target_chunk_size as f64).log2().round() as u32;
+            let mask = (1 << mask_bits) - 1;
+
+            impl_adler32_test_for_sizes!(
+                window_size,
+                mask,
+                f,
+                cli.max_chunk_size,
+                cli.quiet,
+                cli.quickcdc_min_chunk_size,
+                cli.quickcdc_use_hashmap,
+                cli.quickcdc_front_feature_vector_length,
+                cli.quickcdc_end_feature_vector_length,
+                16,
+                32,
+                64,
+                128,
+                256
+            )
+        }
+        Commands::Buzhash {
+            window_size,
+            target_chunk_size,
+        } => {
+            ensure!(window_size >= 16, "window size needs to be at least 16");
+            ensure!(
+                target_chunk_size > 0,
+                "target chunk size needs to be at least 1"
+            );
+            let mask_bits = (target_chunk_size as f64).log2().round() as u32;
+            let mask = (1 << mask_bits) - 1;
+
+            impl_buzhash_test_for_sizes!(
+                window_size,
+                mask,
+                f,
+                cli.max_chunk_size,
+                cli.quiet,
+                cli.quickcdc_min_chunk_size,
+                cli.quickcdc_use_hashmap,
+                cli.quickcdc_front_feature_vector_length,
+                cli.quickcdc_end_feature_vector_length,
+                16,
+                32,
+                64,
+                128,
+                256
             )
         }
     }

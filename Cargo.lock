@@ -3,6 +3,12 @@
 version = 3
 
 [[package]]
+name = "adler32"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aae1277d39aeec15cb388266ecc24b11c80469deae6067e17a1a7aa9e5c1f234"
+
+[[package]]
 name = "aho-corasick"
 version = "0.7.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -89,6 +95,7 @@ checksum = "50d30906286121d95be3d479533b458f87493b30a4b5f79a607db8f5d11aa91f"
 name = "cdc-algorithm-tester"
 version = "0.1.0"
 dependencies = [
+ "adler32",
  "anyhow",
  "byteorder",
  "cdchunking",
@@ -103,7 +110,7 @@ dependencies = [
 [[package]]
 name = "cdchunking"
 version = "1.0.1"
-source = "git+https://github.com/mrd0ll4r/cdchunking-rs?branch=new-algorithms#cc126ede1a7a5ec00f8b01cdc4957c9f689a7f2c"
+source = "git+https://github.com/mrd0ll4r/cdchunking-rs?branch=new-algorithms#f4854c9aebcaed7a82a66fe619d4bbbd20206d3e"
 
 [[package]]
 name = "cfg-if"

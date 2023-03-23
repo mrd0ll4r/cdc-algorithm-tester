@@ -19,6 +19,8 @@ Commands:
   gear     Chunks the input file using Gear
   nc-gear  Chunks the input file using Gear with normalized chunking modifications
   gear64   Chunks the input file using 64-bit Gear
+  adler32  Chunks the input file using 32-bit Adler
+  buzhash  Chunks the input file using Buzhash
   help     Print this message or the help of the given subcommand(s)
 
 Options:
@@ -124,7 +126,11 @@ The `--quiet` flag can be provided to skip the computation of the fingerprint an
 We use [std::hints::black_box](https://doc.rust-lang.org/std/hint/fn.black_box.html) to ensure that the compiler still assumes chunk data to be used in either case.
 
 We use compile-time constants whenever applicable with reasonable effort.
-In particular, we use constants for the feature vector sizes of QuickCDC and the size of the window for PCI.
+In particular, we use constants for:
+- the feature vector sizes of QuickCDC
+- the size of the window for PCI
+- the size of the window for Buzhash
+- the size of the window for Adler32.
 
 ## Building
 
@@ -148,24 +154,33 @@ The binary will be placed in `target/debug/` in this case.
 
 ## Implemented Algorithms
 
-See our fork of the `cdchunking-rs` crate [here](https://github.com/mrd0ll4r/cdchunking-rs/tree/new-algorithms).
-Currently, we implement:
-- No-op chunker, that produces one huge chunk (NOP)
+We implement various state-of-the-art rolling has functions our fork of the `cdchunking-rs` crate [here](https://github.com/mrd0ll4r/cdchunking-rs/tree/new-algorithms).
+These are original implementations derived from their respective publications:
 - Fixed-size chunking (FSC)
-- Rabin fingerprinting, following popular implementations in [C](https://github.com/fd0/rabin-cdc), [Rust](https://github.com/rustic-rs/rustic/tree/main/src/cdc) (adapted from [Rust](https://github.com/green-coder/cdc)), [C++](https://github.com/lemire/rollinghashcpp).
-  This uses some optimizations in pre-computing two tables of constants.
+- Gearhash (Gear)
+- Gearhash with normalized chunking (NC-Gear).
 - Asymmetric Extremum (AE)
 - Rapid Asymmetric Extremum (RAM), with optional optimizations made to the implementation
 - Byte Frequency-Based Chunking (BFBC), including functionality to derive byte frequencies from an input file.
   We extend the invocation of this algorithm with functionality to specify the indices to use, including skipping most-frequent byte pairs.
 - Minimal Incremental Interval (MII)
 - Parity Check of Interval (PCI), implemented in a way that calculates a running popcount, instead of re-calculating the popcount of the window for each byte.
-- Gearhash (Gear)
-- Gearhash with normalized chunking (NC-Gear).
-- 64-bit Gear (Gear64), with optional SIMD implementation, implemented in this repository (see [src/gear.rs](src/gear.rs)).
-  This uses the [gearhash](https://crates.io/crates/gearhash) crate.
+
+Additionally, we adapt a range of pre-existing rolling hash functions to interoperate with our testing framework.
+These implementations are not original, but rather translated from other languages, or existing implementations in Rust.
+They are contained in this repository (see [src/](src)).
+Currently, we implement:
+- Rabin fingerprinting, following popular implementations in [C](https://github.com/fd0/rabin-cdc), [Rust](https://github.com/rustic-rs/rustic/tree/main/src/cdc) (adapted from [Rust](https://github.com/green-coder/cdc)), [C++](https://github.com/lemire/rollinghashcpp).
+  This uses some optimizations in pre-computing two tables of constants.
+- 64-bit Gear (Gear64), with optional SIMD implementation.
+  This uses the [gearhash](https://crates.io/crates/gearhash) crate, licensed MIT.
   In contrast to the algorithm described in the DDelta paper, this version uses a 64-bit internal hash (and 64-bit table entries).
   This implementation is optionally SIMD-accelerated on CPUs supporting SSE4.2 or AVX2, controlled via a flag.
+- Adler32, using the [adler32 crate](https://crates.io/crates/adler32).
+  This is a port of the [original implementation in zlib](https://github.com/madler/zlib/blob/2fa463bacfff79181df1a5270fb67cc679a53e71/adler32.c).
+  The original zlib license applies, and is included in [src/adler.rs](src/adler.rs).
+- Buzhash, adapted from an implementation in the [bitar crate](https://crates.io/crates/bitar), licensed MIT.
+- A no-op chunker, that produces one huge chunk (NOP)
 
 ### QuickCDC
 

@@ -22,21 +22,24 @@ cdchunking = { git = "https://github.com/mrd0ll4r/cdchunking-rs", branch = "new-
 # Gearhash, SIMD-optimized
 gearhash = "0.1.3"
 
-## Error handling
+# Error handling
 anyhow = "1.0.65"
 
-## Timestamps
+# Timestamps
 chrono = "0.4.19"
 
-## Logging
+# Logging
 log = "^0.4"
 flexi_logger = "0.22"
 
-## CLI parser
+# CLI parser
 clap = { version = "^4", features = ["cargo", "derive"] }
 
-## SHA1 for fingerprinting
+# SHA1 for fingerprinting
 sha1 = "0.10.5"
 
-## For reading/writing BFBC state with specified endianness.
+# For reading/writing BFBC state with specified endianness.
 byteorder = "1.4.3"
+
+# Adler32 implementation
+adler32 = "1.2.0"
