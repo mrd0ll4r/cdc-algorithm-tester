@@ -189,8 +189,9 @@ enum Commands {
     PCI {
         /// The size of the window. Currently, not all possible window sizes are implemented.
         ///
-        /// Windows between 2 and 16 bytes, as well as some larger ones are implemented.
-        window_size: u16,
+        /// Windows between 2 and 5 bytes, as well as some larger ones are implemented.
+        window_size: usize,
+
         /// The threshold for the number of one bits in the window.
         one_bits_threshold: u32,
     },
@@ -456,17 +457,6 @@ fn main() -> anyhow::Result<()> {
                 3,
                 4,
                 5,
-                6,
-                7,
-                8,
-                9,
-                10,
-                11,
-                12,
-                13,
-                14,
-                15,
-                16,
                 56,
                 20,
                 43,
