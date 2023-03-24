@@ -45,4 +45,5 @@ RUN cargo +nightly chef cook --release --recipe-path recipe.json
 
 # Build our project.
 COPY . .
+ENV RUSTFLAGS="-C target-cpu=native"
 RUN cargo +nightly build --release --locked
