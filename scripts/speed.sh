@@ -2,7 +2,7 @@
 
 source scripts/utils.sh
 
-perf_events_to_collect="task-clock,context-switches,page-faults,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-misses,cache-references,cache-misses"
+perf_events_to_collect="task-clock,context-switches,page-faults,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-misses,L1-dcache-prefetches,cache-references,cache-misses"
 
 # Get command string for chunker. Pass arguments in the following order: algoname, dataset, target chunk size.
 get_cmd() {
@@ -40,7 +40,7 @@ for dataset in "${DATASETS[@]}"; do
       for cs in "${TARGET_CHUNK_SIZES[@]}"; do
         cmd=$(get_cmd "$subalgo" $dataset $cs)
         for i in $(seq 1 $ITER); do
-          time=$({ time $cmd >/dev/null; } 2>&1 | grep real | awk '{print $2}')
+          time=$({ time $cmd >/dev/null; } 2>&1 | grep "real" | awk '{print $2}')
           time=$(time_to_ms $time)
           header=$(printf "%s,%s,%d,%d,%d" $(get_algo_name "$subalgo") "${dataset%%.*}" "$dataset_size" "$cs" "$i")
           echo "$header,$time"
