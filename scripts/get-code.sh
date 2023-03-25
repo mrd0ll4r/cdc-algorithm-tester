@@ -1,4 +1,7 @@
 #!/bin/bash -e
+
+source scripts/utils.sh
+
 # Downloads source code tarballs of gcc, gdb, and emacs of 2019-2022 releases, extracts them, and collects the results
 # into a tarball.
 
@@ -11,9 +14,8 @@ download_extract_archive() {
   rm -f "$name".tar.gz
 }
 
-path=data/code
-mkdir -p $path
-cd $path
+mkdir -p $DATA_PATH/code
+cd $DATA_PATH/code
 
 # gcc
 echo "Downloading GCC..."

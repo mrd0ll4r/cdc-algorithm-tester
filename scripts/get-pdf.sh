@@ -1,4 +1,11 @@
 #!/bin/bash -e
 
-wget -U "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:49.0) Gecko/20100101 Firefox/49.0" \
-  -r -l 10 -nd -e robots=off -t 3 -T 5 -P ./data/pdf -A ".pdf" -H https://www.semanticscholar.org/
+source scripts/utils.sh
+
+for i in $(seq -w 1 29); do
+  aws s3 cp --request-payer requester s3://arxiv/pdf/arXiv_pdf_1801_0$i.tar $DATA_PATH/pdf
+done
+
+echo "Creating TAR archive..."
+cat $DATA_PATH/pdf/*.tar > $DATA_PATH/pdf.tar
+rm -r $DATA_PATH/pdf
