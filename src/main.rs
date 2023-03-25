@@ -428,6 +428,7 @@ fn main() -> anyhow::Result<()> {
                 cli.quickcdc_end_feature_vector_length,
                 16,
                 32,
+                48,
                 64,
                 128,
                 256
@@ -671,6 +672,7 @@ fn main() -> anyhow::Result<()> {
                 cli.quickcdc_end_feature_vector_length,
                 16,
                 32,
+                48,
                 64,
                 128,
                 256
@@ -700,6 +702,7 @@ fn main() -> anyhow::Result<()> {
                 cli.quickcdc_end_feature_vector_length,
                 16,
                 32,
+                48,
                 64,
                 128,
                 256
