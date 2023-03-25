@@ -2,8 +2,8 @@
 
 source scripts/utils.sh
 
-mkdir -p $DATA_PATH/lnx
-cd $DATA_PATH/lnx
+mkdir -p "$DATA_PATH/lnx"
+cd "$DATA_PATH/lnx"
 
 wget http://ftp.gwdg.de/debian-cd/11.4.0/arm64/iso-dvd/debian-11.4.0-arm64-DVD-1.iso
 wget https://gemmei.ftp.acc.umu.se/debian-cd/current/amd64/iso-cd/debian-11.4.0-amd64-netinst.iso

@@ -5,8 +5,8 @@ source scripts/utils.sh
 # Script to download images of the nytimes.com website for every day of 2022.
 # We don't `set -e` on purpose, as some requests to external websites fail.
 
-mkdir -p $DATA_PATH/web
-cd $DATA_PATH/web || exit
+mkdir -p "$DATA_PATH/web"
+cd "$DATA_PATH/web" || exit
 
 for month in {01..12}; do
   days_in_month=$(cal -d "2022-${month}-01" | awk 'NF {DAYS = $NF}; END {print DAYS}')

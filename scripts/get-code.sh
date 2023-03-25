@@ -14,8 +14,8 @@ download_extract_archive() {
   rm -f "$name".tar.gz
 }
 
-mkdir -p $DATA_PATH/code
-cd $DATA_PATH/code
+mkdir -p "$DATA_PATH/code"
+cd "$DATA_PATH/code"
 
 # gcc
 echo "Downloading GCC..."
