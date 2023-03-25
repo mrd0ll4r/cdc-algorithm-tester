@@ -136,18 +136,19 @@ MSRV: `nightly`, because we use `#![feature(generic_const_exprs)]`.
 
 The code is built with link-time optimization and `codegen-units=1` for the `release` profile, which is used to measure performance.
 This will take a while to build, but should produce fast code.
+Furthermore, binaries used for testing are produced with `RUSTFLAGS="-C target-cpu=native"`.
 
 Preferably and most easily: build id docker using the [build-in-docker.sh](./build-in-docker.sh) script.
 The binary will be placed in `out/`.
 
 Alternatively, on a host with an up-to-date __nightly__ Rust installed:
 ```
-cargo +nightly build --release --locked
+RUSTFLAGS="-C target-cpu=native" cargo +nightly build --release --locked
 ```
 This will produce a binary in `target/release/`
 
 If performance is not a consideration, build without `--release`.
-This will also enable some assertions used to check correctness of the algorithms.
+This will build much faster and enable some assertions used to check correctness of the algorithms.
 The binary will be placed in `target/debug/` in this case.
 
 ## Implemented Algorithms
