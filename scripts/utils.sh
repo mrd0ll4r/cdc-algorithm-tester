@@ -201,3 +201,5 @@ else
   # shellcheck disable=SC2207
   DATASETS=($(echo "$DATASETS" | tr ',' ' '))
 fi
+
+mkdir -p "$FAST_DATA_PATH"
