@@ -3,7 +3,7 @@
 # Compiled binaries can be found in /cdc-algo-tester/target/release/.
 # Sources are copied into /cdc-algo-tester/.
 
-FROM ubuntu:jammy AS chef
+FROM ubuntu:focal AS chef
 
 # Get build dependencies for Rust itself.
 RUN apt-get update && apt-get install -y \
