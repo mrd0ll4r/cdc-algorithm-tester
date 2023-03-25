@@ -90,6 +90,36 @@ get_subalgos() {
       "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1"
     )
     ;;
+  "rabin")
+    subalgos=(
+      "rabin 16"
+      "rabin 32"
+      "rabin 48"
+      "rabin 64"
+      "rabin 128"
+      "rabin 256"
+    )
+    ;;
+  "adler32")
+    subalgos=(
+      "adler32 16"
+      "adler32 32"
+      "adler32 48"
+      "adler32 64"
+      "adler32 128"
+      "adler32 256"
+    )
+    ;;
+  "buzhash")
+    subalgos=(
+      "buzhash 16"
+      "buzhash 32"
+      "buzhash 48"
+      "buzhash 64"
+      "buzhash 128"
+      "buzhash 256"
+    )
+    ;;
   "bfbc")
     subalgos=("bfbc" "bfbc_custom_div") # the name bfbc_custom_div is just a marker and will be evaluated in get_cmd
     ;;
@@ -101,15 +131,10 @@ get_subalgos() {
 }
 
 get_algo_name() {
-  case $1 in
-  "nc-gear 1")
-    echo "gear_nc_1"
-    ;;
-  "nc-gear 2")
-    echo "gear_nc_2"
-    ;;
-  "nc-gear 3")
-    echo "gear_nc_3"
+  case "$1" in
+  "nc-gear"*)
+    local level=$(echo "$1" | awk -F' ' '{print $2}')
+    echo "gear_nc_$level}"
     ;;
   "gear64 --allow-simd-impl")
     echo "gear64_simd"
@@ -128,6 +153,15 @@ get_algo_name() {
     ;;
   "bfbc_custom_div")
     echo "bfbc_custom_div"
+    ;;
+  "rabin"*)
+    echo "${1/ /_}"
+    ;;
+  "adler32"*)
+    echo "${1/ /_}"
+    ;;
+  "buzhash"*)
+    echo "${1/ /_}"
     ;;
   *)
     echo "$subalgo"
@@ -164,10 +198,6 @@ get_cmd_args() {
     args_and_algo="bfbc chunk --frequency-file $DATA_PATH/bfbc/$2.stats --byte-pair-indices $divisors --min-chunk-size 2"
     params=""
     ;;
-  "rabin")
-    local w=48
-    params="$w $(($3 - $w))"
-    ;;
   esac
   echo "$args_and_algo $params"
 }
@@ -185,7 +215,7 @@ else
 fi
 
 if [ -z "${ALGOS}" ]; then
-  ALGOS=("fsc" "ae" "ram" "mii" "pci" "rabin" "gear" "nc-gear" "gear64" "quickcdc" "bfbc")
+  ALGOS=("fsc" "ae" "ram" "mii" "pci" "rabin" "adler32" "buzhash" "gear" "nc-gear" "gear64" "quickcdc" "bfbc")
   # detect if we are running speed tests
   if [[ "$0" == *"speed"* ]]; then
     ALGOS=("nop" "${ALGOS[@]}")
