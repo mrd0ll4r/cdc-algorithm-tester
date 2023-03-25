@@ -110,7 +110,7 @@ dependencies = [
 [[package]]
 name = "cdchunking"
 version = "1.0.1"
-source = "git+https://github.com/mrd0ll4r/cdchunking-rs?branch=new-algorithms#2b9049768c827a08283a4dbf033e258a459f5fa4"
+source = "git+https://github.com/mrd0ll4r/cdchunking-rs?branch=new-algorithms#3b9f2caf9edc45acb12b6d6461a053c9d05db93c"
 
 [[package]]
 name = "cfg-if"
