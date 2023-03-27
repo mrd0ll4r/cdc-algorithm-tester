@@ -134,7 +134,7 @@ get_algo_name() {
   case "$1" in
   "nc-gear"*)
     local level=$(echo "$1" | awk -F' ' '{print $2}')
-    echo "gear_nc_$level}"
+    echo "gear_nc_$level"
     ;;
   "gear64 --allow-simd-impl")
     echo "gear64_simd"
