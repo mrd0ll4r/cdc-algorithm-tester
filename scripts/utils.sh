@@ -1,23 +1,5 @@
 #!/bin/bash -e
 
-# Utility function to get the absolute value of a number $1.
-abs() {
-  if (($(echo "$1 < 0" | bc -l))); then
-    echo "$1 * -1" | bc -l
-  else
-    echo $1
-  fi
-}
-
-# Convert time string to milliseconds (e.g., "1m23.456s" -> 82345).
-time_to_ms() {
-  local time="$1"
-  local minutes=$(echo "$time" | sed 's/^ *\([0-9]*\)m.*$/\1/' | sed 's/^0*//')
-  local seconds=$(echo "$time" | sed 's/^ *[0-9]*m\([0-9]*\.[0-9]*\)s$/\1/' | cut -d'.' -f1 | sed 's/^0*//')
-  local milliseconds=$(echo "$time" | sed 's/^ *[0-9]*m[0-9]*\.\([0-9]*\)s$/\1/' | sed 's/^0*//')
-  echo "$((minutes * 60 * 1000 + seconds * 1000 + milliseconds))"
-}
-
 # Finds the best match for parameter w in MII to achieve given target chunk size.
 get_w_for_mii() {
   MII_AVGS=(1 2 4 9 28 126 737 5152 41448 375910 3792352) # mapping from w to average chunk size for w=0..10
@@ -208,7 +190,7 @@ export DATA_PATH=data
 export FAST_DATA_PATH=fast_data
 
 if [ -z "${TARGET_CHUNK_SIZES}" ]; then
-  TARGET_CHUNK_SIZES=(512 1024 2048 4096 8192)
+  TARGET_CHUNK_SIZES=(512 1024 2048 4096 8192 737 5152)
 else
   # shellcheck disable=SC2207
   TARGET_CHUNK_SIZES=($(echo "$TARGET_CHUNK_SIZES" | tr ',' ' '))
@@ -232,4 +214,5 @@ else
   DATASETS=($(echo "$DATASETS" | tr ',' ' '))
 fi
 
+mkdir -p "$DATA_PATH"
 mkdir -p "$FAST_DATA_PATH"
