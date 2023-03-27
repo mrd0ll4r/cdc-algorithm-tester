@@ -2,8 +2,7 @@
 
 source scripts/utils.sh
 
-# Downloads source code tarballs of gcc, gdb, and emacs of 2019-2022 releases, extracts them, and collects the results
-# into a tarball.
+# Downloads source code tarballs of gcc for 2019-2022 releases, extracts them, and collects the results into a tarball.
 
 download_extract_archive() {
   local url=$1
@@ -25,24 +24,6 @@ declare -a gcc_versions=(
 )
 for version in "${gcc_versions[@]}"; do
   download_extract_archive "http://ftpmirror.gnu.org/gcc/gcc-$version/gcc-$version.tar.gz" "gcc-$version"
-done
-
-# gdb
-echo "Downloading gdb..."
-declare -a gdb_versions=(
-  "10.1" "10.2" "11.1" "11.2" "12.1" "8.3.1" "8.3" "9.1" "9.2"
-)
-for version in "${gdb_versions[@]}"; do
-  download_extract_archive "http://ftpmirror.gnu.org/gdb/gdb-${version}.tar.gz" "gdb-$version"
-done
-
-# emacs
-echo "Downloading emacs..."
-declare -a emacs_versions=(
-  "26.2" "26.3" "27.1" "27.2" "28.1" "28.2"
-)
-for version in "${emacs_versions[@]}"; do
-  download_extract_archive "http://ftpmirror.gnu.org/emacs/emacs-${version}.tar.gz" "emacs-$version"
 done
 
 # tarring
