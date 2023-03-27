@@ -15,13 +15,12 @@ if [ -z "${ITER}" ]; then
 fi
 
 # clean up on ramdisk from previous runs
-for dataset in "${DATASETS[@]}"; do
-  rm -f "$FAST_DATA_PATH/$dataset" "$FAST_DATA_PATH/$dataset.stats"
-done
+#for dataset in "${DATASETS[@]}"; do
+#  rm -f "$FAST_DATA_PATH/$dataset" "$FAST_DATA_PATH/$dataset.stats"
+#done
 
 # CSV header
-echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,time_ms"
-echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,event,value" >perf.csv
+echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,event,value"
 
 for dataset in "${DATASETS[@]}"; do
   # copy dataset to ramdisk
@@ -40,12 +39,9 @@ for dataset in "${DATASETS[@]}"; do
       for cs in "${TARGET_CHUNK_SIZES[@]}"; do
         cmd=$(get_cmd "$subalgo" $dataset $cs)
         for i in $(seq 1 $ITER); do
-          time=$({ time $cmd >/dev/null; } 2>&1 | grep "real" | awk '{print $2}')
-          time=$(time_to_ms $time)
           header=$(printf "%s,%s,%d,%d,%d" $(get_algo_name "$subalgo") "${dataset%%.*}" "$dataset_size" "$cs" "$i")
-          echo "$header,$time"
           perf_result=$(perf stat -x, -e "$perf_events_to_collect" $cmd 2>/dev/stdout 1>/dev/null | awk -F',' '{print $3","$1}')
-          for l in $perf_result; do echo "$header,$l" >>perf.csv; done
+          for l in $perf_result; do echo "$header,$l"; done
         done
 
         # as nop is agnostic to target chunk sizes, one chunk size is enough
