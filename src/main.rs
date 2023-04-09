@@ -413,7 +413,7 @@ fn main() -> anyhow::Result<()> {
                 target_chunk_size > 0,
                 "target chunk size needs to be at least 1"
             );
-            let mask_bits = ((target_chunk_size + window_size) as f64).log2().round() as u64;
+            let mask_bits = ((target_chunk_size - window_size) as f64).log2().round() as u64;
             let mask = (1 << mask_bits) - 1;
 
             impl_rabin_test_for_sizes!(
@@ -657,7 +657,7 @@ fn main() -> anyhow::Result<()> {
                 target_chunk_size > 0,
                 "target chunk size needs to be at least 1"
             );
-            let mask_bits = ((target_chunk_size + window_size) as f64).log2().round() as u32;
+            let mask_bits = ((target_chunk_size - window_size) as f64).log2().round() as u32;
             let mask = (1 << mask_bits) - 1;
 
             impl_adler32_test_for_sizes!(
@@ -687,7 +687,7 @@ fn main() -> anyhow::Result<()> {
                 target_chunk_size > 0,
                 "target chunk size needs to be at least 1"
             );
-            let mask_bits = ((target_chunk_size + window_size) as f64).log2().round() as u32;
+            let mask_bits = ((target_chunk_size - window_size) as f64).log2().round() as u32;
             let mask = (1 << mask_bits) - 1;
 
             impl_buzhash_test_for_sizes!(
