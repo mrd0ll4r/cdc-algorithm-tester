@@ -45,6 +45,7 @@ Copyright notice for the original C code from the zlib project:
  */
 
 use cdchunking::ChunkerImpl;
+use log::debug;
 use std::fmt::{Debug, Formatter};
 
 #[derive(Clone)]
@@ -81,6 +82,14 @@ impl<const W: usize> ChunkerImpl for Adler32Chunker<W> {
     fn find_boundary(&mut self, data: &[u8]) -> Option<usize> {
         for (i, &b) in data.iter().enumerate() {
             let pos = self.pos % W;
+            debug!(
+                "ingesting {}, pos is {}, pos in window is {}, hash is {:032b}, mask {:032b}",
+                b,
+                self.pos,
+                pos,
+                self.inner.hash(),
+                self.mask
+            );
             if self.pos >= W {
                 self.inner.remove(W, self.window[pos])
             }
@@ -89,6 +98,12 @@ impl<const W: usize> ChunkerImpl for Adler32Chunker<W> {
             self.pos += 1;
 
             if self.pos >= W {
+                debug!(
+                    "checking has. pos is {}, hash is {:032b}, mask {:032b}",
+                    self.pos,
+                    self.inner.hash(),
+                    self.mask
+                );
                 if self.inner.hash() & self.mask == 0 {
                     return Some(i);
                 }
