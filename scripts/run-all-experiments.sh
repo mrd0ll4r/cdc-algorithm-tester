@@ -11,10 +11,16 @@ make bfbc
 ########################
 # Computational Performance Measurements
 
-echo "Starting computational performance measurements..."
+echo "Running computational performance measurements. This will take a while."
 
 echo "evaluating on random..."
 DATASETS="random.bin" make speed | gzip -9 > csv/perf_random.csv.gz
+
+echo "evaluating on empty..."
+DATASETS="empty.bin" make speed | gzip -9 > csv/perf_empty.csv.gz
+
+echo "evaluating on zero..."
+DATASETS="zero.bin" make speed | gzip -9 > csv/perf_zero.csv.gz
 
 echo "evaluating on code..."
 DATASETS="code.tar" make speed | gzip -9 > csv/perf_code.csv.gz
@@ -30,10 +36,12 @@ DATASETS="lnx.tar" make speed | gzip -9 > csv/perf_lnx.csv.gz
 
 ########################
 # Chunk size distributions
+# We do not evaluate this on the empty dataset.
 
-echo "Starting chunk size distribution measurements..."
+echo "Starting chunk size distribution measurements in parallel..."
 
 bash -c 'DATASETS="random.bin" make csd | gzip -9 > csv/csd_random.csv.gz' &
+bash -c 'DATASETS="zero.bin" make csd | gzip -9 > csv/csd_zero.csv.gz' &
 bash -c 'DATASETS="code.tar" make csd | gzip -9 > csv/csd_code.csv.gz' &
 bash -c 'DATASETS="web.tar" make csd | gzip -9 > csv/csd_web.csv.gz' &
 bash -c 'DATASETS="pdf.tar" make csd | gzip -9 > csv/csd_pdf.csv.gz' &
@@ -41,10 +49,12 @@ bash -c 'DATASETS="lnx.tar" make csd | gzip -9 > csv/csd_lnx.csv.gz' &
 
 ########################
 # Deduplication ratios
+# We do not evaluate this on the empty dataset.
 
-echo "Starting deduplication ratio measurements..."
+echo "Starting deduplication ratio measurements in parallel..."
 
 bash -c 'DATASETS="random.bin" make dedup | gzip -9 > csv/dedup_random.csv.gz' &
+bash -c 'DATASETS="zero.bin" make dedup | gzip -9 > csv/dedup_zero.csv.gz' &
 bash -c 'DATASETS="code.tar" make dedup | gzip -9 > csv/dedup_code.csv.gz' &
 bash -c 'DATASETS="web.tar" make dedup | gzip -9 > csv/dedup_web.csv.gz' &
 bash -c 'DATASETS="pdf.tar" make dedup | gzip -9 > csv/dedup_pdf.csv.gz' &

@@ -224,7 +224,7 @@ else
 fi
 
 if [ -z "${DATASETS}" ]; then
-  DATASETS=("random.bin" "web.tar" "code.tar" "pdf.tar" "lnx.tar")
+  DATASETS=("random.bin" "web.tar" "code.tar" "pdf.tar" "lnx.tar" "zero.bin" "empty.bin")
 else
   # shellcheck disable=SC2207
   DATASETS=($(echo "$DATASETS" | tr ',' ' '))
