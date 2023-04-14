@@ -70,6 +70,10 @@ get_subalgos() {
       "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1"
       "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1"
       "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1"
+      "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 64"
+      "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 64"
+      "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 64"
+      "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 64"
     )
     ;;
   "rabin")
@@ -132,6 +136,18 @@ get_algo_name() {
     ;;
   "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1")
     echo "quick_hash_3"
+    ;;
+  "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 64")
+    echo "quick_2_rabin_64"
+    ;;
+  "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 64")
+    echo "quick_3_rabin_64"
+    ;;
+  "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 64")
+    echo "quick_hash_2_rabin_64"
+    ;;
+  "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 64")
+    echo "quick_hash_3_rabin_64"
     ;;
   "bfbc_custom_div")
     echo "bfbc_custom_div"
