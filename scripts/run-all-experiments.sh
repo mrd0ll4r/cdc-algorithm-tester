@@ -34,6 +34,19 @@ DATASETS="pdf.tar" make speed | gzip -9 > csv/perf_pdf.csv.gz
 echo "evaluating on LNX..."
 DATASETS="lnx.tar" make speed | gzip -9 > csv/perf_lnx.csv.gz
 
+# perf doesn't count some events if the execution doesn't last long enough.
+# This happens for the empty dataset.
+# TODO only fix for that dataset
+for f in perf_*.csv.gz; do
+    echo $f;
+    b="$(basename $f '.gz')";
+    gunzip $f;
+    sed -i '/counted>/d' $b;
+    sed -i '/<not/d' $b;
+    gzip -9 $b;
+done
+
+
 ########################
 # Chunk size distributions
 # We do not evaluate this on the empty dataset.
