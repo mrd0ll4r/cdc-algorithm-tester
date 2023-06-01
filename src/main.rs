@@ -380,7 +380,7 @@ fn main() -> anyhow::Result<()> {
     let cli: Cli = Cli::parse();
 
     debug!("opening input file...");
-    let f = File::open(cli.input_file).context("unable to open input file")?;
+    let f = File::open(cli.input_file.clone()).context("unable to open input file")?;
 
     match cli.command {
         Commands::NOP {} => {
@@ -426,12 +426,8 @@ fn main() -> anyhow::Result<()> {
             let mask = (1 << mask_bits) - 1;
 
             // Create output file for hashes, if specified
-            let hash_output_file = if let Some(path) = cli.hash_value_output_file {
-                debug!("creating {:?} to write hash values to...", path);
-                Some(File::create(path).context("unable to create hash value output file")?)
-            } else {
-                None
-            };
+            let hash_output_file = create_hash_value_output_file(&cli)
+                .context("unable to create hash value output file")?;
 
             impl_rabin_test_for_sizes!(
                 window_size,
@@ -613,12 +609,8 @@ fn main() -> anyhow::Result<()> {
             let mask = u64::MAX << (64 - mask_bits);
 
             // Create output file for hashes, if specified
-            let hash_output_file = if let Some(path) = cli.hash_value_output_file {
-                debug!("creating {:?} to write hash values to...", path);
-                Some(File::create(path).context("unable to create hash value output file")?)
-            } else {
-                None
-            };
+            let hash_output_file = create_hash_value_output_file(&cli)
+                .context("unable to create hash value output file")?;
 
             if allow_simd_impl {
                 let algo = gear::MaybeSimdGear64::new(mask);
@@ -687,12 +679,8 @@ fn main() -> anyhow::Result<()> {
             let mask = (1 << mask_bits) - 1;
 
             // Create output file for hashes, if specified
-            let hash_output_file = if let Some(path) = cli.hash_value_output_file {
-                debug!("creating {:?} to write hash values to...", path);
-                Some(File::create(path).context("unable to create hash value output file")?)
-            } else {
-                None
-            };
+            let hash_output_file = create_hash_value_output_file(&cli)
+                .context("unable to create hash value output file")?;
 
             impl_adler32_test_for_sizes!(
                 window_size,
@@ -726,12 +714,8 @@ fn main() -> anyhow::Result<()> {
             let mask = (1 << mask_bits) - 1;
 
             // Create output file for hashes, if specified
-            let hash_output_file = if let Some(path) = cli.hash_value_output_file {
-                debug!("creating {:?} to write hash values to...", path);
-                Some(File::create(path).context("unable to create hash value output file")?)
-            } else {
-                None
-            };
+            let hash_output_file = create_hash_value_output_file(&cli)
+                .context("unable to create hash value output file")?;
 
             impl_buzhash_test_for_sizes!(
                 window_size,
@@ -753,6 +737,18 @@ fn main() -> anyhow::Result<()> {
             )
         }
     }
+}
+
+fn create_hash_value_output_file(cli: &Cli) -> anyhow::Result<Option<File>> {
+    let hash_output_file = if let Some(path) = &cli.hash_value_output_file.clone() {
+        debug!("creating {:?} to write hash values to...", path);
+        let mut f = File::create(path).context("unable to create hash value output file")?;
+        writeln!(f, "hash_value").context("unable to write to hash value output file")?;
+        Some(f)
+    } else {
+        None
+    };
+    Ok(hash_output_file)
 }
 
 fn chunk_with_algorithm_and_size_limit<C: ChunkerImpl + Debug>(

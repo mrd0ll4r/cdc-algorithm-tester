@@ -175,7 +175,8 @@ impl<const W: usize> ChunkerImpl for BuzHashChunker<W> {
                 if self.inner.window_full {
                     // Record hash value
                     if let Some(ref mut writer) = self.hash_writer {
-                        writeln!(writer, "{}", self.inner.sum()).expect("unable to write to hash file")
+                        writeln!(writer, "{}", self.inner.sum())
+                            .expect("unable to write to hash file")
                     }
 
                     if self.inner.sum() & self.mask == 0 {
