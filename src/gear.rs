@@ -1,4 +1,6 @@
 use cdchunking::ChunkerImpl;
+use std::fs::File;
+use std::io::{BufWriter, Write};
 
 /// A hasher that uses the Gear algorithm.
 ///
@@ -10,17 +12,19 @@ use cdchunking::ChunkerImpl;
 /// Source: Xia, Wen, et al. "Ddelta: A deduplication-inspired fast delta compression approach."
 /// Performance Evaluation 79 (2014): 258-272.
 /// PDF: https://cswxia.github.io/pub/DElta-PEVA-2014.pdf
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct ScalarGear64 {
     mask: u64,
     state: Gear64State,
+    hash_writer: Option<BufWriter<File>>,
 }
 
 impl ScalarGear64 {
-    pub(crate) fn new(mask: u64) -> ScalarGear64 {
+    pub(crate) fn new(mask: u64, hash_value_output_file: Option<File>) -> ScalarGear64 {
         ScalarGear64 {
             mask,
             state: Default::default(),
+            hash_writer: hash_value_output_file.map(|f| BufWriter::new(f)),
         }
     }
 }
@@ -48,6 +52,11 @@ impl ChunkerImpl for ScalarGear64 {
     fn find_boundary(&mut self, data: &[u8]) -> Option<usize> {
         for (i, &b) in data.iter().enumerate() {
             self.state.ingest(b);
+
+            // Record hash value
+            if let Some(ref mut writer) = self.hash_writer {
+                writeln!(writer, "{}", self.state.hash).expect("unable to write to hash file")
+            }
 
             if self.state.check_hash(self.mask) {
                 return Some(i);

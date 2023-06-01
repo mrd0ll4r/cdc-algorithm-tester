@@ -59,6 +59,11 @@ Options:
       --quickcdc-use-hashmap
           Use the hashmap-based implementation of the QuickCDC wrapper
 
+      --hash-value-output-file <HASH_VALUE_OUTPUT_FILE>
+          Output file to write intermediary hash values to. This will write the rolling hash before it is discriminated to the output file, one value per line. Note that this only prints values to be discriminated, which will generally skip the window size of input bytes.
+
+          Only implemented for Adler, Buzhash, Gear64, and Rabin.
+
   -h, --help
           Print help (see a summary with '-h')
 

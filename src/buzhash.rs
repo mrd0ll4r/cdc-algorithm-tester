@@ -20,6 +20,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 use cdchunking::ChunkerImpl;
+use std::fs::File;
+use std::io::{BufWriter, Write};
 
 const BUZHASH_SEED: u32 = 0x1032_4195;
 
@@ -145,17 +147,19 @@ impl<const W: usize> BuzHash<W> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub(crate) struct BuzHashChunker<const W: usize> {
     mask: u32,
     inner: BuzHash<W>,
+    hash_writer: Option<BufWriter<File>>,
 }
 
 impl<const W: usize> BuzHashChunker<W> {
-    pub(crate) fn new(mask: u32) -> Self {
+    pub(crate) fn new(mask: u32, hash_value_output_file: Option<File>) -> Self {
         BuzHashChunker {
             mask,
             inner: BuzHash::new(),
+            hash_writer: hash_value_output_file.map(|f| BufWriter::new(f)),
         }
     }
 }
@@ -169,6 +173,11 @@ impl<const W: usize> ChunkerImpl for BuzHashChunker<W> {
                 // Important: since init can fill the window we need to re-check if it's full here.
                 // If it is, we have to check for a boundary already.
                 if self.inner.window_full {
+                    // Record hash value
+                    if let Some(ref mut writer) = self.hash_writer {
+                        writeln!(writer, "{}", self.inner.sum()).expect("unable to write to hash file")
+                    }
+
                     if self.inner.sum() & self.mask == 0 {
                         return Some(i);
                     }
@@ -177,6 +186,12 @@ impl<const W: usize> ChunkerImpl for BuzHashChunker<W> {
             }
 
             self.inner.input(b);
+
+            // Record hash value
+            if let Some(ref mut writer) = self.hash_writer {
+                writeln!(writer, "{}", self.inner.sum()).expect("unable to write to hash file")
+            }
+
             if self.inner.sum() & self.mask == 0 {
                 return Some(i);
             }

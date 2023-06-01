@@ -2,6 +2,8 @@
 //! Original source: https://github.com/green-coder/cdc
 
 use cdchunking::ChunkerImpl;
+use std::fs::File;
+use std::io::{BufWriter, Write};
 
 // The irreducible polynomial to be used in the fingerprint function.
 pub trait Polynomial {
@@ -140,21 +142,23 @@ impl<const W: usize> Rabin64<W> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub(crate) struct RabinChunker<const W: usize> {
     inner: Rabin64<W>,
     pos: usize,
     mask: Polynomial64,
+    hash_writer: Option<BufWriter<File>>,
 }
 
 impl<const W: usize> RabinChunker<W> {
-    pub(crate) fn new(mask: u64) -> RabinChunker<W> {
+    pub(crate) fn new(mask: u64, hash_value_output_file: Option<File>) -> RabinChunker<W> {
         RabinChunker {
             // This is the default polynom from https://github.com/fd0/rabin-cdc/blob/master/rabin.h
             // There's also some discussion here: https://github.com/lemire/rollinghashcpp/issues/6
             inner: Rabin64::new_with_polynom(0x3DA3358B4DC173),
             pos: 0,
             mask,
+            hash_writer: hash_value_output_file.map(|f| BufWriter::new(f)),
         }
     }
 }
@@ -168,6 +172,12 @@ impl<const W: usize> ChunkerImpl for RabinChunker<W> {
             } else {
                 // Calculate rolling hash
                 self.inner.slide(b);
+
+                // Record hash value
+                if let Some(ref mut writer) = self.hash_writer {
+                    writeln!(writer, "{}", self.inner.hash).expect("unable to write to hash file")
+                }
+
                 if self.inner.hash & self.mask == 0 {
                     return Some(i);
                 }

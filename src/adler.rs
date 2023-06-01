@@ -47,13 +47,15 @@ Copyright notice for the original C code from the zlib project:
 use cdchunking::ChunkerImpl;
 use log::debug;
 use std::fmt::{Debug, Formatter};
+use std::fs::File;
+use std::io::{BufWriter, Write};
 
-#[derive(Clone)]
 pub(crate) struct Adler32Chunker<const W: usize> {
     mask: u32,
     inner: adler32::RollingAdler32,
     window: [u8; W],
     pos: usize,
+    hash_writer: Option<BufWriter<File>>,
 }
 
 impl<const W: usize> Debug for Adler32Chunker<W> {
@@ -68,12 +70,13 @@ impl<const W: usize> Debug for Adler32Chunker<W> {
 }
 
 impl<const W: usize> Adler32Chunker<W> {
-    pub(crate) fn new(mask: u32) -> Self {
+    pub(crate) fn new(mask: u32, hash_value_output_file: Option<File>) -> Self {
         Adler32Chunker {
             mask,
             window: [0; W],
             pos: 0,
             inner: adler32::RollingAdler32::new(),
+            hash_writer: hash_value_output_file.map(|f| BufWriter::new(f)),
         }
     }
 }
@@ -98,6 +101,11 @@ impl<const W: usize> ChunkerImpl for Adler32Chunker<W> {
             self.pos += 1;
 
             if self.pos >= W {
+                // Record hash value
+                if let Some(ref mut writer) = self.hash_writer {
+                    writeln!(writer, "{}", self.inner.hash()).expect("unable to write to hash file")
+                }
+
                 debug!(
                     "checking has. pos is {}, hash is {:032b}, mask {:032b}",
                     self.pos,

@@ -51,8 +51,8 @@ macro_rules! impl_pci_test_for_sizes {
 }
 
 macro_rules! impl_buzhash_test_with_size {
-    ($window_size:literal,$mask:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {{
-        let algo = buzhash::BuzHashChunker::<$window_size>::new($mask);
+    ($window_size:literal,$mask:expr,$f:expr,$max_chunk_size:expr,$hash_out_file:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {{
+        let algo = buzhash::BuzHashChunker::<$window_size>::new($mask,$hash_out_file);
         chunk_with_algorithm_and_size_limit(
             $f,
             algo,
@@ -67,10 +67,10 @@ macro_rules! impl_buzhash_test_with_size {
 }
 
 macro_rules! impl_buzhash_test_for_sizes {
-    ($window_size:expr,$mask:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
+    ($window_size:expr,$mask:expr,$f:expr,$max_chunk_size:expr,$hash_out_file:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
         match $window_size {
             $(
-            $x => impl_buzhash_test_with_size!($x,$mask,$f,$max_chunk_size,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
+            $x => impl_buzhash_test_with_size!($x,$mask,$f,$max_chunk_size,$hash_out_file,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
             )*
             _ => bail!("window size not implemented"),
         }
@@ -78,8 +78,8 @@ macro_rules! impl_buzhash_test_for_sizes {
 }
 
 macro_rules! impl_adler32_test_with_size {
-    ($window_size:literal,$mask:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {{
-        let algo = adler::Adler32Chunker::<$window_size>::new($mask);
+    ($window_size:literal,$mask:expr,$f:expr,$max_chunk_size:expr,$hash_out_file:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {{
+        let algo = adler::Adler32Chunker::<$window_size>::new($mask, $hash_out_file);
         chunk_with_algorithm_and_size_limit(
             $f,
             algo,
@@ -94,10 +94,10 @@ macro_rules! impl_adler32_test_with_size {
 }
 
 macro_rules! impl_adler32_test_for_sizes {
-    ($window_size:expr,$mask:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
+    ($window_size:expr,$mask:expr,$f:expr,$max_chunk_size:expr,$hash_out_file:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
         match $window_size {
             $(
-            $x => impl_adler32_test_with_size!($x,$mask,$f,$max_chunk_size,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
+            $x => impl_adler32_test_with_size!($x,$mask,$f,$max_chunk_size,$hash_out_file,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
             )*
             _ => bail!("window size not implemented"),
         }
@@ -105,8 +105,8 @@ macro_rules! impl_adler32_test_for_sizes {
 }
 
 macro_rules! impl_rabin_test_with_size {
-    ($window_size:literal,$mask:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {{
-        let algo = rabin::RabinChunker::<$window_size>::new($mask);
+    ($window_size:literal,$mask:expr,$f:expr,$max_chunk_size:expr,$hash_out_file:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr) => {{
+        let algo = rabin::RabinChunker::<$window_size>::new($mask, $hash_out_file);
         chunk_with_algorithm_and_size_limit(
             $f,
             algo,
@@ -121,10 +121,10 @@ macro_rules! impl_rabin_test_with_size {
 }
 
 macro_rules! impl_rabin_test_for_sizes {
-    ($window_size:expr,$mask:expr,$f:expr,$max_chunk_size:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
+    ($window_size:expr,$mask:expr,$f:expr,$max_chunk_size:expr,$hash_out_file:expr,$quiet:expr,$quickcdc_min_chunk_size:expr,$quickcdc_use_hashmap:expr,$quickcdc_n:expr,$quickcdc_m:expr,$( $x:expr ),*) => {
         match $window_size {
             $(
-            $x => impl_rabin_test_with_size!($x,$mask,$f,$max_chunk_size,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
+            $x => impl_rabin_test_with_size!($x,$mask,$f,$max_chunk_size,$hash_out_file,$quiet,$quickcdc_min_chunk_size,$quickcdc_use_hashmap,$quickcdc_n,$quickcdc_m),
             )*
             _ => bail!("window size not implemented"),
         }
@@ -221,6 +221,15 @@ struct Cli {
     /// Use the hashmap-based implementation of the QuickCDC wrapper.
     #[arg(long)]
     quickcdc_use_hashmap: bool,
+
+    /// Output file to write intermediary hash values to.
+    /// This will write the rolling hash before it is discriminated to the output file, one value
+    /// per line. Note that this only prints values to be discriminated, which will generally skip
+    /// the window size of input bytes.
+    ///
+    /// Only implemented for Adler, Buzhash, Gear64, and Rabin.
+    #[arg(long)]
+    hash_value_output_file: Option<PathBuf>,
 }
 
 #[derive(Subcommand)]
@@ -416,11 +425,20 @@ fn main() -> anyhow::Result<()> {
             let mask_bits = ((target_chunk_size - window_size) as f64).log2().round() as u64;
             let mask = (1 << mask_bits) - 1;
 
+            // Create output file for hashes, if specified
+            let hash_output_file = if let Some(path) = cli.hash_value_output_file {
+                debug!("creating {:?} to write hash values to...", path);
+                Some(File::create(path).context("unable to create hash value output file")?)
+            } else {
+                None
+            };
+
             impl_rabin_test_for_sizes!(
                 window_size,
                 mask,
                 f,
                 cli.max_chunk_size,
+                hash_output_file,
                 cli.quiet,
                 cli.quickcdc_min_chunk_size,
                 cli.quickcdc_use_hashmap,
@@ -594,6 +612,14 @@ fn main() -> anyhow::Result<()> {
             let mask_bits = (target_chunk_size as f64).log2().round() as u64;
             let mask = u64::MAX << (64 - mask_bits);
 
+            // Create output file for hashes, if specified
+            let hash_output_file = if let Some(path) = cli.hash_value_output_file {
+                debug!("creating {:?} to write hash values to...", path);
+                Some(File::create(path).context("unable to create hash value output file")?)
+            } else {
+                None
+            };
+
             if allow_simd_impl {
                 let algo = gear::MaybeSimdGear64::new(mask);
                 chunk_with_algorithm_and_size_limit(
@@ -607,7 +633,7 @@ fn main() -> anyhow::Result<()> {
                     cli.quickcdc_end_feature_vector_length,
                 )
             } else {
-                let algo = gear::ScalarGear64::new(mask);
+                let algo = gear::ScalarGear64::new(mask, hash_output_file);
                 chunk_with_algorithm_and_size_limit(
                     f,
                     algo,
@@ -660,11 +686,20 @@ fn main() -> anyhow::Result<()> {
             let mask_bits = ((target_chunk_size - window_size) as f64).log2().round() as u32;
             let mask = (1 << mask_bits) - 1;
 
+            // Create output file for hashes, if specified
+            let hash_output_file = if let Some(path) = cli.hash_value_output_file {
+                debug!("creating {:?} to write hash values to...", path);
+                Some(File::create(path).context("unable to create hash value output file")?)
+            } else {
+                None
+            };
+
             impl_adler32_test_for_sizes!(
                 window_size,
                 mask,
                 f,
                 cli.max_chunk_size,
+                hash_output_file,
                 cli.quiet,
                 cli.quickcdc_min_chunk_size,
                 cli.quickcdc_use_hashmap,
@@ -690,11 +725,20 @@ fn main() -> anyhow::Result<()> {
             let mask_bits = ((target_chunk_size - window_size) as f64).log2().round() as u32;
             let mask = (1 << mask_bits) - 1;
 
+            // Create output file for hashes, if specified
+            let hash_output_file = if let Some(path) = cli.hash_value_output_file {
+                debug!("creating {:?} to write hash values to...", path);
+                Some(File::create(path).context("unable to create hash value output file")?)
+            } else {
+                None
+            };
+
             impl_buzhash_test_for_sizes!(
                 window_size,
                 mask,
                 f,
                 cli.max_chunk_size,
+                hash_output_file,
                 cli.quiet,
                 cli.quickcdc_min_chunk_size,
                 cli.quickcdc_use_hashmap,
