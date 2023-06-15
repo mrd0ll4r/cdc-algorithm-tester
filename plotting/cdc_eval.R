@@ -499,6 +499,31 @@ rm(t,d,addtorow)
 gc()
 
 ######################################################################
+# HASH VALUE DISTRIBUTION
+######################################################################
+
+# Problem: For some hash functions, this is 64 bits, i.e., col_type I.
+# Unfortunately, ggplot doesn't know how to deal with that.
+# We could read it in as double, which kinda works, but also probably loses some
+# precision at the higher values.
+# To be specific, anything larger than 2^53 is less precise than an integer.
+# I'm not sure this is a problem, though: Even if different integers get mapped
+# to the same double, as long as the buckets are large enough, this should not
+# distort the results.
+d <- read_csv("csv/hash_values_random_small_rabin64_2048.csv.gz", col_types = "d")
+
+p <- d %>%
+  ggplot(aes(x=hash_value,y=after_stat(ndensity))) +
+  geom_freqpoly(bins=200) +
+  scale_x_continuous(
+    #limits = c(0,2^64),
+    labels = trans_format('log2', math_format(2^.x))) +
+  labs(x="Hash Value",y="Normalized Density")
+
+print_plot(p,"hash_value_distribution_rabin64_2048")
+
+
+######################################################################
 # CHUNK SIZE DISTRIBUTIONS
 ######################################################################
 # Note: The complete CSD dataset is too large to be stored in one R vector.
