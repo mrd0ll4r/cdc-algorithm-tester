@@ -24,6 +24,7 @@ mean_abs_dev <- function(x) mean(abs(x-mean(x)))
 
 # Function to calculate mean-min as an error metric, as per https://lemire.me/blog/2023/04/06/are-your-memory-bound-benchmarking-timings-normally-distributed/
 mean_min_dev <- function(x) mean(x)-min(x)
+mean_max_dev <- function(x) max(x) - mean(x)
 
 csv_dir = "./csv"
 
@@ -39,6 +40,10 @@ perf_derive_metrics <- function(df) {
   
   df <- df %>%
     mutate(instructions_per_cycle=instructions/cycles) %>%
+    mutate(kbranches=(branches/10^3)) %>%
+    mutate(mbranches=(branches/10^6)) %>%
+    mutate(gbranches=(branches/10^9)) %>%
+    mutate(branches_per_byte=(branches/dataset_size)) %>%
     mutate(branch_miss_percentage=(`branch-misses`/branches)*100) %>%
     mutate(cache_miss_percentage=(`cache-misses`/`cache-references`)*100) %>%
     mutate(l1_dcache_miss_percentage=(`L1-dcache-misses`/`L1-dcache-loads`)*100) %>%
@@ -73,6 +78,7 @@ BFBC_ALGORITHMS <- c("bfbc","bfbc_custom_div")
 
 ALGORITHMS_TO_COMPARE <- c("fsc","ae","ram","mii","pci","rabin_32","adler32_256","buzhash_64","gear","bfbc","bfbc_custom_div")
 
+POWER_OF_TWO_SIZES = c(512,1024,2048,4096,8192)
 
 ######################################################################
 # COMPUTATIONAL PERFORMANCE
@@ -169,28 +175,43 @@ d <- perf_data %>%
   filter(dataset %in% c("random","zero")) %>%
   group_by(algorithm,dataset,target_chunk_size,event) %>% 
   summarize(dataset_size=mean(dataset_size), n=n(), 
-            val=mean(value), sd=sd(value), se=standard_error(value),
+            val=mean(value), sd=sd(value),
+            se=standard_error(value),
+            max=max(value),
             mmd=mean_min_dev(value)) %>%
-  filter(target_chunk_size == 2048 | target_chunk_size == 512) %>%
-  filter(event %in% c("task-clock","branch_miss_percentage","cache_miss_percentage","l1_dcache_miss_percentage","instructions_per_cycle","instructions_per_byte"))
+  filter(target_chunk_size == 8192 | target_chunk_size == 512) %>%
+  filter(event %in% c("task-clock","mibytes_per_sec","usec_per_byte","branch_miss_percentage","cache_miss_percentage","l1_dcache_miss_percentage","instructions_per_cycle","instructions_per_byte"))
 
 # Create table
 t <- d %>% 
-  pivot_wider(id_cols=c(algorithm,dataset,dataset_size,target_chunk_size,n),names_from=event,values_from=c("val","se"),names_glue = "{event}_{.value}",names_vary="slowest") %>%
+  pivot_wider(id_cols=c(algorithm,dataset,dataset_size,target_chunk_size,n),names_from=event,values_from=c("val","se","max"),names_glue = "{event}_{.value}",names_vary="slowest") %>%
   mutate(dataset_size=NULL, n=NULL) %>%
   arrange(target_chunk_size,dataset,algorithm) %>%
   select(algorithm,dataset,target_chunk_size,
-         starts_with("task-clock"),
-         starts_with("instructions_per_byte"),
-         starts_with("instructions_per_cycle"),
-         starts_with("l1_dcache_miss_percentage"),
-         starts_with("branch_miss_percentage"))
+         #starts_with("task-clock"),
+         #starts_with("mibytes_per_sec"),
+         mibytes_per_sec_val,
+         mibytes_per_sec_max,
+         #starts_with("usec_per_byte"),
+         #starts_with("instructions_per_byte"),
+         instructions_per_byte_val,
+         instructions_per_byte_se,
+         #starts_with("instructions_per_cycle"),
+         instructions_per_cycle_val,
+         instructions_per_cycle_se,
+         #starts_with("l1_dcache_miss_percentage"),
+         l1_dcache_miss_percentage_val,
+         l1_dcache_miss_percentage_se,
+         #starts_with("branch_miss_percentage")
+         branch_miss_percentage_val,
+         branch_miss_percentage_se
+         )
 
 addtorow <- list()
 addtorow$pos <- list(0)
-addtorow$command <- '&&& \\multicolumn{2}{c}{Runtime (ms)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{L1 DCache Miss (\\%)} & \\multicolumn{2}{c}{Branch Misses (\\%)}\\\\
+addtorow$command <- '&&& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{L1 DCache Miss (\\%)} & \\multicolumn{2}{c}{Branch Misses (\\%)}\\\\
 \\cmidrule(lr){4-13}
-Algorithm & Dataset & Target CS & $\\mu$ & SE & $\\mu$ & SE & $\\mu$ & SE & $\\mu$ & SE & $\\mu$ & SE\\\\'
+Algorithm & Dataset & Target CS & $\\mu$ & Max & $\\mu$ & SE & $\\mu$ & SE & $\\mu$ & SE & $\\mu$ & SE\\\\'
 
 print(xtable(t, digits=4), file="tab/perf_quickcdc_rabin_variants.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
 
@@ -240,14 +261,17 @@ gc()
 #- Idea: How much does manual Vectorization (SIMD) help?
 d <- perf_data %>%
   filter(dataset == "random") %>%
-  filter(algorithm %in% c("gear64","gear64_simd"))
+  filter(algorithm %in% c("gear64","gear64_simd")) %>%
+  filter(target_chunk_size %in% POWER_OF_TWO_SIZES)
 
 # Compute statistics
 d <- d %>% 
   group_by(algorithm,dataset,target_chunk_size,event) %>% 
   summarize(dataset_size=mean(dataset_size), n=n(), 
-            val=mean(value), sd=sd(value), se=standard_error(value),
-            mmd=mean_min_dev(value))
+            val=mean(value), sd=sd(value),
+            se=standard_error(value),
+            max=max(value),
+            mmd=mean_max_dev(value))
 
 #ggplot(d %>% filter(event=="branches"),aes(x=target_chunk_size,y=val,color=algorithm)) +
 #  geom_errorbar(aes(ymin=val-se, ymax=val+se), colour="black", width=100, position=position_dodge(0.1)) +
@@ -265,19 +289,22 @@ d <- d %>%
 
 # Create table
 t <- d %>%
-  filter(event %in% c("task-clock",
-                      #"branches",
+  filter(event %in% c('mibytes_per_sec',
+                      #"task-clock",
+                      "gbranches",
                       #"branch_miss_percentage",
                       "cache_miss_percentage",
                       "instructions_per_byte",
                       "instructions_per_cycle")) %>%
   ungroup() %>%
   mutate(dataset=NULL,dataset_size=NULL,n=NULL) %>%
-  pivot_wider(id_cols=c(algorithm,target_chunk_size),names_from=event,values_from=c("val","se","mmd"),names_glue = "{event}_{.value}",names_vary="slowest") %>%
+  pivot_wider(id_cols=c(algorithm,target_chunk_size),names_from=event,values_from=c("val","se","max"),names_glue = "{event}_{.value}",names_vary="slowest") %>%
   arrange(target_chunk_size,algorithm) %>%
   select(algorithm,target_chunk_size,
-         `task-clock_val`,
-         `task-clock_mmd`,
+         mibytes_per_sec_val,
+         mibytes_per_sec_max,
+         #`task-clock_val`,
+         #`task-clock_mmd`,
          instructions_per_byte_val,
          instructions_per_byte_se,
          instructions_per_cycle_val,
@@ -287,16 +314,18 @@ t <- d %>%
          #starts_with("instructions_per_cycle")#,
          #starts_with("branches"),
          #starts_with("branch_miss_percentage")
+         gbranches_val,
+         gbranches_se
          )
 t$algorithm <- recode(t$algorithm, gear64="Scalar", gear64_simd="SIMD")
 
 addtorow <- list()
 addtorow$pos <- list(0)
-addtorow$command <- '&& \\multicolumn{2}{c}{Runtime (ms)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC}\\\\
-\\cmidrule(lr){3-8}
-Algorithm & Target CS (B) & $\\mu$ & MMD & $\\mu$ & SE (±) & $\\mu$ & SE (±)\\\\'
+addtorow$command <- '&& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{Branches ($\\times 10^9$)}\\\\
+\\cmidrule(lr){3-10}
+Algorithm & Target CS (B) & $\\mu$ & Max & $\\mu$ & SE (±) & $\\mu$ & SE (±) & $\\mu$ & SE (±)\\\\'
 
-print(xtable(t, digits=4), file="tab/perf_gear_simd_comparison_random.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
+print(xtable(t, digits=3), file="tab/perf_gear_simd_comparison_random.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
 
 rm(d,t,addtorow)
 gc()
@@ -310,24 +339,31 @@ d <- perf_data %>%
   filter(target_chunk_size == 2048) %>%
   group_by(algorithm,dataset,target_chunk_size,event) %>% 
   summarize(dataset_size=mean(dataset_size), n=n(), 
-            val=mean(value), sd=sd(value), se=standard_error(value), mmd=mean_min_dev(value))
+            val=mean(value),
+            sd=sd(value),
+            se=standard_error(value),
+            mmd=mean_max_dev(value),
+            max=max(value))
 
 
 t <- d %>%
   filter(event %in% c("mibytes_per_sec",
                       "instructions_per_byte",
-                      "instructions_per_cycle")) %>%
+                      "instructions_per_cycle",
+                      "branches_per_byte")) %>%
   ungroup() %>%
   mutate(n=NULL, target_chunk_size=NULL,dataset_size = NULL) %>%
-  pivot_wider(id_cols=c(algorithm,dataset),names_from=event,values_from=c("val","se","mmd"),names_glue = "{event}_{.value}",names_vary="slowest") %>%
+  pivot_wider(id_cols=c(algorithm,dataset),names_from=event,values_from=c("val","se","max"),names_glue = "{event}_{.value}",names_vary="slowest") %>%
   arrange(dataset,algorithm) %>%
   select(algorithm,dataset,
          mibytes_per_sec_val,
-         mibytes_per_sec_mmd,
+         mibytes_per_sec_max,
          instructions_per_byte_val,
          instructions_per_byte_se,
          instructions_per_cycle_val,
          instructions_per_cycle_se,
+         branches_per_byte_val,
+         branches_per_byte_se
          #starts_with("mibytes_per_sec"),
          #starts_with("instructions_per_byte"),
          #starts_with("instructions_per_cycle")
@@ -335,9 +371,9 @@ t <- d %>%
 
 addtorow <- list()
 addtorow$pos <- list(0)
-addtorow$command <- '&& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC}\\\\
-\\cmidrule(lr){3-8}
-Algorithm & Dataset & $\\mu$ & MMD & $\\mu$ & SE (±) & $\\mu$ & SE (±)\\\\'
+addtorow$command <- '&& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{Branches/B}\\\\
+\\cmidrule(lr){3-10}
+Algorithm & Dataset & $\\mu$ & Max & $\\mu$ & SE (±) & $\\mu$ & SE (±) & $\\mu$ & SE (±)\\\\'
 
 print(xtable(t, digits=3), file="tab/perf_overview_random_code_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
 
