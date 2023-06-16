@@ -127,7 +127,7 @@ impl<const W: usize> Rabin64<W> {
         self.hash |= u64::from(byte);
         self.hash ^= self.mod_table[mod_index as usize];
 
-        // Move the windowIndex to the next position.
+        // Move window index to the next position.
         self.window_index = (self.window_index + 1) % W;
     }
 
@@ -166,7 +166,7 @@ impl<const W: usize> RabinChunker<W> {
 impl<const W: usize> ChunkerImpl for RabinChunker<W> {
     fn find_boundary(&mut self, data: &[u8]) -> Option<usize> {
         for (i, &b) in data.iter().enumerate() {
-            if self.pos < W {
+            if self.pos < W - 1 {
                 // Prefill window
                 self.inner.eat(b)
             } else {
