@@ -182,7 +182,7 @@ get_cmd_args() {
   "nop")
     params=""
     ;;
-  "quickcdc"*)
+  *"quickcdc"*)
     local min=$(($3 / 2))
     args_and_algo="--quickcdc-min-chunk-size $min $1"
     params="$(($3 - $min))"
