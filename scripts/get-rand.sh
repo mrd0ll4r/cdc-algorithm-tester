@@ -2,4 +2,4 @@
 
 source scripts/utils.sh
 
-dd if=/dev/urandom of="$DATA_PATH/random.bin" bs=10G count=1
+dd if=/dev/urandom of="$DATA_PATH/random.bin" bs=1G count=10
