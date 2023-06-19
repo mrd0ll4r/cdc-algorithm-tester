@@ -51,7 +51,6 @@ done
 
 echo "Analyzing file sizes..."
 
-bash -c 'DATASET="random.bin" make sizes | gzip -9 > csv/sizes_random.csv.gz' &
 bash -c 'DATASET="code.tar" make sizes | gzip -9 > csv/sizes_code.csv.gz' &
 bash -c 'DATASET="web.tar" make sizes | gzip -9 > csv/sizes_web.csv.gz' &
 bash -c 'DATASET="pdf.tar" make sizes | gzip -9 > csv/sizes_pdf.csv.gz' &
