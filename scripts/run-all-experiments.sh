@@ -46,6 +46,17 @@ for f in perf_*.csv.gz; do
     gzip -9 $b;
 done
 
+########################
+# File sizes
+
+echo "Analyzing file sizes..."
+
+bash -c 'DATASET="random.bin" make sizes | gzip -9 > csv/sizes_random.csv.gz' &
+bash -c 'DATASET="code.tar" make sizes | gzip -9 > csv/sizes_code.csv.gz' &
+bash -c 'DATASET="web.tar" make sizes | gzip -9 > csv/sizes_web.csv.gz' &
+bash -c 'DATASET="pdf.tar" make sizes | gzip -9 > csv/sizes_pdf.csv.gz' &
+bash -c 'DATASET="lnx.tar" make sizes | gzip -9 > csv/sizes_lnx.csv.gz' &
+
 
 ########################
 # Chunk size distributions

@@ -30,6 +30,10 @@ avg:
 ent:
 	./scripts/datasets-entropy.sh
 
+# Prints a comma separated list of file sizes within a dataset (DATASET must be set).
+sizes:
+	./scripts/file-sizes.sh
+
 # Print a CSV with the optimal divisors for each target chunk size in each dataset.
 bfbc_divisors:
 	./scripts/bfbc-divisors.sh
