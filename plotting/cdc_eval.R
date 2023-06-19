@@ -527,24 +527,10 @@ print_plot(p,"hash_value_distribution_rabin64_2048")
 # FILE SIZES IN DATASETS
 ######################################################################
 
-# Helper function to bin the data, needed to reduce the granularity to not exceed TeX memory
-bin_data <- function(data, num_bins) {
-  bins <- cut(data, breaks = num_bins)
-  data_binned <- tapply(data, bins, mean)
-  return(data_binned)
-}
-num_bins <- 1000
-
 sizes_data_code <- scan(sprintf("%s/sizes_code.txt",csv_dir), what=numeric(), sep=",")
 sizes_data_web <- scan(sprintf("%s/sizes_web.txt",csv_dir), what=numeric(), sep=",")
 sizes_data_pdf <- scan(sprintf("%s/sizes_pdf.txt",csv_dir), what=numeric(), sep=",")
 sizes_data_lnx <- scan(sprintf("%s/sizes_lnx.txt",csv_dir), what=numeric(), sep=",")
-
-# Bin the data
-sizes_data_code <- bin_data(sizes_data_code, num_bins)
-sizes_data_web <- bin_data(sizes_data_web, num_bins)
-sizes_data_pdf <- bin_data(sizes_data_pdf, num_bins)
-sizes_data_lnx <- bin_data(sizes_data_lnx, num_bins)
 
 # Calculate the CDFs
 cdf_func_code <- ecdf(sizes_data_code)
@@ -572,8 +558,7 @@ p <- ggplot(cdf_data, aes(x = values, y = cdf_values, color = category)) +
   geom_vline(xintercept = 512, linetype = "dashed") +
   xlab("File Size (Log Scale)") +
   ylab("Cumulative Probability") +
-  labs(color = "Dataset") +
-  ggtitle("Cumulative Distribution Function (CDF) with Log Scale")
+  labs(color = "Dataset")
 
 print_plot(p,"dataset_file_sizes")
 
