@@ -44,13 +44,12 @@ gzip -9 csv/perf_empty.csv
 ########################
 # File sizes
 
-echo "Analyzing file sizes..."
+echo "Analyzing file sizes in parallel..."
 
 bash -c 'DATASET="code.tar" make sizes > csv/sizes_code.txt' &
 bash -c 'DATASET="web.tar" make sizes > csv/sizes_web.txt' &
 bash -c 'DATASET="pdf.tar" make sizes > csv/sizes_pdf.txt' &
 bash -c 'DATASET="lnx.tar" make sizes > csv/sizes_lnx.txt' &
-
 
 ########################
 # Chunk size distributions
@@ -77,6 +76,12 @@ bash -c 'DATASETS="code.tar" make dedup | gzip -9 > csv/dedup_code.csv.gz' &
 bash -c 'DATASETS="web.tar" make dedup | gzip -9 > csv/dedup_web.csv.gz' &
 bash -c 'DATASETS="pdf.tar" make dedup | gzip -9 > csv/dedup_pdf.csv.gz' &
 bash -c 'DATASETS="lnx.tar" make dedup | gzip -9 > csv/dedup_lnx.csv.gz' &
+
+########################
+# Hash value distributions
+
+echo "Starting hash value distribution experiments in the background..."
+./scripts/hash-value-distributions.sh &
 
 ########################
 
