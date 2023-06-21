@@ -153,7 +153,7 @@ pub(crate) struct RabinChunker<const W: usize> {
 impl<const W: usize> RabinChunker<W> {
     pub(crate) fn new(mask: u64, hash_value_output_file: Option<File>) -> RabinChunker<W> {
         RabinChunker {
-            // This is the default polynom from https://github.com/fd0/rabin-cdc/blob/master/rabin.h
+            // This is the default polynomial from https://github.com/fd0/rabin-cdc/blob/master/rabin.h
             // There's also some discussion here: https://github.com/lemire/rollinghashcpp/issues/6
             inner: Rabin64::new_with_polynom(0x3DA3358B4DC173),
             pos: 0,
@@ -169,6 +169,18 @@ impl<const W: usize> ChunkerImpl for RabinChunker<W> {
             if self.pos < W - 1 {
                 // Prefill window
                 self.inner.eat(b)
+            } else if self.pos == W - 1 {
+                // Prefill window and check hash, window is now full
+                self.inner.eat(b);
+
+                // Record hash value
+                if let Some(ref mut writer) = self.hash_writer {
+                    writeln!(writer, "{}", self.inner.hash).expect("unable to write to hash file")
+                }
+
+                if self.inner.hash & self.mask == 0 {
+                    return Some(i);
+                }
             } else {
                 // Calculate rolling hash
                 self.inner.slide(b);
