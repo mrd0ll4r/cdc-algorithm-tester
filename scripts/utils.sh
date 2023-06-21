@@ -235,6 +235,12 @@ get_cmd_args() {
   echo "$args_and_algo $params"
 }
 
+# Get command string for chunker. Pass arguments in the following order: algorithm, dataset, target chunk size.
+get_cmd() {
+  local args="$(get_cmd_args "$1" "$2" "$3")"
+  echo "$BIN -i $DATA_PATH/$2 $args"
+}
+
 # Global settings
 export BIN=./target/release/cdc-algorithm-tester
 export DATA_PATH=data

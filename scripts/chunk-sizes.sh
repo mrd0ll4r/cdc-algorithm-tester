@@ -2,12 +2,6 @@
 
 source scripts/utils.sh
 
-# Get command string for chunker. Pass arguments in the following order: algoname, dataset, target chunk size.
-get_cmd() {
-  local args="$(get_cmd_args "$1" "$2" "$3")"
-  echo "$BIN -i $DATA_PATH/$2 $args"
-}
-
 # CSV header
 echo "algorithm,dataset,target_chunk_size,chunk_size"
 
