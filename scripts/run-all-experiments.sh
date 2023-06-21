@@ -36,15 +36,10 @@ DATASETS="lnx.tar" make speed | gzip -9 > csv/perf_lnx.csv.gz
 
 # perf doesn't count some events if the execution doesn't last long enough.
 # This happens for the empty dataset.
-# TODO only fix for that dataset
-for f in perf_*.csv.gz; do
-    echo $f;
-    b="$(basename $f '.gz')";
-    gunzip $f;
-    sed -i '/counted>/d' $b;
-    sed -i '/<not/d' $b;
-    gzip -9 $b;
-done
+gunzip csv/perf_empty.csv.gz
+sed -i '/counted>/d' csv/perf_empty.csv
+sed -i '/<not/d' csv/perf_empty.csv
+gzip -9 csv/perf_empty.csv
 
 ########################
 # File sizes
@@ -88,5 +83,28 @@ bash -c 'DATASETS="lnx.tar" make dedup | gzip -9 > csv/dedup_lnx.csv.gz' &
 sleep 1
 echo "Waiting for jobs to finish..."
 wait $(jobs -p)
+
+########################
+
+echo "Splitting chunk size distribution measurements by algorithm..."
+
+for f in csv/csd_*.csv.gz; do
+        echo "splitting $f..."
+        header=$(zcat "$f" | head -n 1)
+        b=$(basename "$f" ".csv.gz")
+        filter="{print > (\"csv/${b}_\" \$1 \".csv\")}"
+        zcat "$f" | awk "$filter" FS=,
+
+        # Clean up the empty _algorithm file produced (from the header)
+        rm "csv/${b}_algorithm.csv"
+
+        echo "compressing..."
+        for ff in csv/${b}_*.csv; do
+                # prepend the header
+                sed -i -e "1i $header" "$ff"
+                gzip -9 "$ff"
+        done
+done
+
 
 echo "All done."
