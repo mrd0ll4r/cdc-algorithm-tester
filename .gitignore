@@ -11,5 +11,8 @@
 # Datasets
 /data/
 
+# Measurement results
+/csv/
+
 # Vim undo files
 *.un~
