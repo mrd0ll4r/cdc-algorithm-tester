@@ -61,9 +61,9 @@ perf_derive_metrics <- function(df) {
 algorithm_as_factor <- function(df) {
   df$algorithm <- as.factor(df$algorithm)
   df$algorithm <- recode(df$algorithm,
-                                `gear_nc_1}`="gear_nc_1",
-                                `gear_nc_2}`="gear_nc_2",
-                                `gear_nc_3}`="gear_nc_3")
+                         `gear_nc_1}`="gear_nc_1",
+                         `gear_nc_2}`="gear_nc_2",
+                         `gear_nc_3}`="gear_nc_3")
   return(df)
 }
 
@@ -205,7 +205,7 @@ t <- d %>%
          #starts_with("branch_miss_percentage")
          branch_miss_percentage_val,
          branch_miss_percentage_se
-         )
+  )
 
 addtorow <- list()
 addtorow$pos <- list(0)
@@ -247,8 +247,8 @@ p <- d %>%
   scale_color_jama(name="", # Legend label
                    breaks=c("rabin_64","quick_2_rabin_64", "quick_3_rabin_64", "quick_hash_2_rabin_64","quick_hash_3_rabin_64"),
                    labels=c("Rabin","A-2", "A-3","HM-2","HM-3"))
-                  #breaks=c("gear_nc_1","quick_2", "quick_3", "quick_hash_2","quick_hash_3"),
-                  #labels=c("Gear","A-2", "A-3","HM-2","HM-3"))
+#breaks=c("gear_nc_1","quick_2", "quick_3", "quick_hash_2","quick_hash_3"),
+#labels=c("Gear","A-2", "A-3","HM-2","HM-3"))
 
 print_plot(p,"perf_quickcdc_rabin_variants_different_targets_code")
 
@@ -316,7 +316,7 @@ t <- d %>%
          #starts_with("branch_miss_percentage")
          gbranches_val,
          gbranches_se
-         )
+  )
 t$algorithm <- recode(t$algorithm, gear64="Scalar", gear64_simd="SIMD")
 
 addtorow <- list()
@@ -367,7 +367,7 @@ t <- d %>%
          #starts_with("mibytes_per_sec"),
          #starts_with("instructions_per_byte"),
          #starts_with("instructions_per_cycle")
-         )
+  )
 
 addtorow <- list()
 addtorow$pos <- list(0)
@@ -469,8 +469,8 @@ p <- dedup_data %>%
   labs(x="Target Chunk Size (B)",y="Deduplication Ratio") +
   facet_wrap(~algo_group,nrow=3,ncol=1) +
   scale_color_jama(name="Window Size (B)", # Legend label
-    breaks=c("16", "32", "48", "64", "128", "256"),
-    labels=c("16","32","48","64","128","256"))
+                   breaks=c("16", "32", "48", "64", "128", "256"),
+                   labels=c("16","32","48","64","128","256"))
 
 print_plot(p,"dedup_comparison_window_sizes_web_algorithm_facets",height=5)
 
@@ -531,20 +531,20 @@ load_hash_value_distribution_for_algorithm <- function(algorithm) {
     f = strsplit(f,c(sprintf("%s/",csv_dir)))[[1]][2]
     print(sprintf("loading %s...",f))
     tmp = load_hash_value_distribution(f)
-
+    
     if (isempty(d)) {
       d <- tmp
     } else {
       d <- rows_append(d,tmp)
     }
-
+    
     rm(tmp)
   }
   d <- d %>%
     mutate(algorithm=as.factor(algorithm),
            window_size=as.factor(window_size),
            algorithm_and_winsize=as.factor(algorithm_and_winsize))
-
+  
   return(d)
 }
 
@@ -571,7 +571,7 @@ HASH_VALUE_DISTRIBUTION_ALGORITHMS_TO_COMPARE = c("adler32_256","buzhash_64","ra
 
 hash_value_distribution_single_algorithm_window_size_comparison_plot <- function(d, window_sizes=c("16","32","48","64","128","256")) {
   codomain_exponent = log(max(d$codomain_max), base=2)
-
+  
   d %>%
     ggplot(aes(x=g_norm, y=n_norm, linetype=window_size, fill=window_size)) +
     geom_line(position=position_jitter(width=0,height=0.0025)) +
@@ -580,11 +580,11 @@ hash_value_distribution_single_algorithm_window_size_comparison_plot <- function
       x=sprintf("Normalized Codomain (*2^%d)", codomain_exponent),
       y="Density") +
     scale_fill_jama(name="Window Size (B)", # Legend label
-                    breaks=c("16","32","48","64","128","256"),
-                    labels=c("16","32","48","64","128","256")) +
+                    breaks=window_sizes,
+                    labels=window_sizes) +
     scale_linetype_discrete(name="Window Size (B)",
-                            breaks=c("16","32","48","64","128","256"),
-                            labels=c("16","32","48","64","128","256"))
+                            breaks=window_sizes,
+                            labels=window_sizes)
 }
 
 hash_value_distribution_adler32_binned <- load_hash_value_distribution_for_algorithm("adler32") %>%
@@ -592,15 +592,18 @@ hash_value_distribution_adler32_binned <- load_hash_value_distribution_for_algor
 gc()
 
 hash_value_distribution_buzhash_binned <- load_hash_value_distribution_for_algorithm("buzhash") %>%
-  bin_normalize_hash_value_distribution(bins=100, codomain_min=0, codomain_max=2^32)
+  bin_normalize_hash_value_distribution(bins=100, codomain_min=0, codomain_max=2^32) %>% 
+  mutate(algoritm_and_winsize = as.numeric(str_extract(algoritm_and_winsize, "\\d+")))
 gc()
 
 hash_value_distribution_rabin_binned <- load_hash_value_distribution_for_algorithm("rabin") %>%
-  bin_normalize_hash_value_distribution(bins=100, codomain_min=0, codomain_max=2^53)
+  bin_normalize_hash_value_distribution(bins=100, codomain_min=0, codomain_max=2^53) %>% 
+  mutate(algoritm_and_winsize = as.numeric(str_extract(algoritm_and_winsize, "\\d+")))
 gc()
 
 hash_value_distribution_gear64_binned <- load_hash_value_distribution_for_algorithm("gear64") %>%
-  bin_normalize_hash_value_distribution(bins=100, codomain_min=0, codomain_max=2^64)
+  bin_normalize_hash_value_distribution(bins=100, codomain_min=0, codomain_max=2^64) %>% 
+  mutate(algoritm_and_winsize = as.numeric(str_extract(algoritm_and_winsize, "\\d+")))
 gc()
 
 hash_value_distribution_data_binned <- rbind(
@@ -611,40 +614,17 @@ hash_value_distribution_data_binned <- rbind(
 )
 
 p <- hash_value_distribution_data_binned %>%
-  filter(algorithm == "adler32") %>%
-  hash_value_distribution_single_algorithm_window_size_comparison_plot()
-print_plot(p, "hash_value_distribution_adler32")
-
-p <- hash_value_distribution_data_binned %>%
-  filter(algorithm == "buzhash") %>%
-  hash_value_distribution_single_algorithm_window_size_comparison_plot()
-print_plot(p, "hash_value_distribution_buzhash")
-
-p <- hash_value_distribution_data_binned %>%
-  filter(algorithm == "rabin") %>%
-  hash_value_distribution_single_algorithm_window_size_comparison_plot()
-print_plot(p, "hash_value_distribution_rabin")
-
-p <- hash_value_distribution_data_binned %>%
-  filter(algorithm == "gear64") %>%
-  hash_value_distribution_single_algorithm_window_size_comparison_plot()
-print_plot(p, "hash_value_distribution_gear64")
-
-p <- hash_value_distribution_data_binned %>%
-  filter(algorithm_and_winsize %in% HASH_VALUE_DISTRIBUTION_ALGORITHMS_TO_COMPARE) %>%
-  ggplot(aes(x=g_norm, y=n_norm, linetype=algorithm_and_winsize, fill=algorithm_and_winsize)) +
+  filter(algorithm %in% c("adler32", "buzhash", "rabin", "gear64")) %>%
+  ggplot(aes(x=g_norm, y=n_norm, linetype=window_size, fill=window_size)) +
   geom_line(position=position_jitter(width=0,height=0.005)) +
   geom_area(alpha=0.1,position="identity") +
   labs(x="Normalized Codomain", y="Density") +
-  scale_fill_jama(name="Algorithm"#, # Legend label
-                  #breaks=c("16","32","48","64","128","256"),
-                  #labels=c("16","32","48","64","128","256")
-                  ) +
-  scale_linetype_discrete(name="Algorithm"#,
-                          #breaks=c("16","32","48","64","128","256"),
-                          #labels=c("16","32","48","64","128","256")
-                          )
-print_plot(p, "hash_value_distribution_selection")
+  scale_fill_jama(name="Window Size (B)") +
+  scale_linetype_discrete(name="Window Size (B)") +
+  facet_wrap(~ algorithm, nrow = 4)
+
+print_plot(p, "hash_value_distributions", height = 5)
+
 
 
 ######################################################################
@@ -973,11 +953,11 @@ ggplot(data = dd, aes(x=chunk_size,y=after_stat(density),group=algorithm,color=a
     breaks = (2048/4)*2^seq(0,4),
     labels = trans_format("log2", math_format(2 ^ .x))
   )
-  scale_x_continuous(
-    trans="log2",
-    breaks = (2048/4)*2^seq(0,4),
-    labels = trans_format("log2", math_format(2 ^ .x))
-  )
+scale_x_continuous(
+  trans="log2",
+  breaks = (2048/4)*2^seq(0,4),
+  labels = trans_format("log2", math_format(2 ^ .x))
+)
 
 ggplot(data=dd %>% mutate(chunk_size = as.double(chunk_size)), aes(x=chunk_size,group=algorithm,color=algorithm,fill=algorithm)) +
   geom_histogram() +
@@ -1162,9 +1142,9 @@ ggplot(data = dd %>% mutate(chunk_size = as.double(chunk_size)), aes(x=chunk_siz
   )
 
 xlim(1,8192) +
-
-
-
+  
+  
+  
   coord_trans(x="log2") +
   scale_x_continuous(
     breaks = (2048/4)*2^seq(0,4),
@@ -1210,10 +1190,5 @@ chunk_size_ecdf_log <- function(d,target_chunk_size=2^9) {
     )
   return(p)
 }
-
-
-
-
-
 
 
