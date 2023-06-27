@@ -9,7 +9,8 @@ theme_update(
   #axis.title.y = element_text(vjust = 1), # default is vjust = 1
   # axis.title.x = element_text(vjust = 0), # default is vjust = 1
 #  axis.text = element_text(size = rel(1.2)), # default is rel(0.8)
-  legend.position = "bottom",
+  #legend.position = "bottom",
+  legend.position = "right",
   #legend.title = element_text(size = rel(0.8)),
   #legend.title = element_blank()
 )
