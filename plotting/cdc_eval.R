@@ -728,18 +728,15 @@ hash_value_distribution_adler32_binned <- load_hash_value_distribution_for_algor
 gc()
 
 hash_value_distribution_buzhash_binned <- load_hash_value_distribution_for_algorithm("buzhash") %>%
-  bin_normalize_hash_value_distribution(bins=100, codomain_min=0, codomain_max=2^32) %>% 
-  mutate(algoritm_and_winsize = as.numeric(str_extract(algoritm_and_winsize, "\\d+")))
+  bin_normalize_hash_value_distribution(bins=100, codomain_min=0, codomain_max=2^32)
 gc()
 
 hash_value_distribution_rabin_binned <- load_hash_value_distribution_for_algorithm("rabin") %>%
-  bin_normalize_hash_value_distribution(bins=100, codomain_min=0, codomain_max=2^53) %>% 
-  mutate(algoritm_and_winsize = as.numeric(str_extract(algoritm_and_winsize, "\\d+")))
+  bin_normalize_hash_value_distribution(bins=100, codomain_min=0, codomain_max=2^53)
 gc()
 
 hash_value_distribution_gear64_binned <- load_hash_value_distribution_for_algorithm("gear64") %>%
-  bin_normalize_hash_value_distribution(bins=100, codomain_min=0, codomain_max=2^64) %>% 
-  mutate(algoritm_and_winsize = as.numeric(str_extract(algoritm_and_winsize, "\\d+")))
+  bin_normalize_hash_value_distribution(bins=100, codomain_min=0, codomain_max=2^64)
 gc()
 
 hash_value_distribution_data_binned <- rbind(
@@ -757,9 +754,10 @@ p <- hash_value_distribution_data_binned %>%
   labs(x="Normalized Codomain", y="Density") +
   scale_fill_jama(name="Window Size (B)") +
   scale_linetype_discrete(name="Window Size (B)") +
-  facet_wrap(~ algorithm, nrow = 4)
+  facet_wrap(~ algorithm, nrow = 2, scales = "free_y") +
+  theme(legend.position="bottom")
 
-print_plot(p, "hash_value_distributions", height = 5)
+print_plot(p, "hash_value_distributions", height = 4)
 
 
 
