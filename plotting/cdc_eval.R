@@ -108,7 +108,7 @@ perf_data <- perf_data %>%
   perf_derive_metrics()
 
 # Check for asymmetry, as per https://lemire.me/blog/2023/04/06/are-your-memory-bound-benchmarking-timings-normally-distributed/
-perf_data %>% 
+perf_data %>%
   filter(dataset != "zero" & dataset != "empty") %>%
   filter(event=="usec_per_byte" & target_chunk_size==2048) %>%
   group_by(algorithm,dataset) %>%
@@ -150,9 +150,9 @@ d <- perf_data %>%
   filter(dataset != "zero" & dataset != "empty")
 
 # Calculate some statistics...
-d <- d %>% 
-  group_by(algorithm,dataset,target_chunk_size,event) %>% 
-  summarize(dataset_size=mean(dataset_size), n=n(), 
+d <- d %>%
+  group_by(algorithm,dataset,target_chunk_size,event) %>%
+  summarize(dataset_size=mean(dataset_size), n=n(),
             val=mean(value), sd=sd(value), se=standard_error(value),
             mmd=mean_min_dev(value))
 
@@ -198,7 +198,7 @@ d <- perf_data %>%
 # Calculate some statistics...
 d <- d %>%
   group_by(algorithm,dataset,target_chunk_size,event) %>%
-  summarize(dataset_size=mean(dataset_size), n=n(), 
+  summarize(dataset_size=mean(dataset_size), n=n(),
             val=mean(value), sd=sd(value), se=standard_error(value),
             mmd=mean_min_dev(value))
 
@@ -249,7 +249,7 @@ d <- perf_data %>%
 # Calculate some statistics...
 d <- d %>%
   group_by(algorithm,dataset,target_chunk_size,event) %>%
-  summarize(dataset_size=mean(dataset_size), n=n(), 
+  summarize(dataset_size=mean(dataset_size), n=n(),
             val=mean(value), sd=sd(value), se=standard_error(value),
             mmd=mean_min_dev(value))
 
@@ -307,7 +307,7 @@ d <- perf_data %>%
   filter(event %in% c("task-clock","mibytes_per_sec","usec_per_byte","branch_miss_percentage","cache_miss_percentage","l1_dcache_miss_percentage","instructions_per_cycle","instructions_per_byte"))
 
 # Create table
-t <- d %>% 
+t <- d %>%
   pivot_wider(id_cols=c(algorithm,dataset,dataset_size,target_chunk_size,n),names_from=event,values_from=c("val","se","max"),names_glue = "{event}_{.value}",names_vary="slowest") %>%
   mutate(dataset_size=NULL, n=NULL) %>%
   arrange(target_chunk_size,dataset,algorithm) %>%
@@ -359,8 +359,8 @@ d <- perf_data %>%
   mutate(target_chunk_size = as.factor(target_chunk_size))
 
 # Calculate some statistics...
-d <- d %>% 
-  group_by(algorithm,dataset,target_chunk_size,event) %>% 
+d <- d %>%
+  group_by(algorithm,dataset,target_chunk_size,event) %>%
   summarize(bytes=mean(dataset_size), n=n(),
             val=mean(value), sd=sd(value), se=standard_error(value),
             mmd=mean_min_dev(value))
@@ -393,9 +393,9 @@ d <- perf_data %>%
   filter(target_chunk_size %in% POWER_OF_TWO_SIZES)
 
 # Compute statistics
-d <- d %>% 
-  group_by(algorithm,dataset,target_chunk_size,event) %>% 
-  summarize(dataset_size=mean(dataset_size), n=n(), 
+d <- d %>%
+  group_by(algorithm,dataset,target_chunk_size,event) %>%
+  summarize(dataset_size=mean(dataset_size), n=n(),
             val=mean(value), sd=sd(value),
             se=standard_error(value),
             max=max(value),
@@ -465,8 +465,8 @@ d <- perf_data %>%
   filter(dataset == "random" | dataset=="code") %>%
   filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
   filter(target_chunk_size == 2048) %>%
-  group_by(algorithm,dataset,target_chunk_size,event) %>% 
-  summarize(dataset_size=mean(dataset_size), n=n(), 
+  group_by(algorithm,dataset,target_chunk_size,event) %>%
+  summarize(dataset_size=mean(dataset_size), n=n(),
             val=mean(value),
             sd=sd(value),
             se=standard_error(value),
@@ -620,7 +620,7 @@ d <- dedup_data %>%
   filter(!grepl("hash", algorithm, fixed=TRUE))
 
 # Create table
-t <- d %>% 
+t <- d %>%
   pivot_wider(id_cols=c(algorithm,dataset),names_from=target_chunk_size,values_from=dedup_ratio)
 
 addtorow <- list()
@@ -900,9 +900,9 @@ d <- bind_rows(lapply(csd_data_full, function(df) {
 }))
 
 # Create Table
-t <- d %>% 
+t <- d %>%
   # xtable cannot handle int64
-  mutate(n=NULL,mean=as.integer(mean)) %>% 
+  mutate(n=NULL,mean=as.integer(mean)) %>%
   pivot_wider(id_cols = c("algorithm","dataset"),names_from=target_chunk_size,values_from=c("mean","sd"),names_vary = "slowest")
 
 addtorow <- list()
@@ -1103,7 +1103,7 @@ ggplot(data=dd %>% mutate(chunk_size = as.double(chunk_size)), aes(x=chunk_size,
 
 
 ##########################################
-d %>% 
+d %>%
   filter(dataset=="random") %>%
   filter(target_chunk_size==4096) %>%
   mutate(chunk_size = as.double(chunk_size)) %>%
@@ -1137,7 +1137,7 @@ df %>%
   )
 
 ##########################################
-d %>% 
+d %>%
   filter(dataset=="random") %>%
   filter(target_chunk_size==4096) %>%
   mutate(chunk_size = as.double(chunk_size)) %>%
@@ -1174,7 +1174,7 @@ dd %>% mutate(chunk_size = as.double(chunk_size)) %>%
   )
 
 ##########################################
-csd_data_random %>% 
+csd_data_random %>%
   filter(algorithm %in% c("gear","gear_nc_1","gear_nc_2","gear_nc_3")) %>%
   filter(dataset=="random") %>%
   filter(target_chunk_size==2048) %>%
@@ -1190,7 +1190,7 @@ csd_data_random %>%
     labels = trans_format("log2", math_format(2 ^ .x)),
   )
 
-csd_data_random %>% 
+csd_data_random %>%
   filter(algorithm %in% c("gear","gear_nc_1","gear_nc_2","gear_nc_3")) %>%
   filter(dataset=="random") %>%
   filter(target_chunk_size==2048) %>%
@@ -1208,7 +1208,7 @@ csd_data_random %>%
     labels = trans_format("log2", math_format(2 ^ .x)),
   )
 
-csd_data_random %>% 
+csd_data_random %>%
   filter(algorithm %in% c("gear","gear_nc_1","gear_nc_2","gear_nc_3")) %>%
   filter(dataset=="random") %>%
   filter(target_chunk_size==2048) %>%
@@ -1228,7 +1228,7 @@ csd_data_random %>%
   )
 
 
-csd_data_random %>% 
+csd_data_random %>%
   filter(algorithm %in% c("gear","gear_nc_1","gear_nc_2","gear_nc_3")) %>%
   filter(dataset=="random") %>%
   filter(target_chunk_size==2048) %>%
@@ -1247,7 +1247,7 @@ csd_data_random %>%
   )
 
 
-csd_data_random %>% 
+csd_data_random %>%
   filter(algorithm %in% c("gear","gear_nc_1","gear_nc_2","gear_nc_3")) %>%
   filter(dataset=="random") %>%
   filter(target_chunk_size==2048) %>%
@@ -1255,7 +1255,7 @@ csd_data_random %>%
   group_by(algorithm) %>%
   summarize(n=n())
 
-csd_data_random %>% 
+csd_data_random %>%
   filter(algorithm %in% c("gear","gear_nc_1","gear_nc_2","gear_nc_3")) %>%
   filter(dataset=="random") %>%
   filter(target_chunk_size==2048) %>%
