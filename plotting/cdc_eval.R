@@ -68,8 +68,16 @@ algorithm_as_factor <- function(df) {
 }
 
 QUICKCDC_ALGORITHMS <- c("quick_2","quick_3","quick_hash_2","quick_hash_3",
-                         "quick_2_rabin_64","quick_3_rabin_64","quick_hash_2_rabin_64","quick_hash_3_rabin_64")
+                         "quick_2_rabin_64","quick_3_rabin_64","quick_hash_2_rabin_64","quick_hash_3_rabin_64",
+                         "quick_2_noskip","quick_3_noskip","quick_hash_2_noskip","quick_hash_3_noskip",
+                         "quick_2_rabin_64_noskip","quick_3_rabin_64_noskip","quick_hash_2_rabin_64_noskip","quick_hash_3_rabin_64_noskip"
+                         )
 QUICKCDC_RABIN_ALGORITHMS <- c("quick_2_rabin_64","quick_3_rabin_64","quick_hash_2_rabin_64","quick_hash_3_rabin_64")
+QUICKCDC_GEAR_ALGORITHMS <- c("quick_2","quick_3","quick_hash_2","quick_hash_3")
+QUICKCDC_RABIN_ALGORITHMS_NOSKIP <- c("quick_2_rabin_64_noskip","quick_3_rabin_64_noskip","quick_hash_2_rabin_64_noskip","quick_hash_3_rabin_64_noskip")
+QUICKCDC_GEAR_ALGORITHMS_NOSKIP <- c("quick_2_noskip","quick_3_noskip","quick_hash_2_noskip","quick_hash_3_noskip")
+
+
 GEAR_ALGORITHMS <- c("gear","gear_nc_1","gear_nc_2","gear_nc_3","gear64","gear64_simd")
 RABIN_ALGORITHMS <- c("rabin_16","rabin_32","rabin_48","rabin_64","rabin_128","rabin_256")
 BUZHASH_ALGORITHMS <- c("buzhash_16","buzhash_32","buzhash_48","buzhash_64","buzhash_128","buzhash_256")
@@ -135,7 +143,10 @@ perf_data <- perf_data %>% filter(dataset != "empty")
 #  - Target chunk size: e.g. 2 KiB
 #- Idea: How does QuickCDC perform w.r.t. caching and jumping on different datasets?
 d <- perf_data %>%
-  filter(algorithm %in% QUICKCDC_RABIN_ALGORITHMS | algorithm == "rabin_64") %>%
+  filter(algorithm %in% QUICKCDC_RABIN_ALGORITHMS |
+           algorithm == "rabin_64"
+         #| algorithm %in% QUICKCDC_RABIN_ALGORITHMS_NOSKIP
+  ) %>%
   filter(dataset != "zero" & dataset != "empty")
 
 # Calculate some statistics...
@@ -160,10 +171,123 @@ p <- d %>%
   scale_fill_jama(name="", # Legend label
                   #breaks=c("gear_nc_1","quick_2", "quick_3", "quick_hash_2","quick_hash_3"),
                   #labels=c("Gear","A-2", "A-3","HM-2","HM-3"))
-                  breaks=c("rabin_64","quick_2_rabin_64", "quick_3_rabin_64", "quick_hash_2_rabin_64","quick_hash_3_rabin_64"),
-                  labels=c("Rabin","A-2", "A-3","HM-2","HM-3"))
+                  breaks=c("rabin_64",
+                           "quick_2_rabin_64", "quick_3_rabin_64", "quick_hash_2_rabin_64","quick_hash_3_rabin_64"#,
+                           #"quick_2_rabin_64_noskip", "quick_3_rabin_64_noskip", "quick_hash_2_rabin_64_noskip","quick_hash_3_rabin_64_noskip"
+                  ),
+                  labels=c("Rabin",
+                           "A-2", "A-3","HM-2","HM-3"#,
+                           #"A-2-NS", "A-3-NS","HM-2-NS","HM-3-NS"
+                  ))
 
 print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib")
+
+######################################################################
+#- Computational efficiency of QuickCDC variants on different Datasets in a bar plot
+#  - x = Datasets, y = Bytes per second
+#- Algorithms: QUICK_*
+#  - Target chunk size: e.g. 2 KiB
+#- Idea: How does QuickCDC perform w.r.t. caching and jumping on different datasets?
+d <- perf_data %>%
+  filter(algorithm %in% QUICKCDC_GEAR_ALGORITHMS |
+           algorithm == "gear_nc_1"
+         #| algorithm %in% QUICKCDC_RABIN_ALGORITHMS_NOSKIP
+  ) %>%
+  filter(dataset != "zero" & dataset != "empty")
+
+# Calculate some statistics...
+d <- d %>%
+  group_by(algorithm,dataset,target_chunk_size,event) %>%
+  summarize(dataset_size=mean(dataset_size), n=n(), 
+            val=mean(value), sd=sd(value), se=standard_error(value),
+            mmd=mean_min_dev(value))
+
+# Plot
+p <- d %>%
+  filter(event=="mibytes_per_sec" & target_chunk_size==2048) %>%
+  ggplot(aes(y=val,fill=algorithm,x=dataset)) +
+  geom_bar(position=position_dodge(), stat="identity",
+           colour="black", # Use black outlines,
+           linewidth=.3) +      # Thinner lines
+  geom_errorbar(aes(ymin=val-mmd, ymax=val+mmd),
+                linewidth=.5,    # Thinner lines
+                width=.3,
+                position=position_dodge(.9)) +
+  labs(x="Dataset",y="Throughput (MiB/s)") +
+  scale_fill_jama(name="", # Legend label
+                  breaks=c("gear_nc_1","quick_2", "quick_3", "quick_hash_2","quick_hash_3"),
+                  labels=c("Gear","A-2", "A-3","HM-2","HM-3"))
+#breaks=c("rabin_64",
+#         "quick_2_rabin_64", "quick_3_rabin_64", "quick_hash_2_rabin_64","quick_hash_3_rabin_64"#,
+#         #"quick_2_rabin_64_noskip", "quick_3_rabin_64_noskip", "quick_hash_2_rabin_64_noskip","quick_hash_3_rabin_64_noskip"
+#),
+#labels=c("Rabin",
+#         "A-2", "A-3","HM-2","HM-3"#,
+#         #"A-2-NS", "A-3-NS","HM-2-NS","HM-3-NS"
+#))
+
+print_plot(p,"perf_quickcdc_gear_variants_different_datasets_2kib")
+
+
+######################################################################
+#- Computational efficiency of QuickCDC variants on different Datasets in a bar plot
+#  - x = Datasets, y = Bytes per second
+#- Algorithms: QUICK_*
+#  - Target chunk size: e.g. 2 KiB
+#- Idea: How does QuickCDC perform w.r.t. caching and jumping on different datasets?
+
+d <- perf_data %>%
+  filter(algorithm %in% QUICKCDC_ALGORITHMS |
+           algorithm == "gear_nc_1" |
+           algorithm == "rabin_64"
+  ) %>%
+  filter(target_chunk_size == 2048) %>%
+  filter(dataset != "zero" & dataset != "empty") %>%
+  filter(event=="mibytes_per_sec") %>%
+  filter(!grepl("hash", algorithm, fixed=TRUE))
+
+# Calculate some statistics...
+d <- d %>%
+  group_by(algorithm,dataset,target_chunk_size,event) %>%
+  summarize(dataset_size=mean(dataset_size), n=n(), 
+            val=mean(value), sd=sd(value), se=standard_error(value),
+            mmd=mean_min_dev(value))
+
+# Plot
+p <- d %>%
+  filter(!grepl("rabin",algorithm,fixed=TRUE)) %>%
+  ggplot(aes(y=val,fill=algorithm,x=dataset)) +
+  geom_bar(position=position_dodge(), stat="identity",
+           colour="black", # Use black outlines,
+           linewidth=.3) +      # Thinner lines
+  geom_errorbar(aes(ymin=val-mmd, ymax=val+mmd),
+                linewidth=.5,    # Thinner lines
+                width=.3,
+                position=position_dodge(.9)) +
+  labs(x="Dataset",y="Throughput (MiB/s)") +
+  scale_fill_jama(name="", # Legend label
+                  breaks=c("gear_nc_1","quick_2", "quick_3", "quick_2_noskip","quick_3_noskip"),
+                  labels=c("Gear","A-2", "A-3","A-2-NS","A-3-NS"))
+
+print_plot(p,"perf_quickcdc_gear_variants_different_datasets_2kib_skip_vs_cache")
+
+# Plot
+p <- d %>%
+  filter(grepl("rabin",algorithm,fixed=TRUE)) %>%
+  ggplot(aes(y=val,fill=algorithm,x=dataset)) +
+  geom_bar(position=position_dodge(), stat="identity",
+           colour="black", # Use black outlines,
+           linewidth=.3) +      # Thinner lines
+  geom_errorbar(aes(ymin=val-mmd, ymax=val+mmd),
+                linewidth=.5,    # Thinner lines
+                width=.3,
+                position=position_dodge(.9)) +
+  labs(x="Dataset",y="Throughput (MiB/s)") +
+  scale_fill_jama(name="", # Legend label
+                  breaks=c("rabin_64","quick_2_rabin_64", "quick_3_rabin_64", "quick_2_rabin_64_noskip","quick_3_rabin_64_noskip"),
+                  labels=c("Rabin","A-2", "A-3","A-2-NS","A-3-NS"))
+
+print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib_skip_vs_cache")
 
 ################
 #- Performance of QuickCDC variants on low/high entropy datasets, table
@@ -173,8 +297,8 @@ print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib")
 d <- perf_data %>%
   filter(algorithm %in% QUICKCDC_RABIN_ALGORITHMS | algorithm == "rabin_64") %>%
   filter(dataset %in% c("random","zero")) %>%
-  group_by(algorithm,dataset,target_chunk_size,event) %>% 
-  summarize(dataset_size=mean(dataset_size), n=n(), 
+  group_by(algorithm,dataset,target_chunk_size,event) %>%
+  summarize(dataset_size=mean(dataset_size), n=n(),
             val=mean(value), sd=sd(value),
             se=standard_error(value),
             max=max(value),
@@ -203,15 +327,18 @@ t <- d %>%
          l1_dcache_miss_percentage_val,
          l1_dcache_miss_percentage_se,
          #starts_with("branch_miss_percentage")
-         branch_miss_percentage_val,
-         branch_miss_percentage_se
+         #branch_miss_percentage_val,
+         #branch_miss_percentage_se
   )
 
 addtorow <- list()
 addtorow$pos <- list(0)
-addtorow$command <- '&&& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{L1 DCache Miss (\\%)} & \\multicolumn{2}{c}{Branch Misses (\\%)}\\\\
-\\cmidrule(lr){4-13}
-Algorithm & Dataset & Target CS & $\\mu$ & Max & $\\mu$ & SE & $\\mu$ & SE & $\\mu$ & SE & $\\mu$ & SE\\\\'
+addtorow$command <- '&&& \\multicolumn{2}{c}{Throughput (MiB/s)} &
+\\multicolumn{2}{c}{Inst./B} &
+\\multicolumn{2}{c}{IPC} &
+\\multicolumn{2}{c}{L1 DCache Miss (\\%)}\\\\
+\\cmidrule(lr){4-11}
+Algorithm & Dataset & Target CS & $\\mu$ & Max & $\\mu$ & SE & $\\mu$ & SE & $\\mu$ & SE\\\\'
 
 print(xtable(t, digits=4), file="tab/perf_quickcdc_rabin_variants.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
 
@@ -228,6 +355,7 @@ gc()
 d <- perf_data %>%
   filter(dataset == "code") %>%
   filter(algorithm %in% QUICKCDC_RABIN_ALGORITHMS | algorithm == "rabin_64") %>%
+  filter(target_chunk_size %in% POWER_OF_TWO_SIZES) %>%
   mutate(target_chunk_size = as.factor(target_chunk_size))
 
 # Calculate some statistics...
@@ -481,7 +609,11 @@ gc()
 # Compare QuickCDC variants to plain gear-nc-1
 
 d <- dedup_data %>%
-  filter(algorithm %in% QUICKCDC_RABIN_ALGORITHMS | algorithm == "rabin_64")
+  filter(target_chunk_size %in% POWER_OF_TWO_SIZES) %>%
+  filter(!(dataset %in% c("random","zero"))) %>%
+  filter(algorithm %in% QUICKCDC_RABIN_ALGORITHMS_NOSKIP | algorithm == "rabin_64") %>%
+  # filter out hash variants, they should be identical to the array versions
+  filter(!grepl("hash", algorithm, fixed=TRUE))
 
 # Create table
 t <- d %>% 
