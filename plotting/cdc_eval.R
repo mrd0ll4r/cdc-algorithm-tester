@@ -462,10 +462,10 @@ gc()
 ######################################################################
 # Performance overview
 d <- perf_data %>%
-  filter(dataset == "random" | dataset=="code") %>%
+  filter(dataset == "random") %>%
   filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
   filter(target_chunk_size == 2048) %>%
-  group_by(algorithm,dataset,target_chunk_size,event) %>%
+  group_by(algorithm,target_chunk_size,event) %>%
   summarize(dataset_size=mean(dataset_size), n=n(),
             val=mean(value),
             sd=sd(value),
@@ -481,9 +481,9 @@ t <- d %>%
                       "branches_per_byte")) %>%
   ungroup() %>%
   mutate(n=NULL, target_chunk_size=NULL,dataset_size = NULL) %>%
-  pivot_wider(id_cols=c(algorithm,dataset),names_from=event,values_from=c("val","se","max"),names_glue = "{event}_{.value}",names_vary="slowest") %>%
-  arrange(dataset,algorithm) %>%
-  select(algorithm,dataset,
+  pivot_wider(id_cols=c(algorithm),names_from=event,values_from=c("val","se","max"),names_glue = "{event}_{.value}",names_vary="slowest") %>%
+  arrange(algorithm) %>%
+  select(algorithm,
          mibytes_per_sec_val,
          mibytes_per_sec_max,
          instructions_per_byte_val,
@@ -501,7 +501,7 @@ addtorow <- list()
 addtorow$pos <- list(0)
 addtorow$command <- '&& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{Branches/B}\\\\
 \\cmidrule(lr){3-10}
-Algorithm & Dataset & $\\mu$ & Max & $\\mu$ & SE (±) & $\\mu$ & SE (±) & $\\mu$ & SE (±)\\\\'
+Algorithm & $\\mu$ & Max & $\\mu$ & SE (±) & $\\mu$ & SE (±) & $\\mu$ & SE (±)\\\\'
 
 print(xtable(t, digits=3), file="tab/perf_overview_random_code_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
 
