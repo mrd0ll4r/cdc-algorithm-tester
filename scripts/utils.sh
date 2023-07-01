@@ -208,7 +208,6 @@ get_cmd_args() {
     params="$(get_w_and_t_for_pci $3)"
     ;;
   "mii")
-    args_and_algo="--max-chunk-size $((2 * $3)) $1"
     params="$(get_w_for_mii $3)"
     ;;
   "nop")
