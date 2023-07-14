@@ -842,48 +842,21 @@ csd_data_full <- list(csd_data_random, csd_data_code, csd_data_web, csd_data_pdf
 gc()
 
 
-csd_density_plot <- function(df,spread=3) {
+csd_density_plot <- function(df) {
+  df <- filter(df, !(algorithm %in% c("fsc")))
   target_cs <- mean(df$target_chunk_size)
-  return(
-    df %>%
-      # Not sure how well ggplot handles bit64, so convert to double...
-      mutate(chunk_size = as.double(chunk_size)) %>%
-      # Filter out the tails, otherwise geom_density complains
-      # (not 100% sure why, I think it's because the distributions are so different, or maybe because of the heavy tails.)
-      # Or maybe it's because of the x-limits?
-      filter(chunk_size >= target_cs*2^(spread*-1) & chunk_size <= target_cs*2^spread) %>%
-      ggplot(aes(x=chunk_size,fill=algorithm)) +
-      geom_density(alpha=0.3,n=1024,bounds=c(0,Inf)) +
-      labs(x = "Chunk Size (B)", y = "Density") +
-      scale_x_continuous(
-        trans="log2",
-        breaks = target_cs*2^seq(-2,2),
-        labels = trans_format("log2", math_format(2 ^ .x)),
-        limits = c(target_cs*2^(spread*-1),target_cs*2^spread)
-      )
-  )
-}
 
-csd_density_plot2 <- function(df,spread=3) {
-  target_cs <- mean(df$target_chunk_size)
+  df_means <- df %>%
+    group_by(algorithm) %>% 
+    summarize(mean_chunk_size = mean(chunk_size))
+  
   return(
-    df %>%
-      # Not sure how well ggplot handles bit64, so convert to double...
-      mutate(chunk_size = as.double(chunk_size)) %>%
-      # Filter out the tails, otherwise geom_density complains
-      # (not 100% sure why, I think it's because the distributions are so different, or maybe because of the heavy tails.)
-      # Or maybe it's because of the x-limits?
-      #chunk_size >= target_cs*2^(spread*-1) &
-      filter( chunk_size <= target_cs*2^spread) %>%
-      ggplot(aes(x=chunk_size,fill=algorithm)) +
-      geom_density(alpha=0.3,n=1024,bounds=c(0,Inf)) +
-      labs(x = "Chunk Size (B)", y = "Density") +
-      coord_trans(x="log2") +
-      scale_x_continuous(
-        limits = c(target_cs*2^(spread*-1),target_cs*2^spread),
-        breaks = target_cs*2^seq(-2,2),
-        labels = trans_format("log2", math_format(2 ^ .x))
-      )
+    ggplot(df, aes(x = chunk_size, color = algorithm, linetype = algorithm)) +
+      geom_freqpoly(bins=100, aes(y = after_stat(density))) +
+      xlab("Chunk Size (B)") +
+      ylab("Density") +
+      xlim(c(0, target_cs * 4)) +
+      geom_point(data = df_means, aes(x = mean_chunk_size, y = 0, color = algorithm), size = 3, show.legend = FALSE)
   )
 }
 
@@ -964,14 +937,7 @@ p <- d  %>%
   filter(dataset==eval_dataset) %>%
   filter(target_chunk_size == eval_target_cs) %>%
   csd_density_plot()
-print_plot(p,sprintf("csd_gear_nc_%s_%d_v1",eval_dataset,eval_target_cs))
-
-p <- d  %>%
-  filter(dataset==eval_dataset) %>%
-  filter(target_chunk_size == eval_target_cs)  %>%
-  csd_density_plot2(spread=3)
-
-print_plot(p,sprintf("csd_gear_nc_%s_%d_v2",eval_dataset,eval_target_cs))
+print_plot(p,sprintf("csd_gear_nc_%s_%d",eval_dataset,eval_target_cs))
 
 ###############
 # All Datasets, eval_target_cs target
@@ -980,14 +946,7 @@ p <- d %>%
   csd_density_plot()+
   facet_wrap(~dataset,dir="v")
 
-print_plot(p,sprintf("csd_gear_nc_dataset_faceted_%d_v1",eval_target_cs),height=8)
-
-p <- d %>%
-  filter(target_chunk_size==eval_target_cs) %>%
-  csd_density_plot2()+
-  facet_wrap(~dataset,dir="v")
-
-print_plot(p,sprintf("csd_gear_nc_dataset_faceted_%d_v2",eval_target_cs),height=8)
+print_plot(p,sprintf("csd_gear_nc_dataset_faceted_%d",eval_target_cs),height=8)
 
 ###############
 # Dataset eval_dataset, all targets
@@ -997,17 +956,49 @@ p <- d %>%
   csd_density_plot()+
   facet_wrap(~target_chunk_size,dir="v")
 
-print_plot(p,sprintf("csd_gear_nc_%s_target_faceted_v1",eval_dataset),height=8)
-
-p <- d %>%
-  filter(dataset==eval_dataset) %>%
-  csd_density_plot2()+
-  facet_wrap(~target_chunk_size,dir="v")
-
-print_plot(p,sprintf("csd_gear_nc_%s_target_faceted_v2",eval_dataset),height=8)
+print_plot(p,sprintf("csd_gear_nc_%s_target_faceted",eval_dataset),height=8)
 
 rm(d,p,eval_target_cs,eval_dataset)
 gc()
+
+################
+# All datasets on target 737
+
+p <- read_csv(sprintf("%s/csd_random_737.csv.gz",csv_dir),col_types = "fciI") %>%
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>% 
+  select(-dataset, -target_chunk_size)
+  csd_density_plot()
+print_plot(p,sprintf("csd_random_737",eval_dataset),height=8)
+
+p <- read_csv(sprintf("%s/csd_code_737.csv.gz",csv_dir),col_types = "fciI") %>%
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>% 
+  select(-dataset, -target_chunk_size)
+  csd_density_plot()
+print_plot(p,sprintf("csd_code_737",eval_dataset),height=8)
+
+p <- read_csv(sprintf("%s/csd_web_737.csv.gz",csv_dir),col_types = "fciI") %>%
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>% 
+  select(-dataset, -target_chunk_size)
+  csd_density_plot()
+print_plot(p,sprintf("csd_web_737",eval_dataset),height=8)
+
+p <- read_csv(sprintf("%s/csd_pdf_737.csv.gz",csv_dir),col_types = "fciI") %>%
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>% 
+  select(-dataset, -target_chunk_size)
+  csd_density_plot()
+print_plot(p,sprintf("csd_pdf_737",eval_dataset),height=8)
+
+p <- read_csv(sprintf("%s/csd_lnx_737.csv.gz",csv_dir),col_types = "fciI") %>%
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>% 
+  select(-dataset, -target_chunk_size)
+  csd_density_plot()
+print_plot(p,sprintf("csd_lnx_737",eval_dataset),height=8)
+
+p <- read_csv(sprintf("%s/csd_zero_737.csv.gz",csv_dir),col_types = "fciI") %>%
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>% 
+  select(-dataset, -target_chunk_size)
+  csd_density_plot()
+print_plot(p,sprintf("csd_zero_737",eval_dataset),height=8)
 
 
 ######################################################################
@@ -1070,7 +1061,49 @@ rm(d,p)
 gc()
 
 
+################
+# All datasets on target 737
 
+ALGORITHMS_TO_COMPARE <- c("fsc","ae","ram","mii","pci","rabin_32","adler32_256","buzhash_64","gear","bfbc","bfbc_custom_div")
+
+csd_density_plot <- function(df) {
+  df <- filter(df, !(algorithm %in% c("fsc")))
+  target_cs <- mean(df$target_chunk_size)
+  
+  df_means <- df %>%
+    group_by(algorithm) %>% 
+    summarize(mean_chunk_size = mean(chunk_size))
+  
+  return(
+    ggplot(df, aes(x = chunk_size, color = algorithm, linetype = algorithm)) +
+      geom_freqpoly(bins=100, aes(y = after_stat(density))) +
+      xlab("Chunk Size (B)") +
+      ylab("Density") +
+      geom_point(data = df_means, aes(x = mean_chunk_size, y = after_stat(density) - convertY(3, "mm", "npc"), color = algorithm), size = 2, show.legend = FALSE) +
+      xlim(c(0, target_cs * 3)) +
+      facet_wrap(~dataset, scales = "free_y")
+  )
+}
+
+df_list <- list()
+
+for (dataset in c("random", "zero", "web", "code", "lnx", "pdf")) {
+  df <- read_csv(sprintf("%s/csd_%s_737.csv.gz", csv_dir, dataset), col_types = "cccii") %>%
+    filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
+    select(-target_chunk_size)
+  
+  df_list[[dataset]] <- df
+}
+
+d <- bind_rows(df_list)
+rm(df_list)
+
+p <- csd_density_plot(d) + xlim(c(0, 737 * 3)) # xlim here is redundant but it somehow would not work another way
+
+print_plot(p, "csd_737", width=8, height=4)
+
+rm(d,p)
+gc()
 
 
 #####################
