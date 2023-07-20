@@ -143,7 +143,7 @@ perf_data <- perf_data %>% filter(dataset != "empty")
 #  - Target chunk size: e.g. 2 KiB
 #- Idea: How does QuickCDC perform w.r.t. caching and jumping on different datasets?
 d <- perf_data %>%
-  filter(algorithm %in% QUICKCDC_RABIN_ALGORITHMS |
+  filter(algorithm %in% c(QUICKCDC_RABIN_ALGORITHMS, QUICKCDC_RABIN_ALGORITHMS_NOSKIP) |
            algorithm == "rabin_64"
          #| algorithm %in% QUICKCDC_RABIN_ALGORITHMS_NOSKIP
   ) %>%
@@ -157,7 +157,13 @@ d <- d %>%
             mmd=mean_min_dev(value))
 
 # Plot
-p <- d %>%
+algos <- c("rabin_64",
+           "quick_2_rabin_64_noskip", "quick_3_rabin_64_noskip",
+           "quick_2_rabin_64", "quick_3_rabin_64", "quick_hash_2_rabin_64","quick_hash_3_rabin_64"
+)
+d$algorithm <- factor(d$algorithm, levels = algos)
+
+p <- d %>% drop_na(algorithm) %>%
   filter(event=="mibytes_per_sec" & target_chunk_size==2048) %>%
   ggplot(aes(y=val,fill=algorithm,x=dataset)) +
   geom_bar(position=position_dodge(), stat="identity",
@@ -168,19 +174,17 @@ p <- d %>%
                 width=.3,
                 position=position_dodge(.9)) +
   labs(x="Dataset",y="Throughput (MiB/s)") +
-  scale_fill_jama(name="", # Legend label
-                  #breaks=c("gear_nc_1","quick_2", "quick_3", "quick_hash_2","quick_hash_3"),
-                  #labels=c("Gear","A-2", "A-3","HM-2","HM-3"))
-                  breaks=c("rabin_64",
-                           "quick_2_rabin_64", "quick_3_rabin_64", "quick_hash_2_rabin_64","quick_hash_3_rabin_64"#,
-                           #"quick_2_rabin_64_noskip", "quick_3_rabin_64_noskip", "quick_hash_2_rabin_64_noskip","quick_hash_3_rabin_64_noskip"
-                  ),
+  theme(legend.position="bottom") +
+  guides(fill = guide_legend(ncol = 4)) +
+  scale_fill_brewer(palette = "Set3") +
+  scale_fill_jama(name="",
+                  breaks=algos,
                   labels=c("Rabin",
-                           "A-2", "A-3","HM-2","HM-3"#,
-                           #"A-2-NS", "A-3-NS","HM-2-NS","HM-3-NS"
+                           "A-2-NS", "A-3-NS",
+                           "A-2", "A-3","HM-2","HM-3"
                   ))
 
-print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib")
+print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib", height = 3)
 
 ######################################################################
 #- Computational efficiency of QuickCDC variants on different Datasets in a bar plot
@@ -189,11 +193,17 @@ print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib")
 #  - Target chunk size: e.g. 2 KiB
 #- Idea: How does QuickCDC perform w.r.t. caching and jumping on different datasets?
 d <- perf_data %>%
-  filter(algorithm %in% QUICKCDC_GEAR_ALGORITHMS |
+  filter(algorithm %in% c(QUICKCDC_GEAR_ALGORITHMS, QUICKCDC_GEAR_ALGORITHMS_NOSKIP) |
            algorithm == "gear_nc_1"
          #| algorithm %in% QUICKCDC_RABIN_ALGORITHMS_NOSKIP
   ) %>%
   filter(dataset != "zero" & dataset != "empty")
+
+algos <- c("gear_nc_1",
+           "quick_2_noskip", "quick_3_noskip",
+           "quick_2", "quick_3", "quick_hash_2","quick_hash_3"
+)
+d$algorithm <- factor(d$algorithm, levels = algos)
 
 # Calculate some statistics...
 d <- d %>%
@@ -203,7 +213,7 @@ d <- d %>%
             mmd=mean_min_dev(value))
 
 # Plot
-p <- d %>%
+p <- d %>% drop_na(algorithm) %>%
   filter(event=="mibytes_per_sec" & target_chunk_size==2048) %>%
   ggplot(aes(y=val,fill=algorithm,x=dataset)) +
   geom_bar(position=position_dodge(), stat="identity",
@@ -214,19 +224,18 @@ p <- d %>%
                 width=.3,
                 position=position_dodge(.9)) +
   labs(x="Dataset",y="Throughput (MiB/s)") +
-  scale_fill_jama(name="", # Legend label
-                  breaks=c("gear_nc_1","quick_2", "quick_3", "quick_hash_2","quick_hash_3"),
-                  labels=c("Gear","A-2", "A-3","HM-2","HM-3"))
-#breaks=c("rabin_64",
-#         "quick_2_rabin_64", "quick_3_rabin_64", "quick_hash_2_rabin_64","quick_hash_3_rabin_64"#,
-#         #"quick_2_rabin_64_noskip", "quick_3_rabin_64_noskip", "quick_hash_2_rabin_64_noskip","quick_hash_3_rabin_64_noskip"
-#),
-#labels=c("Rabin",
-#         "A-2", "A-3","HM-2","HM-3"#,
-#         #"A-2-NS", "A-3-NS","HM-2-NS","HM-3-NS"
-#))
+  theme(legend.position="bottom") +
+  guides(fill = guide_legend(ncol = 4)) +
+  scale_fill_brewer(palette = "Set3") +
+  scale_fill_jama(name="",
+                  breaks=algos,
+                  labels=c("Gear",
+                           "A-2-NS", "A-3-NS",
+                           "A-2", "A-3","HM-2","HM-3"
+                  ))
 
-print_plot(p,"perf_quickcdc_gear_variants_different_datasets_2kib")
+print_plot(p,"perf_quickcdc_gear_variants_different_datasets_2kib", height = 3)
+
 
 
 ######################################################################
@@ -342,7 +351,7 @@ Algorithm & Dataset & Target CS & $\\mu$ & Max & $\\mu$ & SE & $\\mu$ & SE & $\\
 
 print(xtable(t, digits=4), file="tab/perf_quickcdc_rabin_variants.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
 
-rm(d,p,t,addtorow)
+rm(d,p,t,addtorow,algos)
 gc()
 
 ######################################################################
@@ -539,11 +548,13 @@ p <- d %>%
   geom_line(position=position_dodge(0.1)) +
   geom_point(position=position_dodge(0.1), size=1, shape=21, fill="white") +
   facet_wrap(~dataset,nrow=4,ncol=1) +
-  scale_color_futurama() #name="Supplement type", # Legend label, use darker colors
-#breaks=c("OJ", "VC"),
-#labels=c("Orange juice", "Ascorbic acid"))
+  ylab("Deduplication Ratio") +
+  xlab("Target Chunk Size") +
+  theme(legend.position="bottom") +
+  guides(color = guide_legend(nrow = 4)) +
+  scale_color_futurama()
 
-print_plot(p,"dedup_overview_dataset_facets", height = 4)
+print_plot(p,"dedup_overview_dataset_facets", height = 8)
 
 rm(p,d)
 gc()
