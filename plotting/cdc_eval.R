@@ -8,6 +8,7 @@ library(scales)
 library(ggsci)
 library(stringr)
 library(bit64)
+library(RColorBrewer)
 
 source("base_setup.R")
 source("plot_setup.R")
@@ -176,11 +177,12 @@ p <- d %>% drop_na(algorithm) %>%
   labs(x="Dataset",y="Throughput (MiB/s)") +
   theme(legend.position="bottom") +
   guides(fill = guide_legend(ncol = 4)) +
-  scale_fill_brewer(palette = "Set3") +
+  scale_fill_manual(values = colorRampPalette(brewer.pal(12, "Set1"))(length(algos))) +
   scale_fill_jama(name="",
                   breaks=algos,
                   labels=c("Rabin",
-                           "A-2-NS", "A-3-NS",
+                           "A-2-NS", "A-3-NS", 
+                           "HM-2-NS", "HM-3-NS",
                            "A-2", "A-3","HM-2","HM-3"
                   ))
 
@@ -1010,6 +1012,34 @@ p <- read_csv(sprintf("%s/csd_zero_737.csv.gz",csv_dir),col_types = "fciI") %>%
   select(-dataset, -target_chunk_size)
   csd_density_plot()
 print_plot(p,sprintf("csd_zero_737",eval_dataset),height=8)
+
+
+######################################################################
+# Plot Gear variants
+
+target_cs <- 737
+d <- read_csv(sprintf("%s/csd_%s_737.csv.gz", csv_dir, "code"), col_types = "cccii") %>%
+  filter(algorithm %in% GEAR_ALGORITHMS) %>% 
+  filter(algorithm != "gear64_simd" & algorithm != "gear64")
+
+df_means <- d %>%
+  group_by(algorithm) %>% 
+  summarize(mean_chunk_size = mean(chunk_size))
+
+labels <- c("gear" = "NC-0", "gear_nc_1" = "NC-1", "gear_nc_2" = "NC-2", "gear_nc_3" = "NC-3")
+p <- ggplot(d, aes(x = chunk_size, color = algorithm, linetype = algorithm)) +
+  geom_freqpoly(bins=100, aes(y = after_stat(density))) +
+  xlab("Chunk Size (B)") +
+  ylab("Density") +
+  xlim(c(0, target_cs * 3)) +
+  geom_point(data = df_means, aes(x = mean_chunk_size, y = 0, color = algorithm), size = 2, show.legend = FALSE) +
+  theme(legend.position = "bottom", legend.title = element_blank()) +
+  scale_color_discrete(labels = labels) +
+  scale_linetype_discrete(labels = labels)
+
+print_plot(p, "csd_gear_variants", height=3)
+
+rm(labels,df_means,target_cs,d,p)
 
 
 ######################################################################
