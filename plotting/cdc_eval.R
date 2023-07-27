@@ -510,11 +510,11 @@ t <- d %>%
 
 addtorow <- list()
 addtorow$pos <- list(0)
-addtorow$command <- '&& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{Branches/B}\\\\
-\\cmidrule(lr){3-10}
+addtorow$command <- '& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{Branches/B}\\\\
+\\cmidrule(lr){2-9}
 Algorithm & $\\mu$ & Max & $\\mu$ & SE (±) & $\\mu$ & SE (±) & $\\mu$ & SE (±)\\\\'
 
-print(xtable(t, digits=3), file="tab/perf_overview_random_code_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
+print(xtable(t, digits=3), file="tab/perf_overview_random_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
 
 
 ######################################################################
