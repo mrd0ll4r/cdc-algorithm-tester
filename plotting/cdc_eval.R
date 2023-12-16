@@ -479,7 +479,7 @@ p <- d %>%
   ungroup() %>%
   mutate(target_chunk_size = as.factor(target_chunk_size)) %>%
   mutate(dataset=NULL,dataset_size=NULL,n=NULL) %>%
-  mutate(algorithm = fct_recode(algorithm,gear64="Scalar", gear64_simd="SIMD")) %>%
+  mutate(algorithm = fct_recode(algorithm, Scalar="gear64",SIMD="gear64_simd")) %>%
   ggplot(aes(group=algorithm, x=target_chunk_size, y=val, fill=algorithm)) +
     # Plot error bars first so the barplot is over it, i.e., hides the lower whisker.
     geom_errorbar(aes(ymin=val*0.5, ymax = max),
