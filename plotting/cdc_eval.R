@@ -486,14 +486,17 @@ p <- d %>%
                   position = position_dodge(1),
                   linewidth=.5,    # Thinner lines
                   width=.3,) +
-    geom_bar(stat="identity", position = position_dodge(1)) +
+    geom_bar(stat="identity",
+             position = position_dodge(1),
+             colour="black", # Use black outlines,
+             linewidth=.3) +      # Thinner lines
   labs(x="Target Chunk Size",y="Throughput (MiB/s)") +
   theme(legend.position="bottom") +
   scale_fill_jama(name="")
 
 print_plot(p, "perf_gear_simd_throughput_comparison_chunk_sizes_random")
 
-rm(d,t,addtorow)
+rm(d,t,p,addtorow)
 gc()
 
 
