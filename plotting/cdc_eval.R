@@ -489,7 +489,8 @@ t <- d %>%
   filter(event %in% c("mibytes_per_sec",
                       "instructions_per_byte",
                       "instructions_per_cycle",
-                      "branches_per_byte")) %>%
+                      "branches_per_byte",
+                      "branch_miss_percentage")) %>%
   ungroup() %>%
   mutate(n=NULL, target_chunk_size=NULL,dataset_size = NULL) %>%
   pivot_wider(id_cols=c(algorithm),names_from=event,values_from=c("val","se","max"),names_glue = "{event}_{.value}",names_vary="slowest") %>%
@@ -502,7 +503,9 @@ t <- d %>%
          instructions_per_cycle_val,
          instructions_per_cycle_se,
          branches_per_byte_val,
-         branches_per_byte_se
+         branches_per_byte_se,
+         branch_miss_percentage_val,
+         branch_miss_percentage_se
          #starts_with("mibytes_per_sec"),
          #starts_with("instructions_per_byte"),
          #starts_with("instructions_per_cycle")
@@ -510,9 +513,9 @@ t <- d %>%
 
 addtorow <- list()
 addtorow$pos <- list(0)
-addtorow$command <- '& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{Branches/B}\\\\
-\\cmidrule(lr){2-9}
-Algorithm & $\\mu$ & Max & $\\mu$ & SE (±) & $\\mu$ & SE (±) & $\\mu$ & SE (±)\\\\'
+addtorow$command <- '& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{Branches/B}  & \\multicolumn{2}{c}{Branch Miss \\%}\\\\
+\\cmidrule(lr){2-11}
+Algorithm & $\\mu$ & Max & $\\mu$ & SE (±) & $\\mu$ & SE (±) & $\\mu$ & SE (±) & $\\mu$ & SE (±)\\\\'
 
 print(xtable(t, digits=3), file="tab/perf_overview_random_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
 
