@@ -549,6 +549,34 @@ Algorithm & $\\mu$ & Max & $\\mu$ & SE (±) & $\\mu$ & SE (±) & $\\mu$ & SE (±
 
 print(xtable(t, digits=3), file="tab/perf_overview_random_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
 
+p <- d %>%
+  filter(event %in% c("mibytes_per_sec"#,
+                      #"instructions_per_byte",
+                      #"instructions_per_cycle",
+                      #"branches_per_byte",
+                      #"branch_miss_percentage"
+                      )) %>%
+  ungroup() %>%
+  mutate(n=NULL, target_chunk_size=NULL,dataset_size = NULL) %>%
+  mutate(algorithm = fct_rev(algorithm)) %>%
+  ggplot(aes(x=val, y=algorithm)) +
+  # Plot error bars first so the barplot is over it, i.e., hides the lower whisker.
+  geom_errorbar(aes(xmin=val*0.5, xmax = max),
+                #position = position_dodge(1),
+                linewidth=.5,    # Thinner lines
+                width=.3,) +
+  geom_bar(stat="identity",
+           #, position = position_dodge(1)
+           colour="black", # Use black outlines,
+           linewidth=.3) +      # Thinner lines
+  labs(x="Throughput (MiB/s)", y=NULL) +
+  theme(legend.position="bottom")
+
+print_plot(p, "perf_overview_throughput_random_2kib")
+
+rm(d,t,p,addtorow)
+gc()
+
 
 ######################################################################
 # DEDUPLICATION RATIO
