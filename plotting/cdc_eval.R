@@ -9,6 +9,7 @@ library(ggsci)
 library(stringr)
 library(bit64)
 library(RColorBrewer)
+library(forcats)
 
 source("base_setup.R")
 source("plot_setup.R")
@@ -465,6 +466,32 @@ addtorow$command <- '&& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{
 Algorithm & Target CS (B) & $\\mu$ & Max & $\\mu$ & SE (±) & $\\mu$ & SE (±) & $\\mu$ & SE (±)\\\\'
 
 print(xtable(t, digits=3), file="tab/perf_gear_simd_comparison_random.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
+
+p <- d %>%
+  filter(event %in% c('mibytes_per_sec'
+                      #"task-clock",
+                      #"gbranches",
+                      #"branch_miss_percentage",
+                      #"cache_miss_percentage",
+                      #"instructions_per_byte",
+                      #"instructions_per_cycle"
+                      )) %>%
+  ungroup() %>%
+  mutate(target_chunk_size = as.factor(target_chunk_size)) %>%
+  mutate(dataset=NULL,dataset_size=NULL,n=NULL) %>%
+  mutate(algorithm = fct_recode(algorithm,gear64="Scalar", gear64_simd="SIMD")) %>%
+  ggplot(aes(group=algorithm, x=target_chunk_size, y=val, fill=algorithm)) +
+    # Plot error bars first so the barplot is over it, i.e., hides the lower whisker.
+    geom_errorbar(aes(ymin=val*0.5, ymax = max),
+                  position = position_dodge(1),
+                  linewidth=.5,    # Thinner lines
+                  width=.3,) +
+    geom_bar(stat="identity", position = position_dodge(1)) +
+  labs(x="Target Chunk Size",y="Throughput (MiB/s)") +
+  theme(legend.position="bottom") +
+  scale_fill_jama(name="")
+
+print_plot(p, "perf_gear_simd_throughput_comparison_chunk_sizes_random")
 
 rm(d,t,addtorow)
 gc()
