@@ -17,6 +17,7 @@ source("table_setup.R")
 source("tikz_setup.R")
 
 options(pillar.sigfig = 4)
+theme_set(theme_bw())
 
 # Function to calculate standard error
 standard_error <- function(x) sd(x) / sqrt(length(x))
