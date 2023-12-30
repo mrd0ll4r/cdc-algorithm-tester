@@ -1171,37 +1171,66 @@ ALGORITHMS_TO_COMPARE <- c("fsc","ae","ram","mii","pci","rabin_32","adler32_256"
 
 csd_density_plot <- function(df) {
   df <- filter(df, !(algorithm %in% c("fsc")))
-  target_cs <- mean(df$target_chunk_size)
+  target_cs <- as.numeric(df$target_chunk_size[1])
   
+  # Calculate the density for each 'dataset' group
+  density_df <- df %>% 
+    group_by(dataset) %>% 
+    do({
+      dens <- density(.$chunk_size)  # Calculate the density for the 'chunk_size' column
+      data.frame(x = dens$x, y = dens$y)  # Convert the density object to a data frame
+    }) 
+  
+  # Find the min and max density for each 'dataset' group
+  summary_df <- density_df %>%
+    group_by(dataset) %>%
+    summarize(y_base = 0 - max(y) * 0.003)
+  
+  # Calculate mean chunk size for each algorithm within each dataset
   df_means <- df %>%
-    group_by(algorithm) %>% 
-    summarize(mean_chunk_size = mean(chunk_size))
+    group_by(algorithm, dataset) %>% 
+    summarize(mean_chunk_size = mean(chunk_size), .groups = 'drop')
   
-  return(
-    ggplot(df, aes(x = chunk_size, color = algorithm, linetype = algorithm)) +
+  # Join the y_base and y_max values to df_means
+  df_means <- df_means %>%
+    left_join(summary_df, by = "dataset") %>%
+    left_join(ymax_df, by = "dataset")
+  
+  # Create the density plot with faceting and custom limits
+  return(df %>% 
+      ggplot(aes(x = chunk_size, color = algorithm, linetype = algorithm)) +
       geom_freqpoly(bins=100, aes(y = after_stat(density))) +
       xlab("Chunk Size (B)") +
       ylab("Density") +
-      geom_point(data = df_means, aes(x = mean_chunk_size, y = after_stat(density) - convertY(3, "mm", "npc"), color = algorithm), size = 2, show.legend = FALSE) +
       xlim(c(0, target_cs * 3)) +
-      facet_wrap(~dataset, scales = "free_y")
-  )
+      facet_wrap(~dataset, ncol = 2, scales = "free_y") +
+      theme(legend.position = "bottom") +
+      geom_point(data = df_means, aes(x = mean_chunk_size, y = 0 - 0.03 * y_max, color = algorithm), size = 2, show.legend = FALSE)
+    )
 }
 
 df_list <- list()
+ymax_df <- data.frame(dataset = character(), y_max = numeric(), stringsAsFactors = FALSE)
 
-for (dataset in c("random", "zero", "web", "code", "lnx", "pdf")) {
-  df <- read_csv(sprintf("%s/csd_%s_737.csv.gz", csv_dir, dataset), col_types = "cccii") %>%
-    filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
-    select(-target_chunk_size)
+for (dataset in c("random", "zero" , "web", "code", "lnx", "pdf")) {
+  df_list[[dataset]] <- read_csv(sprintf("%s/csd_%s_737.csv.gz", csv_dir, dataset), col_types = "cccii") %>%
+    filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>% 
+    filter(!(algorithm %in% c("fsc")))
   
-  df_list[[dataset]] <- df
+  p <- df_list[[dataset]] %>% 
+    ggplot(aes(x = chunk_size, color = algorithm, linetype = algorithm)) +
+    geom_freqpoly(bins=100, aes(y = after_stat(density))) +
+    xlim(c(0, 737 * 3))
+  p <- ggplot_build(p)
+  
+  y_max <- max(p$data[[1]]$y, na.rm = TRUE)
+  ymax_df <- rbind(ymax_df, data.frame(dataset = dataset, y_max = y_max))
 }
 
 d <- bind_rows(df_list)
 rm(df_list)
 
-p <- csd_density_plot(d) + xlim(c(0, 737 * 3)) # xlim here is redundant but it somehow would not work another way
+p <- csd_density_plot(d)
 
 print_plot(p, "csd_737", width=8, height=4)
 
