@@ -27,14 +27,13 @@ def read_csv(path):
             stats.append(obj)
     return stats
 
-
+data_path = os.environ.get('DATA_PATH') or 'data'
 dataset = sys.argv[1]
-dataset_size = os.stat(f'data/{dataset}').st_size
+dataset_size = os.stat(f'{data_path}/{dataset}').st_size
 target = int(sys.argv[2])
 min = int(sys.argv[3])
 divisors = []
 cs = dataset_size # expected average chunk size with current set of divisors
-data_path = os.environ.get('DATA_PATH') or 'data'
 byte_pairs = list(map(lambda x: x['count'], read_csv(f'{data_path}/bfbc/{dataset}.csv'))) # index => count
 
 def get_chunk_size(_divisors):
