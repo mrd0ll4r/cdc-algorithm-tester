@@ -34,7 +34,8 @@ target = int(sys.argv[2])
 min = int(sys.argv[3])
 divisors = []
 cs = dataset_size # expected average chunk size with current set of divisors
-byte_pairs = list(map(lambda x: x['count'], read_csv(f'data/bfbc/{dataset}.csv'))) # index => count
+data_path = os.environ.get('DATA_PATH') or 'data'
+byte_pairs = list(map(lambda x: x['count'], read_csv(f'{data_path}/bfbc/{dataset}.csv'))) # index => count
 
 def get_chunk_size(_divisors):
   """

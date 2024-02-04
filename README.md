@@ -1,6 +1,6 @@
-# cdc-algorithm-tester
+# CDC Algorithm Tester
 
-Rust Binary to Test Various CDC Algorithms
+Rust Binary to Test Various CDC Algorithms. Requires Bash 4+.
 
 ```
 A program that invokes a selectable chunking algorithm with given configuration on a provided file.
@@ -75,6 +75,7 @@ Options:
 
 Specify an input file with `-i <FILE>`, then run one of the subcommands on it, to chunk it using the specified algorithm.
 The output is a list of chunks as `<digest>,<size in bytes>`, like:
+
 ```
 6264013dd6158754a260e8ef56f866502d0cd5c3,586
 e1fb30e629e75152a72e6d1e55eae3a8ca5683c6,1248
@@ -86,6 +87,7 @@ e1fb30e629e75152a72e6d1e55eae3a8ca5683c6,1248
 ```
 
 It is trivial to validate that the blocks add up to the original file:
+
 ```bash
 $ cdc-algorithm-tester <invocation> | awk -F',' '{print $2}' | paste -sd+ | bc
 <sum of all chunk sizes>
@@ -132,6 +134,7 @@ We use [std::hints::black_box](https://doc.rust-lang.org/std/hint/fn.black_box.h
 
 We use compile-time constants whenever applicable with reasonable effort.
 In particular, we use constants for:
+
 - the feature vector sizes of QuickCDC
 - the size of the window for Rabin, Buzhash, Adler32, and PCI. These are implemented using stack-allocated arrays.
 
@@ -147,9 +150,11 @@ Preferably and most easily: build id docker using the [build-in-docker.sh](./bui
 The binary will be placed in `out/`.
 
 Alternatively, on a host with an up-to-date __nightly__ Rust installed:
+
 ```
 RUSTFLAGS="-C target-cpu=native" cargo +nightly build --release --locked
 ```
+
 This will produce a binary in `target/release/`
 
 If performance is not a consideration, build without `--release`.
@@ -160,6 +165,7 @@ The binary will be placed in `target/debug/` in this case.
 
 We implement various state-of-the-art rolling has functions our fork of the `cdchunking-rs` crate [here](https://github.com/mrd0ll4r/cdchunking-rs/tree/new-algorithms).
 These are original implementations derived from their respective publications:
+
 - Fixed-size chunking (FSC)
 - Gearhash (Gear)
 - Gearhash with normalized chunking (NC-Gear).
@@ -176,6 +182,7 @@ Additionally, we adapt a range of pre-existing rolling hash functions to interop
 These implementations are not original, but rather translated from other languages, or existing implementations in Rust.
 They are contained in this repository (see [src/](src)).
 Currently, we implement:
+
 - Rabin fingerprinting, following popular implementations in [C](https://github.com/fd0/rabin-cdc), [Rust](https://github.com/rustic-rs/rustic/tree/main/src/cdc) (adapted from [Rust](https://github.com/green-coder/cdc)), [C++](https://github.com/lemire/rollinghashcpp).
   This uses some optimizations in pre-computing two tables of constants.
 - 64-bit Gear (Gear64), with optional SIMD implementation.
@@ -197,6 +204,7 @@ The cache stores 32-bit unsigned integers as chunk sizes to skip.
 This limits chunk sizes to `2^32`, which is probably fine in practice, while saving a considerable amount of memory.
 
 There are two implementations:
+
 1. Using `HashMap<[u8;N], u32>`s for the front and end indices.
    These start out small and get filled gradually.
    Benchmarking has shown that this can be slow in some cases, especially when producing many small chunks, which leads to frequent accesses of the hashmap.
