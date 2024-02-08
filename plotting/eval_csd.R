@@ -11,6 +11,8 @@ library(RColorBrewer)
 library(forcats)
 library(ztable)
 library(arrow)
+library(purrr)
+options(ztable.type = "latex", digits=1)
 
 source("base_setup.R")
 source("plot_setup.R")
@@ -25,7 +27,99 @@ source("util.R")
 # However, we converted it to an Arrow dataset, which can be imported from disk
 # and operated on without this limitation.
 
-csd_data <- open_dataset(sprintf("%s/parquet/csd", csv_dir), hive_style=TRUE, format="parquet")
+process_data <- function(csd_data) {
+  df <- csd_data %>%
+    filter(algorithm %in% 
+             c("ae", "ram", "mii", "pci", "rabin_32", "adler32_256", "buzhash_64", "gear", "gear_nc_1", "gear_nc_2", "gear_nc_3", "gear64", "bfbc", "bfbc_custom_div")
+    ) %>% 
+    group_by(algorithm, dataset, target_chunk_size) %>%
+    summarize(
+      mean = mean(chunk_size),
+      sd = sd(chunk_size),
+      .groups = 'drop'
+    ) %>% 
+    collect() %>%
+    pivot_wider(
+      id_cols = c(algorithm, dataset),
+      names_from = target_chunk_size,
+      values_from = c(mean, sd),
+      names_sep = "_"
+    )
+  
+  target_sizes <- c(512, 737, 1024, 2048, 4096, 5152, 8192)
+  col_order <- unlist(sapply(target_sizes, function(size) c(paste("mean", size, sep = "_"), paste("sd", size, sep = "_"))))
+  
+  as.data.frame(df[, c("algorithm", "dataset", col_order)])
+}
+
+df <- rbind(
+  open_dataset(sprintf("%s/parquet/csd", csv_dir), hive_style=TRUE, format="parquet") %>% 
+    filter(dataset %in% c("random", "zero")) %>% 
+    process_data(),
+  open_dataset(sprintf("%s/parquet/csd_cat", csv_dir), hive_style=TRUE, format="parquet") %>% 
+    process_data()
+)
+
+df$dataset <- factor(df$dataset, levels = c("random", "lnx", "pdf", "web", "code", "zero"))
+df$algorithm <- factor(df$algorithm, levels = c("rabin_32", "buzhash_64", "adler32_256", "gear", "gear_nc_1", "gear_nc_2", "gear_nc_3", "gear64", "ae", "ram", "pci", "mii", "bfbc", "bfbc_custom_div"))
+df <- df[order(df$dataset, df$algorithm), ]
+df <- df %>% 
+  mutate(
+    mean_512 = ifelse(algorithm == "mii", NA, mean_512),
+    sd_512 = ifelse(algorithm == "mii", NA, sd_512),
+    mean_737 = ifelse(algorithm %in% c("rabin_32", "buzhash_64"), NA, mean_737),
+    sd_737 = ifelse(algorithm %in% c("rabin_32", "buzhash_64"), NA, sd_737),
+    mean_1024 = ifelse(algorithm == "mii", NA, mean_1024),
+    sd_1024 = ifelse(algorithm == "mii", NA, sd_1024),
+    mean_2048 = ifelse(algorithm == "mii", NA, mean_2048),
+    sd_2048 = ifelse(algorithm == "mii", NA, sd_2048),
+    mean_4096 = ifelse(algorithm == "mii", NA, mean_4096),
+    sd_4096 = ifelse(algorithm == "mii", NA, sd_4096),
+    mean_5152 = ifelse(algorithm %in% c("rabin_32", "buzhash_64"), NA, mean_5152),
+    sd_5152 = ifelse(algorithm %in% c("rabin_32", "buzhash_64"), NA, sd_5152),
+    mean_8192 = ifelse(algorithm == "mii", NA, mean_8192),
+    sd_8192 = ifelse(algorithm == "mii", NA, sd_8192),
+  )
+
+color_scale_df <- df %>%
+  mutate(
+    sd_512 = ifelse(((df$sd_512 - df$mean_512) / df$mean_512 + 1) / 2 > 1, 1, ((df$sd_512 - df$mean_512) / df$mean_512 + 1) / 2),
+    sd_737 = ifelse(((df$sd_737 - df$mean_737) / df$mean_737 + 1) / 2 > 1, 1, ((df$sd_737 - df$mean_737) / df$mean_737 + 1) / 2),
+    sd_1024 = ifelse(((df$sd_1024 - df$mean_1024) / df$mean_1024 + 1) / 2 > 1, 1, ((df$sd_1024 - df$mean_1024) / df$mean_1024 + 1) / 2),
+    sd_2048 = ifelse(((df$sd_2048 - df$mean_2048) / df$mean_2048 + 1) / 2 > 1, 1, ((df$sd_2048 - df$mean_2048) / df$mean_2048 + 1) / 2),
+    sd_4096 = ifelse(((df$sd_4096 - df$mean_4096) / df$mean_4096 + 1) / 2 > 1, 1, ((df$sd_4096 - df$mean_4096) / df$mean_4096 + 1) / 2),
+    sd_5152 = ifelse(((df$sd_5152 - df$mean_5152) / df$mean_5152 + 1) / 2 > 1, 1, ((df$sd_5152 - df$mean_5152) / df$mean_5152 + 1) / 2),
+    sd_8192 = ifelse(((df$sd_8192 - df$mean_8192) / df$mean_8192 + 1) / 2 > 1, 1, ((df$sd_8192 - df$mean_8192) / df$mean_8192 + 1) / 2),
+    
+    mean_512 = ifelse(abs(df$mean_512 - 512) > 512, 512, abs(df$mean_512 - 512)),
+    mean_737 = ifelse(abs(df$mean_737 - 737) > 737, 737, abs(df$mean_737 - 737)),
+    mean_1024 = ifelse(abs(df$mean_1024 - 1024) > 1024, 1024, abs(df$mean_1024 - 1024)),
+    mean_2048 = ifelse(abs(df$mean_2048 - 2048) > 2048, 2048, abs(df$mean_2048 - 2048)),
+    mean_4096 = ifelse(abs(df$mean_4096 - 4096) > 4096, 4096, abs(df$mean_4096 - 4096)),
+    mean_5152 = ifelse(abs(df$mean_5152 - 5152) > 5152, 5152, abs(df$mean_5152 - 5152)),
+    mean_8192 = ifelse(abs(df$mean_8192 - 8192) > 8192, 8192, abs(df$mean_8192 - 8192)),
+  )
+
+cgroup=c("Algorithm", "Dataset", "512 B", "737 B", "1 KB", "2 KB", "4 KB", "5152 B", "8 KB")
+n.cgroup=c(1, 1, 2, 2, 2, 2, 2, 2, 2)
+
+rgroup=c("RANDOM", "LNX", "PDF", "WEB", "CODE", "ZERO")
+n.rgroup=c(14, 14, 14, 14, 14, 4)
+
+ztab <- color_scale_df %>% 
+  ztable() %>%
+  addcgroup(cgroup=cgroup, n.cgroup=n.cgroup) %>% 
+  addrgroup(rgroup=rgroup,n.rgroup=n.rgroup,cspan.rgroup=1) %>% 
+  makeHeatmap(margin=2)
+
+for (col_name in c("mean_512", "sd_512", "mean_737", "sd_737", "mean_1024", "sd_1024", "mean_2048", "sd_2048", "mean_4096", "sd_4096", "mean_5152", "sd_5152", "mean_8192", "sd_8192")) {
+  ztab$x[[col_name]] <- as.character(as.integer(df[[col_name]]))
+}
+
+writeLines(capture.output(ztab), "tab/csd_means_sd_full.tex")
+
+rm(df, ztab, cgroup, rgroup, n.cgroup, n.rgroup, color_scale_df)
+gc()
 
 # TODO algorithm_as_factor cleanup
 
@@ -48,29 +142,6 @@ csd_density_plot <- function(df) {
       geom_point(data = df_means, aes(x = mean_chunk_size, y = 0, color = algorithm), size = 3, show.legend = FALSE)
   )
 }
-
-######################################################################
-# Huge table about means
-
-d <- csd_data %>%
-  group_by(algorithm, dataset, target_chunk_size) %>%
-  summarize(n=n(), mean=mean(chunk_size), sd=sd(chunk_size)) %>%
-  collect() %>%
-  algorithm_as_factor()
-
-# Create Table
-t <- d %>%
-  # xtable cannot handle int64
-  mutate(n=NULL,mean=as.integer(mean)) %>%
-  pivot_wider(id_cols = c("algorithm","dataset"),names_from=target_chunk_size,values_from=c("mean","sd"),names_vary = "slowest")
-
-addtorow <- list()
-addtorow$pos <- list(0)
-addtorow$command <- '&& \\multicolumn{2}{c}{512B} &\\multicolumn{2}{c}{1KiB} &\\multicolumn{2}{c}{2KiB} &\\multicolumn{2}{c}{4KiB} &\\multicolumn{2}{c}{8KiB}\\\\
-\\cmidrule(lr){3-4}\\cmidrule(lr){5-6}\\cmidrule(lr){7-8}\\cmidrule(lr){9-10}\\cmidrule(lr){11-12}
-algorithm & dataset & $\\mu$ & SD & $\\mu$ & SD & $\\mu$ & SD & $\\mu$ & SD & $\\mu$ & SD\\\\'
-
-print(xtable(t), file="tab/csd_means_sd_full.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
 
 #### QuickCDC variants only
 t2 <- t %>%
@@ -358,3 +429,4 @@ print_plot(p, "csd_737", width=8, height=4)
 
 rm(d,p)
 gc()
+
