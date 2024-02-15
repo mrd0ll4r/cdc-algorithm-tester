@@ -30,7 +30,7 @@ source("util.R")
 process_data <- function(csd_data) {
   df <- csd_data %>%
     filter(algorithm %in% 
-             c("ae", "ram", "mii", "pci", "rabin_32", "adler32_256", "buzhash_64", "gear", "gear_nc_1", "gear_nc_2", "gear_nc_3", "gear64", "bfbc", "bfbc_custom_div")
+      c("ae", "ram", "mii", "pci", "rabin_32", "adler32_256", "buzhash_64", "gear", "gear_nc_1", "gear_nc_2", "gear_nc_3", "gear64", "bfbc", "bfbc_custom_div")
     ) %>% 
     group_by(algorithm, dataset, target_chunk_size) %>%
     summarize(
@@ -67,16 +67,16 @@ df <- df %>%
   mutate(
     mean_512 = ifelse(algorithm == "mii", NA, mean_512),
     sd_512 = ifelse(algorithm == "mii", NA, sd_512),
-    mean_737 = ifelse(algorithm %in% c("rabin_32", "buzhash_64"), NA, mean_737),
-    sd_737 = ifelse(algorithm %in% c("rabin_32", "buzhash_64"), NA, sd_737),
+    mean_737 = ifelse(algorithm %in% c("rabin_32", "buzhash_64", "gear"), NA, mean_737),
+    sd_737 = ifelse(algorithm %in% c("rabin_32", "buzhash_64", "gear"), NA, sd_737),
     mean_1024 = ifelse(algorithm == "mii", NA, mean_1024),
     sd_1024 = ifelse(algorithm == "mii", NA, sd_1024),
     mean_2048 = ifelse(algorithm == "mii", NA, mean_2048),
     sd_2048 = ifelse(algorithm == "mii", NA, sd_2048),
     mean_4096 = ifelse(algorithm == "mii", NA, mean_4096),
     sd_4096 = ifelse(algorithm == "mii", NA, sd_4096),
-    mean_5152 = ifelse(algorithm %in% c("rabin_32", "buzhash_64"), NA, mean_5152),
-    sd_5152 = ifelse(algorithm %in% c("rabin_32", "buzhash_64"), NA, sd_5152),
+    mean_5152 = ifelse(algorithm %in% c("rabin_32", "buzhash_64", "gear"), NA, mean_5152),
+    sd_5152 = ifelse(algorithm %in% c("rabin_32", "buzhash_64", "gear"), NA, sd_5152),
     mean_8192 = ifelse(algorithm == "mii", NA, mean_8192),
     sd_8192 = ifelse(algorithm == "mii", NA, sd_8192),
   )
@@ -117,6 +117,75 @@ for (col_name in c("mean_512", "sd_512", "mean_737", "sd_737", "mean_1024", "sd_
 }
 
 writeLines(capture.output(ztab), "tab/csd_means_sd_full.tex")
+
+### Overview table
+
+get_cell_color <- function(att, algos, ds) {
+  means_df <- color_scale_df %>% 
+    filter(algorithm %in% algos) %>% 
+    filter(dataset == ds) %>% 
+    select(starts_with(att)) %>%
+    rowwise() %>%
+    mutate(row_mean = mean(c_across(starts_with(att)), na.rm = TRUE)) %>%
+    ungroup()
+  
+  mean(means_df$row_mean, na.rm = TRUE)
+}
+
+algorithm_groups <- list(
+  c('gear', 'rabin_32', 'buzhash_64'),
+  "ae",
+  "ram",
+  "pci",
+  "mii",
+  "bfbc",
+  "bfbc_custom_div"
+)
+
+mean_random <- numeric(length(algorithm_groups))
+mean_lnx <- numeric(length(algorithm_groups))
+mean_pdf <- numeric(length(algorithm_groups))
+mean_web <- numeric(length(algorithm_groups))
+mean_code <- numeric(length(algorithm_groups))
+sd_random <- numeric(length(algorithm_groups))
+sd_lnx <- numeric(length(algorithm_groups))
+sd_pdf <- numeric(length(algorithm_groups))
+sd_web <- numeric(length(algorithm_groups))
+sd_code <- numeric(length(algorithm_groups))
+
+for (i in seq_along(algorithm_groups)) {
+  algos <- algorithm_groups[[i]]
+  
+  mean_random[i] <- get_cell_color("mean", algos, "random")
+  mean_lnx[i] <- get_cell_color("mean", algos, "lnx")
+  mean_pdf[i] <- get_cell_color("mean", algos, "pdf")
+  mean_web[i] <- get_cell_color("mean", algos, "web")
+  mean_code[i] <- get_cell_color("mean", algos, "code")
+  sd_random[i] <- get_cell_color("sd", algos, "random")
+  sd_lnx[i] <- get_cell_color("sd", algos, "lnx")
+  sd_pdf[i] <- get_cell_color("sd", algos, "pdf")
+  sd_web[i] <- get_cell_color("sd", algos, "web")
+  sd_code[i] <- get_cell_color("sd", algos, "code")
+}
+
+# Create the dataframe without the algorithms column
+df <- data.frame(mean_random, mean_lnx, mean_pdf, mean_web, mean_code,
+                 sd_random, sd_lnx, sd_pdf, sd_web, sd_code, stringsAsFactors = FALSE)
+
+# Add the algorithms as a list column explicitly
+df$algorithms <- algorithm_groups %>% sapply(, function(x) paste(x, collapse = ", "))
+df <- df[, c("algorithms", "mean_random", "mean_lnx", "mean_pdf", "mean_web", "mean_code",
+             "sd_random", "sd_lnx", "sd_pdf", "sd_web", "sd_code")]
+
+cgroup=c("Algorithms", "Mean", "SD")
+n.cgroup=c(1, 5, 5)
+
+ztab <- df %>% 
+  ztable() %>%
+  addcgroup(cgroup=cgroup, n.cgroup=n.cgroup) %>% 
+  makeHeatmap(margin=2)
+
+writeLines(capture.output(ztab), "tab/csd_means_sd_overview.tex")
 
 rm(df, ztab, cgroup, rgroup, n.cgroup, n.rgroup, color_scale_df)
 gc()
