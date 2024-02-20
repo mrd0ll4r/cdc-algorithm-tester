@@ -16,9 +16,9 @@ for dataset in "${DATASETS[@]}"; do
       for cs in "${TARGET_CHUNK_SIZES[@]}"; do
         prefix=$(printf "%s,%s,%d" "$subalgo_name" "$dataset_name" "$cs")
         cmd=$(get_cmd "$subalgo" "$dataset" "$cs")
-        # cut last chunk | get unique chunks | get size
+        # cut last chunk| get size
         # for each produced chunk
-        for l in $($cmd | head -n -1 | sort -u | awk -F, '{print $2}'); do
+        for l in $($cmd | head -n -1 | awk -F, '{print $2}'); do
           echo "$prefix,$l"
         done
       done
