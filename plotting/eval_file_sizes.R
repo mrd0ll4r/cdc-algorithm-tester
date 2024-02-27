@@ -50,11 +50,12 @@ labels <- c("512 B", "8 KB", "128 KB", "2 MB", "32 MB", "512 MB")
 p <- ggplot(cdf_data, aes(x = values, y = cdf_values, color = category)) +
   geom_line() +
   scale_x_log10(breaks = breaks, labels = labels) +
-  geom_vline(xintercept = 512, linetype = "dashed") +
   xlab("File Size (Log Scale)") +
-  ylab("Cumulative Probability") +
-  labs(color = "Dataset")
+  ylab("Cum. Prob.") +
+  labs(color = "Dataset") +
+  theme(legend.position = "bottom") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-print_plot(p,"dataset_file_sizes")
+print_plot(p,"dataset_file_sizes", height=2.5)
 
 gc()
