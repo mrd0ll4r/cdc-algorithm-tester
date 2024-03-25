@@ -11,6 +11,8 @@ library(RColorBrewer)
 library(forcats)
 library(ztable)
 library(arrow)
+library(cowplot)
+library(grid)
 
 source("base_setup.R")
 source("plot_setup.R")
@@ -44,7 +46,9 @@ perf_derive_metrics <- function(df) {
     mutate(mibytes_per_sec=bytes_per_sec/(2^20)) %>%
     mutate(gibytes_per_sec=bytes_per_sec/(2^30)) %>%
     pivot_longer(cols=!c(algorithm,dataset,dataset_size,target_chunk_size,iteration),names_to = "event",values_to="value")
-
+  
+  #df$algorithm <- factor(df$algorithm, levels = ALGORITHM_ORDER)
+  
   return(df)
 }
 
@@ -120,36 +124,49 @@ d <- d %>%
             se=standard_error(value),
             mmd=mean_min_dev(value))
 
-# Plot
 algos <- c("rabin_64",
            "quick_2_rabin_64_noskip", "quick_3_rabin_64_noskip",
-           "quick_2_rabin_64", "quick_3_rabin_64", "quick_hash_2_rabin_64","quick_hash_3_rabin_64"
+           "quick_2_rabin_64", "quick_3_rabin_64",
+           "quick_hash_2_rabin_64","quick_hash_3_rabin_64"
 )
+algo_labels <- c("Vanilla", "A-2-NS", "A-3-NS", "A-2", "A-3", "HM-2", "HM-3")
 d$algorithm <- factor(d$algorithm, levels = algos)
+d$dataset <- factor(d$dataset, levels = c("random", "lnx", "pdf", "web", "code"))
 
-p <- d %>% drop_na(algorithm) %>%
-  filter(event=="mibytes_per_sec" & target_chunk_size==2048) %>%
-  ggplot(aes(y=val,fill=algorithm,x=dataset)) +
-  geom_bar(position=position_dodge(), stat="identity",
-           colour="black", # Use black outlines,
-           linewidth=.3) +      # Thinner lines
-  geom_errorbar(aes(ymin=val-mmd, ymax=val+mmd),
-                linewidth=.5,    # Thinner lines
-                width=.3,
-                position=position_dodge(.9)) +
-  labs(x="Dataset",y="Throughput (MiB/s)") +
-  theme(legend.position="bottom") +
+d <- d %>% drop_na(algorithm) %>% rename_datasets() %>%
+  filter(event == "mibytes_per_sec" & target_chunk_size == 2048)
+
+p <- d %>%
+  ggplot(aes(y = val, fill = algorithm, x = dataset)) +
+  geom_bar(position = position_dodge(), stat = "identity",
+           colour = "black",
+           linewidth = .3) + 
+  geom_errorbar(aes(ymin = val - mmd, ymax = val + mmd),
+                linewidth = .5, 
+                width = .3,
+                position = position_dodge(.9)) +
+  labs(x = "Dataset", y = "Throughput (MiB/s)") +
+  theme(legend.position = "none") + 
   guides(fill = guide_legend(ncol = 4)) +
   scale_fill_manual(values = colorRampPalette(brewer.pal(12, "Set1"))(length(algos))) +
-  scale_fill_jama(name="",
-                  breaks=algos,
-                  labels=c("Rabin",
-                           "A-2-NS", "A-3-NS",
-                           "HM-2-NS", "HM-3-NS",
-                           "A-2", "A-3","HM-2","HM-3"
-                  ))
+  scale_fill_jama(name = "",
+                  breaks = algos,
+                  labels = algo_labels)
 
-print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib", height = 3)
+print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib", height = 2)
+
+dummy_plot <- p + theme_void() + 
+  theme(legend.position = "bottom", text = element_text(size = 11))
+legend <- cowplot::get_legend(dummy_plot)
+
+if (!dev.cur()) dev.new()
+grid.newpage()
+grid.draw(legend)
+legend_plot <- recordPlot()
+dev.off()
+dev.new()
+
+print_plot(legend_plot, "perf_quickcdc_variants_different_datasets_2kib_legendonly", width=3.5, height=0.5)
 
 ######################################################################
 #- Computational efficiency of QuickCDC variants on different Datasets in a bar plot
@@ -164,12 +181,6 @@ d <- perf_data %>%
   ) %>%
   filter(dataset != "zero" & dataset != "empty")
 
-algos <- c("gear_nc_1",
-           "quick_2_noskip", "quick_3_noskip",
-           "quick_2", "quick_3", "quick_hash_2","quick_hash_3"
-)
-d$algorithm <- factor(d$algorithm, levels = algos)
-
 # Calculate some statistics...
 d <- d %>%
   group_by(algorithm,dataset,target_chunk_size,event) %>%
@@ -177,9 +188,19 @@ d <- d %>%
             val=mean(value), sd=sd(value), se=standard_error(value),
             mmd=mean_min_dev(value))
 
+algos <- c("gear_nc_1",
+           "quick_2_noskip", "quick_3_noskip",
+           "quick_2", "quick_3", "quick_hash_2","quick_hash_3"
+)
+algo_labels <- c("Vanilla", "A-2-NS", "A-3-NS", "A-2", "A-3", "HM-2", "HM-3")
+d$algorithm <- factor(d$algorithm, levels = algos)
+d$dataset <- factor(d$dataset, levels = c("random", "lnx", "pdf", "web", "code"))
+
+d <- d %>% drop_na(algorithm) %>% rename_datasets() %>%
+  filter(event == "mibytes_per_sec" & target_chunk_size == 2048)
+
 # Plot
-p <- d %>% drop_na(algorithm) %>%
-  filter(event=="mibytes_per_sec" & target_chunk_size==2048) %>%
+p <- d %>%
   ggplot(aes(y=val,fill=algorithm,x=dataset)) +
   geom_bar(position=position_dodge(), stat="identity",
            colour="black", # Use black outlines,
@@ -189,17 +210,14 @@ p <- d %>% drop_na(algorithm) %>%
                 width=.3,
                 position=position_dodge(.9)) +
   labs(x="Dataset",y="Throughput (MiB/s)") +
-  theme(legend.position="bottom") +
+  theme(legend.position="none") +
   guides(fill = guide_legend(ncol = 4)) +
   scale_fill_brewer(palette = "Set3") +
   scale_fill_jama(name="",
                   breaks=algos,
-                  labels=c("Gear",
-                           "A-2-NS", "A-3-NS",
-                           "A-2", "A-3","HM-2","HM-3"
-                  ))
+                  labels=algo_labels)
 
-print_plot(p,"perf_quickcdc_gear_variants_different_datasets_2kib", height = 3)
+print_plot(p,"perf_quickcdc_gear_variants_different_datasets_2kib", height = 2)
 
 
 
@@ -258,7 +276,7 @@ p <- d %>%
                 position=position_dodge(.9)) +
   labs(x="Dataset",y="Throughput (MiB/s)") +
   scale_fill_jama(name="", # Legend label
-                  breaks=c("rabin_64","quick_2_rabin_64", "quick_3_rabin_64", "quick_2_rabin_64_noskip","quick_3_rabin_64_noskip"),
+                  breaks=c("rabin_32","quick_2_rabin_32", "quick_3_rabin_32", "quick_2_rabin_32_noskip","quick_3_rabin_32_noskip"),
                   labels=c("Rabin","A-2", "A-3","A-2-NS","A-3-NS"))
 
 print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib_skip_vs_cache")
@@ -269,7 +287,7 @@ print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib_skip_vs_cache
 #  - Dataset: Random, Code/Web
 
 d <- perf_data %>%
-  filter(algorithm %in% QUICKCDC_RABIN_ALGORITHMS | algorithm == "rabin_64") %>%
+  filter(algorithm %in% QUICKCDC_RABIN_ALGORITHMS | algorithm == "rabin_32") %>%
   filter(dataset %in% c("random","zero")) %>%
   group_by(algorithm,dataset,target_chunk_size,event) %>%
   summarize(dataset_size=mean(dataset_size), n=n(),
@@ -331,6 +349,55 @@ d <- perf_data %>%
   filter(algorithm %in% QUICKCDC_RABIN_ALGORITHMS | algorithm == "rabin_64") %>%
   filter(target_chunk_size %in% POWER_OF_TWO_SIZES) %>%
   mutate(target_chunk_size = as.factor(target_chunk_size))
+ 
+# Calculate some statistics...
+d <- d %>%
+  group_by(algorithm,dataset,target_chunk_size,event) %>%
+  summarize(bytes=mean(dataset_size), n=n(),
+            val=mean(value), sd=sd(value), se=standard_error(value),
+            mmd=mean_min_dev(value))
+
+p <- d %>%
+  filter(event=="mibytes_per_sec") %>%
+  ggplot(aes(y=val,group=algorithm,color=algorithm,x=target_chunk_size)) +
+  geom_errorbar(aes(ymin=val-mmd, ymax=val+mmd), colour="black", width=.25, position=position_dodge(0.1)) +
+  geom_line(position=position_dodge(0.1)) +
+  geom_point(position=position_dodge(0.1), size=1, shape=21, fill="white") + # 21 is filled circle
+  labs(x="Target Chunk Size",y="Throughput (MiB/s)") +
+  theme(legend.position = "none") +
+  scale_color_jama(name="", # Legend label
+                   breaks=c("rabin_64","quick_2_rabin_64", "quick_3_rabin_64", "quick_hash_2_rabin_64","quick_hash_3_rabin_64"),
+                   labels=c("Vanilla","A-2", "A-3","HM-2","HM-3"))
+#breaks=c("gear_nc_1","quick_2", "quick_3", "quick_hash_2","quick_hash_3"),
+#labels=c("Gear","A-2", "A-3","HM-2","HM-3"))
+
+print_plot(p,"perf_quickcdc_rabin_variants_different_targets_code", height=2)
+
+# legend
+dummy_plot <- p + theme_void() + 
+  theme(legend.position = "bottom", text = element_text(size = 11))
+legend <- cowplot::get_legend(dummy_plot)
+
+if (!dev.cur()) dev.new()
+grid.newpage()
+grid.draw(legend)
+legend_plot <- recordPlot()
+dev.off()
+dev.new()
+
+print_plot(legend_plot, "perf_quickcdc_variants_different_targets_code_legendonly", width=3.5, height=0.3)
+
+rm(d,p)
+gc()
+
+##################
+### Same for Gear
+
+d <- perf_data %>%
+  filter(dataset == "code") %>%
+  filter(algorithm %in% QUICKCDC_GEAR_ALGORITHMS | algorithm == "gear_nc_1") %>%
+  filter(target_chunk_size %in% POWER_OF_TWO_SIZES) %>%
+  mutate(target_chunk_size = as.factor(target_chunk_size))
 
 # Calculate some statistics...
 d <- d %>%
@@ -346,17 +413,16 @@ p <- d %>%
   geom_line(position=position_dodge(0.1)) +
   geom_point(position=position_dodge(0.1), size=1, shape=21, fill="white") + # 21 is filled circle
   labs(x="Target Chunk Size",y="Throughput (MiB/s)") +
+  theme(legend.position = "none") +
   scale_color_jama(name="", # Legend label
-                   breaks=c("rabin_64","quick_2_rabin_64", "quick_3_rabin_64", "quick_hash_2_rabin_64","quick_hash_3_rabin_64"),
-                   labels=c("Rabin","A-2", "A-3","HM-2","HM-3"))
-#breaks=c("gear_nc_1","quick_2", "quick_3", "quick_hash_2","quick_hash_3"),
-#labels=c("Gear","A-2", "A-3","HM-2","HM-3"))
+                   breaks=c("gear_nc_1","quick_2", "quick_3", "quick_hash_2","quick_hash_3"),
+                   labels=c("Vanilla","A-2", "A-3","HM-2","HM-3"))
 
-print_plot(p,"perf_quickcdc_rabin_variants_different_targets_code")
+
+print_plot(p,"perf_quickcdc_gear_variants_different_targets_code", height=2)
 
 rm(d,p)
 gc()
-
 
 ######################################################################
 #- Performance of Gear-variations, probably table
@@ -474,8 +540,8 @@ d <- perf_data %>%
             sd=sd(value),
             se=standard_error(value),
             mmd=mean_max_dev(value),
-            max=max(value))
-
+            max=max(value)) %>% 
+  rename_algorithms()
 
 t <- d %>%
   filter(event %in% c("mibytes_per_sec",
@@ -511,26 +577,23 @@ Algorithm & $\\mu$ & Max & $\\mu$ & SE (±) & $\\mu$ & SE (±) & $\\mu$ & SE (±
 
 print(xtable(t, digits=3), file="tab/perf_overview_random_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
 
-p <- d %>%
-  filter(event %in% c("mibytes_per_sec"#,
-                      #"instructions_per_byte",
-                      #"instructions_per_cycle",
-                      #"branches_per_byte",
-                      #"branch_miss_percentage"
-  )) %>%
+algorithm_order <- d %>%
+  filter(event %in% c("mibytes_per_sec")) %>%
+  group_by(algorithm) %>%
+  summarize(average_val = mean(val, na.rm = TRUE)) %>%
   ungroup() %>%
-  mutate(n=NULL, target_chunk_size=NULL,dataset_size = NULL) %>%
-  mutate(algorithm = fct_rev(algorithm)) %>%
+  arrange(desc(desc(average_val))) %>%
+  pull(algorithm) # Extract the ordered algorithm names
+
+# Step 2: Use this order to set the levels of the algorithm factor in d
+d$algorithm <- factor(d$algorithm, levels = algorithm_order)
+
+# Now, plotting
+p <- d %>%
+  filter(event %in% c("mibytes_per_sec")) %>%
+  mutate(algorithm = factor(algorithm, levels = unique(algorithm))) %>%
   ggplot(aes(x=val, y=algorithm)) +
-  # Plot error bars first so the barplot is over it, i.e., hides the lower whisker.
-  geom_errorbar(aes(xmin=val*0.5, xmax = max),
-                #position = position_dodge(1),
-                linewidth=.5,    # Thinner lines
-                width=.3,) +
-  geom_bar(stat="identity",
-           #, position = position_dodge(1)
-           colour="black", # Use black outlines,
-           linewidth=.3) +      # Thinner lines
+  geom_bar(stat="identity", linewidth=.3, colour="black") +
   labs(x="Throughput (MiB/s)", y=NULL) +
   theme(legend.position="bottom")
 

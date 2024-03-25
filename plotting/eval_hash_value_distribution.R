@@ -124,23 +124,48 @@ hash_value_distribution_gear64_binned <- load_hash_value_distribution_for_algori
 gc()
 
 hash_value_distribution_data_binned <- rbind(
-  hash_value_distribution_adler32_binned,
-  hash_value_distribution_buzhash_binned,
   hash_value_distribution_rabin_binned,
-  hash_value_distribution_gear64_binned
+  hash_value_distribution_buzhash_binned,
+  hash_value_distribution_gear64_binned,
+  hash_value_distribution_adler32_binned
 )
 
-p <- hash_value_distribution_data_binned %>%
-  filter(algorithm %in% c("adler32", "buzhash", "rabin", "gear64")) %>%
-  ggplot(aes(x=g_norm, y=n_norm, linetype=window_size, fill=window_size)) +
-  geom_line(position=position_jitter(width=0,height=0.005)) +
-  geom_area(alpha=0.1,position="identity") +
-  labs(x="Normalized Codomain", y="Density") +
-  scale_fill_jama(name="Window Size (B)") +
-  scale_linetype_discrete(name="Window Size (B)") +
-  facet_wrap(~ algorithm, nrow = 2, scales = "free_y") +
-  theme(legend.position="bottom")
+for (algo in unique(hash_value_distribution_data_binned$algorithm)) {
+  # Filter the data for the current algorithm
+  data_filtered <- hash_value_distribution_data_binned %>%
+    filter(algorithm == algo) %>%
+    mutate(window_size = fct_relevel(window_size, "16", "32", "48", "64", "128", "256"))
+  
+  # Create the plot for the current algorithm
+  p <- ggplot(data_filtered, aes(x=g_norm, y=n_norm, linetype=window_size, fill=window_size)) +
+    geom_line(position=position_jitter(width=0,height=0.005)) +
+    geom_area(alpha=0.1,position="identity") +
+    labs(x="Normalized Codomain", y="Density") +
+    scale_fill_jama(name="Window Size (B)") +
+    scale_linetype_discrete(name="Window Size (B)") +
+    theme(legend.position="none")
+  
+  print_plot(p, paste("hash_value_distribution_", algo, sep=""), height=2, width=2)
+}
 
-print_plot(p, "hash_value_distributions", height = 4)
+# Legend
+dummy_plot <- p + theme_void() +
+  theme(
+    legend.position = "bottom",
+    legend.text = element_text(size = 10), # Adjusts the legend text size
+    legend.direction = "horizontal", # Ensures the legend items are laid out horizontally
+    legend.key.size = unit(0.5, "cm") # Adjusts the legend key size
+  ) +
+  guides(fill=guide_legend(ncol=6), color = guide_legend(ncol = 6, override.aes = list(size = 3)))
 
+legend <- cowplot::get_legend(dummy_plot)
+
+if (!dev.cur()) dev.new()
+grid.newpage()
+grid.draw(legend)
+legend_plot <- recordPlot()
+dev.off()
+dev.new()
+
+print_plot(legend_plot, "hash_value_distribution_legendonly", height=0.8, width=NULL)
 

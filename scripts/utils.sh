@@ -8,8 +8,8 @@ get_w_for_mii() {
   distance=$(($target - ${MII_AVGS[0]}))
   for i in "${!MII_AVGS[@]}"; do
     current=${MII_AVGS[$i]}
-    if [ $current -eq $target ]; then
-      echo $i
+    if [ "$current" -eq "$target" ]; then
+      echo "$i"
       return
     fi
     current_distance=$(($target - $current))
@@ -21,7 +21,7 @@ get_w_for_mii() {
       distance=$current_distance
     fi
   done
-  echo $closest
+  echo "$closest"
 }
 
 # Finds the best match for parameters w and t in PCI to achieve given target chunk size.
@@ -121,7 +121,7 @@ get_subalgos() {
     subalgos=("$1")
     ;;
   esac
-  for subalgo in "${subalgos[@]}"; do echo $subalgo; done
+  for subalgo in "${subalgos[@]}"; do echo "$subalgo"; done
 }
 
 get_algo_name() {
@@ -205,10 +205,10 @@ get_cmd_args() {
   local params="$3"
   case "$1" in
   "pci")
-    params="$(get_w_and_t_for_pci $3)"
+    params="$(get_w_and_t_for_pci "$3")"
     ;;
   "mii")
-    params="$(get_w_for_mii $3)"
+    params="$(get_w_for_mii "$3")"
     ;;
   "nop")
     params=""
@@ -242,7 +242,7 @@ get_cmd() {
 
 # Global settings
 export BIN=./target/release/cdc-algorithm-tester
-export DATA_PATH=data
+export DATA_PATH=catdata
 export FAST_DATA_PATH=fast_data
 
 if [ -z "${TARGET_CHUNK_SIZES}" ]; then

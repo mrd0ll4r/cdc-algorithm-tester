@@ -20,6 +20,9 @@ source("table_setup.R")
 source("tikz_setup.R")
 source("util.R")
 
+DATASET_ORDER <- c("random", "lnx", "pdf", "web", "code")
+ALGORITHM_ORDER <- c("rabin_32", "buzhash_64", "gear", "gear_nc_1", "gear_nc_2", "gear_nc_3", "ae", "ram", "pci", "mii", "bfbc", "bfbc_custom_div")
+
 ######################################################################
 # CHUNK SIZE DISTRIBUTIONS
 ######################################################################
@@ -60,8 +63,8 @@ df <- rbind(
     process_data()
 )
 
-df$dataset <- factor(df$dataset, levels = c("random", "lnx", "pdf", "web", "code", "zero"))
-df$algorithm <- factor(df$algorithm, levels = c("rabin_32", "buzhash_64", "adler32_256", "gear", "gear_nc_1", "gear_nc_2", "gear_nc_3", "gear64", "ae", "ram", "pci", "mii", "bfbc", "bfbc_custom_div"))
+df$dataset <- factor(df$dataset, levels = DATASET_ORDER)
+df$algorithm <- factor(df$algorithm, levels = ALGORITHM_ORDER)
 df <- df[order(df$dataset, df$algorithm), ]
 df <- df %>% 
   mutate(
@@ -103,7 +106,7 @@ color_scale_df <- df %>%
 cgroup=c("Algorithm", "Dataset", "512 B", "737 B", "1 KB", "2 KB", "4 KB", "5152 B", "8 KB")
 n.cgroup=c(1, 1, 2, 2, 2, 2, 2, 2, 2)
 
-rgroup=c("RANDOM", "LNX", "PDF", "WEB", "CODE", "ZERO")
+rgroup=c("RANDOM", "LNX", "PDF", "WEB", "CODE")
 n.rgroup=c(14, 14, 14, 14, 14, 4)
 
 ztab <- color_scale_df %>% 
@@ -173,7 +176,7 @@ df <- data.frame(mean_random, mean_lnx, mean_pdf, mean_web, mean_code,
                  sd_random, sd_lnx, sd_pdf, sd_web, sd_code, stringsAsFactors = FALSE)
 
 # Add the algorithms as a list column explicitly
-df$algorithms <- algorithm_groups %>% sapply(, function(x) paste(x, collapse = ", "))
+df$algorithms <- algorithm_groups %>% sapply(function(x) paste(x, collapse = ", "))
 df <- df[, c("algorithms", "mean_random", "mean_lnx", "mean_pdf", "mean_web", "mean_code",
              "sd_random", "sd_lnx", "sd_pdf", "sd_web", "sd_code")]
 
@@ -426,75 +429,73 @@ gc()
 
 
 ################
-# All datasets on target 737
+# All datasets on target 1024 or 737
 
-ALGORITHMS_TO_COMPARE <- c("fsc","ae","ram","mii","pci","rabin_32","adler32_256","buzhash_64","gear","bfbc","bfbc_custom_div")
+ALGORITHMS_TO_COMPARE <- c("fsc","ae","ram","mii","pci","rabin_32","buzhash_64","gear","bfbc","bfbc_custom_div")
 
-csd_density_plot <- function(df) {
-  df <- filter(df, !(algorithm %in% c("fsc"))) %>%
-    collect()
-  target_cs <- as.numeric(df$target_chunk_size[1])
+df <- open_dataset(sprintf("%s/parquet/csd_cat", csv_dir), hive_style=TRUE, format="parquet") %>%
+  filter(target_chunk_size == 1024 | (target_chunk_size == 737 & algorithm == "mii")) %>%
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
+  filter(!(algorithm %in% c("fsc")))
 
-  # Calculate the density for each 'dataset' group
-  density_df <- df %>%
-    group_by(dataset) %>%
-    do({
-      dens <- density(.$chunk_size)  # Calculate the density for the 'chunk_size' column
-      data.frame(x = dens$x, y = dens$y)  # Convert the density object to a data frame
-    })
+df_rand <- open_dataset(sprintf("%s/parquet/csd", csv_dir), hive_style=TRUE, format="parquet") %>%
+  filter(dataset == 'random') %>%
+  filter(target_chunk_size == 1024 | (target_chunk_size == 737 & algorithm == "mii")) %>%
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
+  filter(!(algorithm %in% c("fsc")))
 
-  # Find the min and max density for each 'dataset' group
-  summary_df <- density_df %>%
-    group_by(dataset) %>%
-    summarize(y_base = 0 - max(y) * 0.003)
+combined_df <- rbind(collect(df), collect(df_rand))
+combined_df$dataset <- factor(combined_df$dataset, levels = DATASET_ORDER)
 
-  # Calculate mean chunk size for each algorithm within each dataset
-  df_means <- df %>%
-    group_by(algorithm, dataset) %>%
-    summarize(mean_chunk_size = mean(chunk_size), .groups = 'drop')
-
-  # Join the y_base and y_max values to df_means
-  df_means <- df_means %>%
-    left_join(summary_df, by = "dataset") %>%
-    left_join(ymax_df, by = "dataset")
-
-  # Create the density plot with faceting and custom limits
-  return(df %>%
-           ggplot(aes(x = chunk_size, color = algorithm, linetype = algorithm)) +
-           geom_freqpoly(bins=100, aes(y = after_stat(density))) +
-           xlab("Chunk Size (B)") +
-           ylab("Density") +
-           xlim(c(0, target_cs * 3)) +
-           facet_wrap(~dataset, ncol = 2, scales = "free_y") +
-           theme(legend.position = "bottom") +
-           geom_point(data = df_means, aes(x = mean_chunk_size, y = 0 - 0.03 * y_max, color = algorithm), size = 2, show.legend = FALSE)
-  )
-}
-
-df_list <- list()
-ymax_df <- data.frame(dataset = character(), y_max = numeric(), stringsAsFactors = FALSE)
-
-for (dataset in c("random", "zero" , "web", "code", "lnx", "pdf")) {
-  df_list[[dataset]] <- read_csv(sprintf("%s/csd_%s_737.csv.gz", csv_dir, dataset), col_types = "cccii") %>%
-    filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
-    filter(!(algorithm %in% c("fsc")))
-
-  p <- df_list[[dataset]] %>%
-    ggplot(aes(x = chunk_size, color = algorithm, linetype = algorithm)) +
+for (dataset_name in DATASET_ORDER) {
+  dataset_df <- combined_df %>%
+    filter(dataset == dataset_name) %>%
+    rename_algorithms() %>%
+    rename_datasets()
+  
+  p <- ggplot(dataset_df, aes(x = chunk_size, color = algorithm, linetype = algorithm)) +
     geom_freqpoly(bins=100, aes(y = after_stat(density))) +
-    xlim(c(0, 737 * 3))
-  p <- ggplot_build(p)
-
-  y_max <- max(p$data[[1]]$y, na.rm = TRUE)
-  ymax_df <- rbind(ymax_df, data.frame(dataset = dataset, y_max = y_max))
+    xlab("Chunk Size (B)") +
+    ylab("Density") +
+    xlim(c(0, 1024 * 2)) +
+    theme(legend.position = "none")
+  
+  print_plot(p, paste("csd", dataset_name, sep="_"), width=4, height=2)
 }
 
-d <- bind_rows(df_list)
-rm(df_list)
+# legend
+dummy_plot <- p + theme_void() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_blank(), # This removes the legend title
+    legend.text = element_text(size = 11), # Sets the legend text size
+    legend.direction = "horizontal" # Ensures the legend items are laid out horizontally
+  ) +
+  guides(color = guide_legend(ncol = 3))
+legend <- cowplot::get_legend(dummy_plot)
 
-p <- csd_density_plot(d)
+if (!dev.cur()) dev.new()
+grid.newpage()
+grid.draw(legend)
+legend_plot <- recordPlot()
+dev.off()
+dev.new()
 
-print_plot(p, "csd_737", width=8, height=4)
+print_plot(legend_plot, "csd_legendonly", width=4, height=2)
+
+
+p <- combined_df %>% 
+  rename_algorithms() %>% 
+  rename_datasets() %>% 
+  ggplot(aes(x = chunk_size, color = algorithm, linetype = algorithm)) +
+  geom_freqpoly(bins=100, aes(y = after_stat(density))) +
+  xlab("Chunk Size (B)") +
+  ylab("Density") +
+  xlim(c(0, 1024 * 2)) +
+  facet_wrap(~dataset, ncol = 2, scales = "free_y") +
+  theme(legend.position = "bottom")
+
+print_plot(p, "csd", width=8, height=6)
 
 rm(d,p)
 gc()

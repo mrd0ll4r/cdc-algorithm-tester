@@ -43,9 +43,10 @@ def get_chunk_size(_divisors):
   total_chunk_count = sum(byte_pairs[i] for i in _divisors) + 1
   return (dataset_size) / total_chunk_count + min
 
-
+print(byte_pairs)
 for i in range(len(byte_pairs)):
     if len(divisors) == 0:
+        print(get_chunk_size(divisors + [i]))
         if get_chunk_size(divisors + [i]) >= target: 
             divisors.append(i)
     else:
