@@ -141,31 +141,12 @@ for (algo in unique(hash_value_distribution_data_binned$algorithm)) {
     geom_line(position=position_jitter(width=0,height=0.005)) +
     geom_area(alpha=0.1,position="identity") +
     labs(x="Normalized Codomain", y="Density") +
-    scale_fill_jama(name="Window Size (B)") +
-    scale_linetype_discrete(name="Window Size (B)") +
+    scale_fill_manual(values=hue_pal()(6), name="Window Size (B)") +
+    scale_color_manual(values=hue_pal()(6), name="Window Size (B)") +
     theme(legend.position="none")
   
-  print_plot(p, paste("hash_value_distribution_", algo, sep=""), height=2, width=2)
+  print_plot(p, paste("hash_value_distribution", algo, sep="_"), height=1.6, width=2)
 }
 
-# Legend
-dummy_plot <- p + theme_void() +
-  theme(
-    legend.position = "bottom",
-    legend.text = element_text(size = 10), # Adjusts the legend text size
-    legend.direction = "horizontal", # Ensures the legend items are laid out horizontally
-    legend.key.size = unit(0.5, "cm") # Adjusts the legend key size
-  ) +
-  guides(fill=guide_legend(ncol=6), color = guide_legend(ncol = 6, override.aes = list(size = 3)))
-
-legend <- cowplot::get_legend(dummy_plot)
-
-if (!dev.cur()) dev.new()
-grid.newpage()
-grid.draw(legend)
-legend_plot <- recordPlot()
-dev.off()
-dev.new()
-
-print_plot(legend_plot, "hash_value_distribution_legendonly", height=0.8, width=NULL)
+print_plot(get_legend_plot(p, 6), "hash_value_distribution_legendonly", height=0.8)
 

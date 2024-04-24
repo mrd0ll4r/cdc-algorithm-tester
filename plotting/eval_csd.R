@@ -12,6 +12,7 @@ library(forcats)
 library(ztable)
 library(arrow)
 library(purrr)
+library(grid)
 options(ztable.type = "latex", digits=1)
 
 source("base_setup.R")
@@ -32,9 +33,7 @@ ALGORITHM_ORDER <- c("rabin_32", "buzhash_64", "gear", "gear_nc_1", "gear_nc_2",
 
 process_data <- function(csd_data) {
   df <- csd_data %>%
-    filter(algorithm %in% 
-      c("ae", "ram", "mii", "pci", "rabin_32", "adler32_256", "buzhash_64", "gear", "gear_nc_1", "gear_nc_2", "gear_nc_3", "gear64", "bfbc", "bfbc_custom_div")
-    ) %>% 
+    filter(algorithm %in% ALGORITHM_ORDER) %>% 
     group_by(algorithm, dataset, target_chunk_size) %>%
     summarize(
       mean = mean(chunk_size),
@@ -110,6 +109,7 @@ rgroup=c("RANDOM", "LNX", "PDF", "WEB", "CODE")
 n.rgroup=c(14, 14, 14, 14, 14, 4)
 
 ztab <- color_scale_df %>% 
+  rename_algorithms() %>% 
   ztable() %>%
   addcgroup(cgroup=cgroup, n.cgroup=n.cgroup) %>% 
   addrgroup(rgroup=rgroup,n.rgroup=n.rgroup,cspan.rgroup=1) %>% 
@@ -123,52 +123,62 @@ writeLines(capture.output(ztab), "tab/csd_means_sd_full.tex")
 
 ### Overview table
 
-get_cell_color <- function(att, algos, ds) {
+get_cell_color <- function(att, algo, ds) {
+  # Filtering the dataframe based on algorithm and dataset
   means_df <- color_scale_df %>% 
-    filter(algorithm %in% algos) %>% 
-    filter(dataset == ds) %>% 
-    select(starts_with(att)) %>%
+    filter(algorithm == algo, dataset == ds)
+  
+  # Applying conditional selection of columns based on the algorithm name
+  if (any(grepl("^gear", algo))) {
+    # If the algorithm name starts with "gear", select columns starting with 'att'
+    # but not ending in '737' or '5152'
+    means_df <- means_df %>%
+      select(matches(paste0("^", att)), 
+             -matches(paste0(att, "737$")), 
+             -matches(paste0(att, "5152$")))
+  } else {
+    # Otherwise, just select columns that start with 'att'
+    means_df <- means_df %>%
+      select(matches(paste0("^", att)))
+  }
+  
+  # Calculating the mean of the selected columns, row-wise, then ungroup
+  means_df <- means_df %>%
     rowwise() %>%
-    mutate(row_mean = mean(c_across(starts_with(att)), na.rm = TRUE)) %>%
+    mutate(row_mean = mean(c_across(matches(paste0("^", att))), na.rm = TRUE)) %>%
     ungroup()
   
+  # Return the overall mean of the row means
   mean(means_df$row_mean, na.rm = TRUE)
 }
 
-algorithm_groups <- list(
-  c('gear', 'rabin_32', 'buzhash_64'),
-  "ae",
-  "ram",
-  "pci",
-  "mii",
-  "bfbc",
-  "bfbc_custom_div"
-)
 
-mean_random <- numeric(length(algorithm_groups))
-mean_lnx <- numeric(length(algorithm_groups))
-mean_pdf <- numeric(length(algorithm_groups))
-mean_web <- numeric(length(algorithm_groups))
-mean_code <- numeric(length(algorithm_groups))
-sd_random <- numeric(length(algorithm_groups))
-sd_lnx <- numeric(length(algorithm_groups))
-sd_pdf <- numeric(length(algorithm_groups))
-sd_web <- numeric(length(algorithm_groups))
-sd_code <- numeric(length(algorithm_groups))
+algorithms <- list('rabin_32', 'buzhash_64', 'gear', 'gear_nc_1', 'gear_nc_2', 'gear_nc_3', "ae", "ram", "pci", "mii", "bfbc", "bfbc_custom_div")
 
-for (i in seq_along(algorithm_groups)) {
-  algos <- algorithm_groups[[i]]
+mean_random <- numeric(length(algorithms))
+mean_lnx <- numeric(length(algorithms))
+mean_pdf <- numeric(length(algorithms))
+mean_web <- numeric(length(algorithms))
+mean_code <- numeric(length(algorithms))
+sd_random <- numeric(length(algorithms))
+sd_lnx <- numeric(length(algorithms))
+sd_pdf <- numeric(length(algorithms))
+sd_web <- numeric(length(algorithms))
+sd_code <- numeric(length(algorithms))
+
+for (i in seq_along(algorithms)) {
+  algo <- algorithms[[i]]
   
-  mean_random[i] <- get_cell_color("mean", algos, "random")
-  mean_lnx[i] <- get_cell_color("mean", algos, "lnx")
-  mean_pdf[i] <- get_cell_color("mean", algos, "pdf")
-  mean_web[i] <- get_cell_color("mean", algos, "web")
-  mean_code[i] <- get_cell_color("mean", algos, "code")
-  sd_random[i] <- get_cell_color("sd", algos, "random")
-  sd_lnx[i] <- get_cell_color("sd", algos, "lnx")
-  sd_pdf[i] <- get_cell_color("sd", algos, "pdf")
-  sd_web[i] <- get_cell_color("sd", algos, "web")
-  sd_code[i] <- get_cell_color("sd", algos, "code")
+  mean_random[i] <- get_cell_color("mean", algo, "random")
+  mean_lnx[i] <- get_cell_color("mean", algo, "lnx")
+  mean_pdf[i] <- get_cell_color("mean", algo, "pdf")
+  mean_web[i] <- get_cell_color("mean", algo, "web")
+  mean_code[i] <- get_cell_color("mean", algo, "code")
+  sd_random[i] <- get_cell_color("sd", algo, "random")
+  sd_lnx[i] <- get_cell_color("sd", algo, "lnx")
+  sd_pdf[i] <- get_cell_color("sd", algo, "pdf")
+  sd_web[i] <- get_cell_color("sd", algo, "web")
+  sd_code[i] <- get_cell_color("sd", algo, "code")
 }
 
 # Create the dataframe without the algorithms column
@@ -176,19 +186,21 @@ df <- data.frame(mean_random, mean_lnx, mean_pdf, mean_web, mean_code,
                  sd_random, sd_lnx, sd_pdf, sd_web, sd_code, stringsAsFactors = FALSE)
 
 # Add the algorithms as a list column explicitly
-df$algorithms <- algorithm_groups %>% sapply(function(x) paste(x, collapse = ", "))
-df <- df[, c("algorithms", "mean_random", "mean_lnx", "mean_pdf", "mean_web", "mean_code",
+df$algorithm <- algorithms %>% sapply(function(x) paste(x, collapse = ", "))
+df <- df[, c("algorithm", "mean_random", "mean_lnx", "mean_pdf", "mean_web", "mean_code",
              "sd_random", "sd_lnx", "sd_pdf", "sd_web", "sd_code")]
 
 cgroup=c("Algorithms", "Mean", "SD")
 n.cgroup=c(1, 5, 5)
 
 ztab <- df %>% 
+  rename_algorithms() %>% 
   ztable() %>%
   addcgroup(cgroup=cgroup, n.cgroup=n.cgroup) %>% 
-  makeHeatmap(margin=2)
+  makeHeatmap(margin=0, cols=c(2,3,4,5,6)) %>% 
+  makeHeatmap(margin=0, cols=c(7,8,9,10,11))
 
-writeLines(capture.output(ztab), "tab/csd_means_sd_overview.tex")
+writeLines(capture.output(ztab), "tab/csd_overview.tex")
 
 rm(df, ztab, cgroup, rgroup, n.cgroup, n.rgroup, color_scale_df)
 gc()
@@ -199,12 +211,12 @@ csd_density_plot <- function(df) {
   df = filter(df, !(algorithm %in% c("fsc"))) %>%
     collect()
   target_chunk_size = as.numeric(df$target_chunk_size[1])
-
+  
   df_means <- df %>%
     group_by(algorithm) %>%
     summarize(mean_chunk_size = mean(chunk_size)) %>%
     collect()
-
+  
   return(
     ggplot(df, aes(x = chunk_size, color = algorithm, linetype = algorithm)) +
       geom_freqpoly(bins=100, aes(y = after_stat(density))) +
@@ -257,16 +269,17 @@ gc()
 ######################################################################
 # Compare NC-gear variants
 
+csd_data <- open_dataset(sprintf("%s/parquet/csd", csv_dir), hive_style=TRUE, format="parquet")
+
 d <- csd_data %>%
-  filter(algorithm %in% c("gear","gear_nc_1","gear_nc_2","gear_nc_3"))
-eval_target_cs<-4096
-eval_dataset<-"random"
+  filter(algorithm %in% c("gear","gear_nc_1","gear_nc_2","gear_nc_3"))  %>%
+  filter(dataset == "code") %>%
+  filter(target_chunk_size == 8192) %>% 
+  collect()
 
 ###############
 # Dataset eval_dataset, eval_target_cs target
-p <- d  %>%
-  filter(dataset==eval_dataset) %>%
-  filter(target_chunk_size == eval_target_cs) %>%
+p <- d %>% 
   csd_density_plot()
 print_plot(p,sprintf("csd_gear_nc_%s_%d",eval_dataset,eval_target_cs))
 
@@ -341,29 +354,41 @@ print_plot(p,sprintf("csd_zero_737",eval_dataset),height=8)
 ######################################################################
 # Plot Gear variants
 
-target_cs <- 737
-d <- csd_data %>%
-  filter(target_chunk_size == 737) %>%
-  filter(dataset == "code") %>%
-  filter(algorithm %in% GEAR_ALGORITHMS) %>%
-  filter(algorithm != "gear64_simd" & algorithm != "gear64")
+for (dataset_name in c("random", "code")) {
+  TARGET_CS <- 2048
+  if (dataset_name == 'random') {
+    dataset_path <- sprintf("%s/parquet/csd", csv_dir)
+  } else {
+    dataset_path <- sprintf("%s/parquet/csd_cat", csv_dir)
+  }
+  d <- open_dataset(dataset_path, hive_style=TRUE, format="parquet") %>% 
+    filter(dataset == dataset_name) %>%
+    filter(target_chunk_size == TARGET_CS) %>%
+    filter(algorithm %in% GEAR_ALGORITHMS) %>%
+    filter(algorithm != "gear64_simd" & algorithm != "gear64") %>% 
+    collect()
+  
+  df_means <- d %>%
+    group_by(algorithm) %>%
+    summarize(mean_chunk_size = mean(chunk_size))
+  
+  labels <- c("gear" = "Vanilla", "gear_nc_1" = "NC-1", "gear_nc_2" = "NC-2", "gear_nc_3" = "NC-3")
+  p <- d %>%
+    ggplot(aes(x = chunk_size / 1000, color = algorithm, linetype = algorithm)) +
+    geom_freqpoly(bins=100, aes(y = after_stat(density))) +
+    xlab("Chunk Size (KB)") +
+    ylab("Density") +
+    xlim(c(0, TARGET_CS * 2 / 1000)) +
+    geom_point(data = df_means, aes(x = mean_chunk_size / 1000, y = 0, color = algorithm), size = 2, show.legend = FALSE) +
+    theme(legend.position = "none", legend.title = element_blank()) +
+    scale_color_discrete(labels = labels) +
+    scale_linetype_discrete(labels = labels)
+  
+  print_plot(p, paste("csd_gear_variants", dataset_name, sep="_"), height=1.8, width=2)
+}
 
-df_means <- d %>%
-  group_by(algorithm) %>%
-  summarize(mean_chunk_size = mean(chunk_size))
+print_plot(get_legend_plot(p, 4), "csd_gear_variants_legendonly", width=3.5, height=0.5)
 
-labels <- c("gear" = "NC-0", "gear_nc_1" = "NC-1", "gear_nc_2" = "NC-2", "gear_nc_3" = "NC-3")
-p <- ggplot(d, aes(x = chunk_size, color = algorithm, linetype = algorithm)) +
-  geom_freqpoly(bins=100, aes(y = after_stat(density))) +
-  xlab("Chunk Size (B)") +
-  ylab("Density") +
-  xlim(c(0, target_cs * 3)) +
-  geom_point(data = df_means, aes(x = mean_chunk_size, y = 0, color = algorithm), size = 2, show.legend = FALSE) +
-  theme(legend.position = "bottom", legend.title = element_blank()) +
-  scale_color_discrete(labels = labels) +
-  scale_linetype_discrete(labels = labels)
-
-print_plot(p, "csd_gear_variants", height=3)
 
 rm(labels,df_means,target_cs,d,p)
 
@@ -447,6 +472,24 @@ df_rand <- open_dataset(sprintf("%s/parquet/csd", csv_dir), hive_style=TRUE, for
 combined_df <- rbind(collect(df), collect(df_rand))
 combined_df$dataset <- factor(combined_df$dataset, levels = DATASET_ORDER)
 
+# render per algorithm (lines are datasets)
+for (algorithm_name in unique(df$algorithm)) {
+  algo_df <- combined_df %>%
+    filter(algorithm == algorithm_name) %>%
+    rename_algorithms() %>%
+    rename_datasets()
+  
+  p <- ggplot(algo_df, aes(x = chunk_size, color = dataset, linetype = dataset)) +
+    geom_freqpoly(bins=100, aes(y = after_stat(density))) +
+    xlab("Chunk Size (B)") +
+    ylab("Density") +
+    xlim(c(0, 1024 * 2)) +
+    theme(legend.position = "bottom")
+  
+  print_plot(p, paste("csd", algorithm_name, sep="_"), height=2)
+}
+
+# render per dataset (lines are algorithms)
 for (dataset_name in DATASET_ORDER) {
   dataset_df <- combined_df %>%
     filter(dataset == dataset_name) %>%
@@ -460,28 +503,10 @@ for (dataset_name in DATASET_ORDER) {
     xlim(c(0, 1024 * 2)) +
     theme(legend.position = "none")
   
-  print_plot(p, paste("csd", dataset_name, sep="_"), width=4, height=2)
+  print_plot(p, paste("csd", dataset_name, sep="_"), height=2)
 }
 
-# legend
-dummy_plot <- p + theme_void() +
-  theme(
-    legend.position = "bottom",
-    legend.title = element_blank(), # This removes the legend title
-    legend.text = element_text(size = 11), # Sets the legend text size
-    legend.direction = "horizontal" # Ensures the legend items are laid out horizontally
-  ) +
-  guides(color = guide_legend(ncol = 3))
-legend <- cowplot::get_legend(dummy_plot)
-
-if (!dev.cur()) dev.new()
-grid.newpage()
-grid.draw(legend)
-legend_plot <- recordPlot()
-dev.off()
-dev.new()
-
-print_plot(legend_plot, "csd_legendonly", width=4, height=2)
+print_plot(get_legend_plot(p, 3), "csd_legendonly", width=4, height=2)
 
 
 p <- combined_df %>% 
@@ -499,4 +524,14 @@ print_plot(p, "csd", width=8, height=6)
 
 rm(d,p)
 gc()
+
+#########################################
+# Gear NC chunk size distributions
+
+p <- ggplot(data_filtered, aes(x=g_norm, y=n_norm, linetype=window_size, fill=window_size)) +
+  geom_line(position=position_jitter(width=0,height=0.005)) +
+  geom_area(alpha=0.1,position="identity") +
+  labs(x="Normalized Codomain", y="Density") +
+  scale_fill_manual(values=hue_pal()(6), name="Window Size (B)") +
+  scale_color_manual(values=hue_pal()(6), name="Window Size (B)")
 
