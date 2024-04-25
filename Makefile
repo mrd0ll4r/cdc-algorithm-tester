@@ -2,7 +2,7 @@
 
 # Produces an optimized and fast release build.
 build:
-	cargo +nightly build --release --locked
+	./build-in-docker.sh
 	chmod +x scripts/*
 
 # Run BFBC analysis on all datasets. Ouput is stored in ./data/bfbc/.

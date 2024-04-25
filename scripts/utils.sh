@@ -70,18 +70,18 @@ get_subalgos() {
       "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1"                                                     # 3/3 nc1
       "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1"                              # 2/2 nc1 hash
       "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1"                              # 3/3 nc1 hash
-      "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 64"                                                      # 2/2 rabin64
-      "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 64"                                                      # 3/3 rabin64
-      "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 64"                               # 2/2 rabin64 hash
-      "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 64"                               # 3/3 rabin64 hash
+      "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 32"                                                      # 2/2 rabin32
+      "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 32"                                                      # 3/3 rabin32
+      "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 32"                               # 2/2 rabin32 hash
+      "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 32"                               # 3/3 rabin32 hash
       "--quickcdc-min-chunk-size 0 --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1"                         # 2/2 nc1 noskip
       "--quickcdc-min-chunk-size 0 --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1"                         # 3/3 nc1 noskip
       "--quickcdc-min-chunk-size 0 --quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1"  # 2/2 nc1 hash noskip
       "--quickcdc-min-chunk-size 0 --quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1"  # 3/3 nc1 hash noskip
-      "--quickcdc-min-chunk-size 0 --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 64"                          # 2/2 rabin64 noskip
-      "--quickcdc-min-chunk-size 0 --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 64"                          # 3/3 rabin64 noskip
-      "--quickcdc-min-chunk-size 0 --quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 64"   # 2/2 rabin64 hash noskip
-      "--quickcdc-min-chunk-size 0 --quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 64"   # 3/3 rabin64 hash noskip
+      "--quickcdc-min-chunk-size 0 --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 32"                          # 2/2 rabin32 noskip
+      "--quickcdc-min-chunk-size 0 --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 32"                          # 3/3 rabin32 noskip
+      "--quickcdc-min-chunk-size 0 --quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 32"   # 2/2 rabin32 hash noskip
+      "--quickcdc-min-chunk-size 0 --quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 32"   # 3/3 rabin32 hash noskip
     )
     ;;
   "rabin")
@@ -145,17 +145,17 @@ get_algo_name() {
   "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1")
     echo "quick_hash_3"
     ;;
-  "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 64")
-    echo "quick_2_rabin_64"
+  "--quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 32")
+    echo "quick_2_rabin_32"
     ;;
-  "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 64")
-    echo "quick_3_rabin_64"
+  "--quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 32")
+    echo "quick_3_rabin_32"
     ;;
-  "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 64")
-    echo "quick_hash_2_rabin_64"
+  "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 32")
+    echo "quick_hash_2_rabin_32"
     ;;
-  "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 64")
-    echo "quick_hash_3_rabin_64"
+  "--quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 32")
+    echo "quick_hash_3_rabin_32"
     ;;
   "--quickcdc-min-chunk-size 0 --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 nc-gear 1")
     echo "quick_2_noskip"
@@ -169,17 +169,17 @@ get_algo_name() {
   "--quickcdc-min-chunk-size 0 --quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 nc-gear 1")
     echo "quick_hash_3_noskip"
     ;;
-  "--quickcdc-min-chunk-size 0 --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 64")
-    echo "quick_2_rabin_64_noskip"
+  "--quickcdc-min-chunk-size 0 --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 32")
+    echo "quick_2_rabin_32_noskip"
     ;;
-  "--quickcdc-min-chunk-size 0 --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 64")
-    echo "quick_3_rabin_64_noskip"
+  "--quickcdc-min-chunk-size 0 --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 32")
+    echo "quick_3_rabin_32_noskip"
     ;;
-  "--quickcdc-min-chunk-size 0 --quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 64")
-    echo "quick_hash_2_rabin_64_noskip"
+  "--quickcdc-min-chunk-size 0 --quickcdc-use-hashmap --quickcdc-front-feature-vector-length 2 --quickcdc-end-feature-vector-length 2 rabin 32")
+    echo "quick_hash_2_rabin_32_noskip"
     ;;
-  "--quickcdc-min-chunk-size 0 --quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 64")
-    echo "quick_hash_3_rabin_64_noskip"
+  "--quickcdc-min-chunk-size 0 --quickcdc-use-hashmap --quickcdc-front-feature-vector-length 3 --quickcdc-end-feature-vector-length 3 rabin 32")
+    echo "quick_hash_3_rabin_32_noskip"
     ;;
   "bfbc_custom_div")
     echo "bfbc_custom_div"
@@ -241,8 +241,8 @@ get_cmd() {
 }
 
 # Global settings
-export BIN=./target/release/cdc-algorithm-tester
-export DATA_PATH=catdata
+export BIN=./out/cdc-algorithm-tester
+export DATA_PATH=data
 export FAST_DATA_PATH=fast_data
 
 if [ -z "${TARGET_CHUNK_SIZES}" ]; then
@@ -264,7 +264,7 @@ else
 fi
 
 if [ -z "${DATASETS}" ]; then
-  DATASETS=("random.bin" "web.tar" "code.tar" "pdf.tar" "lnx.tar" "zero.bin" "empty.bin")
+  DATASETS=("random.bin" "web.cat" "code.cat" "pdf.cat" "lnx.cat")
 else
   # shellcheck disable=SC2207
   DATASETS=($(echo "$DATASETS" | tr ',' ' '))
