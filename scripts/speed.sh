@@ -2,7 +2,7 @@
 
 source scripts/utils.sh
 
-perf_events_to_collect="task-clock,context-switches,page-faults,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-misses,L1-dcache-prefetches,cache-references,cache-misses"
+perf_events_to_collect="task-clock,context-switches,page-faults,cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-misses,cache-references,cache-misses"
 
 # Get command string for chunker. Pass arguments in the following order: algoname, dataset, target chunk size.
 get_cmd() {

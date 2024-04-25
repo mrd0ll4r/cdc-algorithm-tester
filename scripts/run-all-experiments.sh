@@ -10,27 +10,21 @@ make bfbc
 # Computational Performance Measurements
 
 echo "evaluating on random..."
-DATASETS="random.bin" make speed > csv/time_random.csv
-mv perf.csv csv/perf_random.csv
+DATASETS="random.bin" make speed > csv/perf_random.csv
 
 echo "evaluating on code..."
-DATASETS="code.cat" make speed > csv/time_code.csv
-mv perf.csv csv/perf_code.csv
+DATASETS="code.cat" make speed > csv/perf_code.csv
 
 echo "evaluating on web..."
-DATASETS="web.cat" make speed > csv/time_web.csv
-mv perf.csv csv/perf_web.csv
+DATASETS="web.cat" make speed > csv/perf_web.csv
 
 echo "evaluating on pdf..."
-DATASETS="pdf.cat" make speed > csv/time_pdf.csv
-mv perf.csv csv/perf_pdf.csv
+DATASETS="pdf.cat" make speed > csv/perf.csv
 
 echo "evaluating on LNX..."
-DATASETS="lnx.cat" make speed > csv/time_lnx.csv
-mv perf.csv csv/perf_lnx.csv
+DATASETS="lnx.cat" make speed > csv/perf_lnx.csv
 
 echo "compressing..."
-gzip -9 csv/time_*.csv
 gzip -9 csv/perf_*.csv
 
 ########################
