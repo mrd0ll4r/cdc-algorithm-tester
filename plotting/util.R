@@ -33,9 +33,9 @@ QUICKCDC_ALGORITHMS <- c("quick_2","quick_3","quick_hash_2","quick_hash_3",
                          "quick_2_noskip","quick_3_noskip","quick_hash_2_noskip","quick_hash_3_noskip",
                          "quick_2_rabin_32_noskip","quick_3_rabin_32_noskip","quick_hash_2_rabin_32_noskip","quick_hash_3_rabin_32_noskip"
 )
-QUICKCDC_RABIN_ALGORITHMS <- c("quick_2_rabin_64","quick_3_rabin_64","quick_hash_2_rabin_64","quick_hash_3_rabin_64")
+QUICKCDC_RABIN_ALGORITHMS <- c("quick_2_rabin_32","quick_3_rabin_32","quick_hash_2_rabin_32","quick_hash_3_rabin_32")
 QUICKCDC_GEAR_ALGORITHMS <- c("quick_2","quick_3","quick_hash_2","quick_hash_3")
-QUICKCDC_RABIN_ALGORITHMS_NOSKIP <- c("quick_2_rabin_64_noskip","quick_3_rabin_64_noskip","quick_hash_2_rabin_64_noskip","quick_hash_3_rabin_64_noskip")
+QUICKCDC_RABIN_ALGORITHMS_NOSKIP <- c("quick_2_rabin_32_noskip","quick_3_rabin_32_noskip","quick_hash_2_rabin_32_noskip","quick_hash_3_rabin_32_noskip")
 QUICKCDC_GEAR_ALGORITHMS_NOSKIP <- c("quick_2_noskip","quick_3_noskip","quick_hash_2_noskip","quick_hash_3_noskip")
 
 
@@ -61,7 +61,7 @@ rename_algorithms <- function(data_frame) {
     quick_2 = "Quick A-2", quick_3 = "Quick A-3",
     quick_hash_2 = "Quick HM-2", quick_hash_3 = "Quick HM-3"
   )))
-  
+
   return(df)
 }
 
@@ -71,6 +71,6 @@ rename_datasets <- function(data_frame) {
   df$dataset <- factor(recode(df$dataset, !!!c(
     code = "CODE", lnx = "LNX", pdf = "PDF", random = "RAND", web = "WEB", zero = "ZERO"
   )))
-  
+
   return(df)
 }
