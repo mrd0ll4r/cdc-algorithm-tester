@@ -71,6 +71,27 @@ rename_datasets <- function(data_frame) {
   df$dataset <- factor(recode(df$dataset, !!!c(
     code = "CODE", lnx = "LNX", pdf = "PDF", random = "RAND", web = "WEB", zero = "ZERO"
   )))
-
+  
   return(df)
+}
+
+get_legend_plot <-function(p, ncols) {
+  dummy_plot <- p + theme_void() +
+    theme(
+      legend.position = "bottom",
+      legend.title = element_blank(),
+      legend.text = element_text(size = 10),
+      legend.direction = "horizontal"
+    ) +
+    guides(color = guide_legend(ncol = ncols))
+  legend <- cowplot::get_legend(dummy_plot)
+  
+  if (!dev.cur()) dev.new()
+  grid.newpage()
+  grid.draw(legend)
+  legend_plot <- recordPlot()
+  dev.off()
+  dev.new()
+  
+  return(legend_plot)
 }
