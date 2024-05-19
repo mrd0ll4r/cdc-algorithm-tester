@@ -92,9 +92,11 @@ perf_data %>%
 #  - Target chunk size: e.g. 2 KiB
 #- Idea: How does QuickCDC perform w.r.t. caching and jumping on different datasets?
 d <- perf_data %>%
+  rename_datasets() %>%
   filter(algorithm %in% c(QUICKCDC_RABIN_ALGORITHMS, QUICKCDC_RABIN_ALGORITHMS_NOSKIP) |
            algorithm == "rabin_32"
-  )
+  ) %>%
+  filter(!grepl("hash", algorithm, fixed=TRUE))
 
 # Calculate some statistics...
 d <- d %>%
@@ -110,14 +112,12 @@ d <- d %>%
 
 algos <- c("rabin_32",
            "quick_2_rabin_32_noskip", "quick_3_rabin_32_noskip",
-           "quick_2_rabin_32", "quick_3_rabin_32",
-           "quick_hash_2_rabin_32","quick_hash_3_rabin_32"
-)
-algo_labels <- c("Vanilla", "A-2-NS", "A-3-NS", "A-2", "A-3", "HM-2", "HM-3")
+           "quick_2_rabin_32", "quick_3_rabin_32")
+algo_labels <- c("Vanilla", "A-2-NS", "A-3-NS", "A-2", "A-3")
 d$algorithm <- factor(d$algorithm, levels = algos)
-d$dataset <- factor(d$dataset, levels = c("random", "lnx", "pdf", "web", "code"))
 
-d <- d %>% drop_na(algorithm) %>% rename_datasets() %>%
+d <- d %>%
+  drop_na(algorithm)  %>%
   filter(event == "mibytes_per_sec" & target_chunk_size == 2048)
 
 p <- d %>%
@@ -134,21 +134,23 @@ p <- d %>%
   ) +
   labs(x = "Dataset", y = "Throughput (MiB/s)") +
   theme(legend.position = "none") +
-  guides(fill = guide_legend(ncol = 4)) +
+  guides(fill = guide_legend(ncol = 5)) +
   scale_fill_jama(name = "",
                   breaks = algos,
                   labels = algo_labels)
 print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib", height = 2)
 
-print_plot(get_legend_plot(p, 4), "perf_quickcdc_variants_different_datasets_2kib_legendonly", width=3.5, height=0.5)
+print_plot(get_legend_plot(p, 5), "perf_quickcdc_variants_different_datasets_2kib_legendonly", width=4, height=0.5)
 
 
 ######################################################################
 # The same, but around Gear
 d <- perf_data %>%
+  rename_datasets() %>%
   filter(algorithm %in% c(QUICKCDC_GEAR_ALGORITHMS, QUICKCDC_GEAR_ALGORITHMS_NOSKIP) |
            algorithm == "gear_nc_1"
-  )
+  ) %>%
+  filter(!grepl("hash", algorithm, fixed=TRUE))
 
 # Calculate some statistics...
 d <- d %>%
@@ -164,13 +166,12 @@ d <- d %>%
 
 algos <- c("gear_nc_1",
            "quick_2_noskip", "quick_3_noskip",
-           "quick_2", "quick_3", "quick_hash_2","quick_hash_3"
-)
-algo_labels <- c("Vanilla", "A-2-NS", "A-3-NS", "A-2", "A-3", "HM-2", "HM-3")
+           "quick_2", "quick_3")
+algo_labels <- c("Vanilla", "A-2-NS", "A-3-NS", "A-2", "A-3")
 d$algorithm <- factor(d$algorithm, levels = algos)
-d$dataset <- factor(d$dataset, levels = c("random", "lnx", "pdf", "web", "code"))
 
-d <- d %>% drop_na(algorithm) %>% rename_datasets() %>%
+d <- d %>%
+  drop_na(algorithm) %>%
   filter(event == "mibytes_per_sec" & target_chunk_size == 2048)
 
 # Plot
@@ -197,68 +198,86 @@ print_plot(p,"perf_quickcdc_gear_variants_different_datasets_2kib", height = 2)
 #- Idea: What influence do design decisions (hashmap vs. flat array; front/end feature vector length) have on performance?
 #  - Dataset: Random, Code/Web
 #
-# d <- perf_data %>%
-#   filter(algorithm %in% QUICKCDC_RABIN_ALGORITHMS | algorithm == "rabin_32") %>%
-#   filter(dataset %in% c("random","code")) %>%
-#   group_by(algorithm,dataset,target_chunk_size,event) %>%
-#   summarize(dataset_size=mean(dataset_size), n=n(),
-#             val=mean(value), sd=sd(value),
-#             se=standard_error(value),
-#             max=max(value),
-#             mmd=mean_min_dev(value),
-#             med=median(value),
-#             iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
-#   ) %>%
-#   filter(target_chunk_size == 8192 | target_chunk_size == 512) %>%
-#   filter(event %in% c("task-clock","mibytes_per_sec","usec_per_byte","branch_miss_percentage","cache_miss_percentage","l1_dcache_miss_percentage","instructions_per_cycle","instructions_per_byte")) %>%
-#   rename_algorithms() %>%
-#   rename_datasets()
-#
-# # Create table
-# t <- d %>%
-#   pivot_wider(
-#     id_cols=c(algorithm,dataset,dataset_size,target_chunk_size,n),
-#     names_from=event,values_from=c("med","iqd","val","se","max"),
-#     names_glue = "{event}_{.value}",
-#     names_vary="slowest") %>%
-#   mutate(dataset_size=NULL, n=NULL) %>%
-#   arrange(target_chunk_size,dataset,algorithm) %>%
-#   select(algorithm,dataset,target_chunk_size,
-#          #starts_with("task-clock"),
-#          #starts_with("mibytes_per_sec"),
-#          mibytes_per_sec_med,
-#          mibytes_per_sec_iqd,
-#          #starts_with("usec_per_byte"),
-#          #starts_with("instructions_per_byte"),
-#          instructions_per_byte_val,
-#          instructions_per_byte_se,
-#          #starts_with("instructions_per_cycle"),
-#          instructions_per_cycle_val,
-#          instructions_per_cycle_se,
-#          #starts_with("l1_dcache_miss_percentage"),
-#          l1_dcache_miss_percentage_val,
-#          l1_dcache_miss_percentage_se,
-#          #starts_with("branch_miss_percentage")
-#          #branch_miss_percentage_val,
-#          #branch_miss_percentage_se
-#   )
-#
-# addtorow <- list()
-# addtorow$pos <- list(0)
-# addtorow$command <- '&&& \\multicolumn{2}{c}{Throughput (MiB/s)} &
-# \\multicolumn{2}{c}{Inst./B} &
-# \\multicolumn{2}{c}{IPC} &
-# \\multicolumn{2}{c}{L1 DCache Miss (\\%)}\\\\
-# \\cmidrule(lr){4-5}
-# \\cmidrule(lr){6-7}
-# \\cmidrule(lr){8-9}
-# \\cmidrule(lr){10-11}
-# Algorithm & Dataset & Target CS & Median & IQR & Mean & SE & Mean & SE & Mean & SE\\\\'
-#
-# print(xtable(t, digits=4), file="tab/perf_quickcdc_rabin_variants.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE)
-#
-# rm(d,p,t,addtorow,algos)
-# gc()
+d <- perf_data %>%
+  filter(algorithm %in% QUICKCDC_RABIN_ALGORITHMS | algorithm == "rabin_32") %>%
+  filter(dataset %in% c("random","code")) %>%
+  group_by(algorithm,dataset,target_chunk_size,event) %>%
+  summarize(dataset_size=mean(dataset_size), n=n(),
+            val=mean(value), sd=sd(value),
+            se=standard_error(value),
+            max=max(value),
+            mmd=mean_min_dev(value),
+            med=median(value),
+            iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
+  ) %>%
+  filter(target_chunk_size == 8192 | target_chunk_size == 512) %>%
+  filter(event %in% c("task-clock","mibytes_per_sec","usec_per_byte","branch_miss_percentage","cache_miss_percentage","l1_dcache_miss_percentage","instructions_per_cycle","instructions_per_byte")) %>%
+  rename_algorithms() %>%
+  rename_datasets()
+
+# Create table
+t <- d %>%
+  pivot_wider(
+    id_cols=c(algorithm,dataset,dataset_size,target_chunk_size,n),
+    names_from=event,values_from=c("med","iqd","val","se","max"),
+    names_glue = "{event}_{.value}",
+    names_vary="slowest") %>%
+  mutate(dataset_size=NULL, n=NULL) %>%
+  arrange(target_chunk_size,dataset,algorithm) %>%
+  select(algorithm,dataset,target_chunk_size,
+         #starts_with("task-clock"),
+         #starts_with("mibytes_per_sec"),
+         mibytes_per_sec_med,
+         mibytes_per_sec_iqd,
+         #starts_with("usec_per_byte"),
+         #starts_with("instructions_per_byte"),
+         instructions_per_byte_val,
+         instructions_per_byte_se,
+         #starts_with("instructions_per_cycle"),
+         instructions_per_cycle_val,
+         instructions_per_cycle_se,
+         #starts_with("l1_dcache_miss_percentage"),
+         l1_dcache_miss_percentage_val,
+         l1_dcache_miss_percentage_se,
+         #starts_with("branch_miss_percentage")
+         #branch_miss_percentage_val,
+         #branch_miss_percentage_se
+  )  %>%
+  mutate(
+    target_chunk_size = tex_format_number(target_chunk_size),
+    mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med,digits=1)),
+    mibytes_per_sec_iqd = tex_format_percentage(mibytes_per_sec_iqd, digits=1, percentage_sign=FALSE),
+
+    instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
+    instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
+
+    instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
+    instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
+
+    l1_dcache_miss_percentage_val = tex_format_number(round(l1_dcache_miss_percentage_val, digits=2)),
+    l1_dcache_miss_percentage_se = tex_format_percentage(l1_dcache_miss_percentage_se, percentage_sign=FALSE),
+  )
+
+addtorow <- list()
+addtorow$pos <- list(0)
+addtorow$command <- '&&& \\multicolumn{2}{c}{Throughput (MiB/s)} &
+\\multicolumn{2}{c}{Inst./B} &
+\\multicolumn{2}{c}{IPC} &
+\\multicolumn{2}{c}{L1 DCache Miss (\\%)}\\\\
+\\cmidrule(lr){4-5}
+\\cmidrule(lr){6-7}
+\\cmidrule(lr){8-9}
+\\cmidrule(lr){10-11}
+Algorithm & Dataset & Target CS & Median & IQR & Mean & SE & Mean & SE & Mean & SE\\\\'
+
+print(
+  xtable(t, align = c("r", "l", "l", "r", "r", "r","r", "r","r", "r","r", "r")),
+  file="tab/perf_quickcdc_rabin_variants.tex",
+  add.to.row=addtorow,include.colnames=F,floating=FALSE,
+  sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
+
+rm(d,p,t,addtorow,algos)
+gc()
 
 
 ###################
@@ -561,7 +580,8 @@ gc()
 # Performance overview
 d <- perf_data %>%
   filter(dataset == "random") %>%
-  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE)  %>%
+  rename_algorithms() %>%
   filter(target_chunk_size == 2048) %>%
   group_by(algorithm,target_chunk_size,event) %>%
   summarize(dataset_size=mean(dataset_size), n=n(),
@@ -574,8 +594,7 @@ d <- perf_data %>%
             q25=quantile(value, probs=0.25, names=FALSE),
             q75=quantile(value, probs=0.75, names=FALSE),
             iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
-            ) %>%
-  rename_algorithms()
+            )
 
 t <- d %>%
   filter(event %in% c("mibytes_per_sec",
@@ -654,4 +673,144 @@ print_plot(p, "perf_overview_throughput_random_2kib")
 
 rm(d,t,p,addtorow)
 gc()
+
+
+
+##########################################################################
+# BFBC vs BFBC* on CODE/RAND
+
+d <- perf_data %>%
+  filter(dataset %in% c("random", "code")) %>%
+  filter(algorithm %in% c("bfbc","bfbc_custom_div"))  %>%
+  rename_algorithms() %>%
+  rename_datasets() %>%
+  filter(target_chunk_size == 2048) %>%
+  group_by(algorithm, dataset, target_chunk_size,event) %>%
+  summarize(dataset_size=mean(dataset_size), n=n(),
+            val=mean(value),
+            sd=sd(value),
+            se=standard_error(value),
+            mmd=mean_max_dev(value),
+            max=max(value),
+            med=median(value),
+            q25=quantile(value, probs=0.25, names=FALSE),
+            q75=quantile(value, probs=0.75, names=FALSE),
+            iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
+  )
+
+t <- d %>%
+  filter(event %in% c("mibytes_per_sec",
+                      "instructions_per_byte",
+                      "instructions_per_cycle",
+                      "branches_per_byte",
+                      "branch_miss_percentage")) %>%
+  ungroup() %>%
+  mutate(n=NULL, target_chunk_size=NULL, dataset_size = NULL) %>%
+  pivot_wider(
+    id_cols=c(algorithm, dataset),
+    names_from=event,
+    values_from=c("iqd", "val","med","se","max"),
+    names_glue = "{event}_{.value}",
+    names_vary="slowest") %>%
+  arrange(dataset, algorithm) %>%
+  select(algorithm,
+         dataset,
+         mibytes_per_sec_med,
+         mibytes_per_sec_iqd,
+         instructions_per_byte_val,
+         instructions_per_byte_se,
+         instructions_per_cycle_val,
+         instructions_per_cycle_se,
+         branches_per_byte_val,
+         branches_per_byte_se,
+         branch_miss_percentage_val,
+         branch_miss_percentage_se
+         #starts_with("mibytes_per_sec"),
+         #starts_with("instructions_per_byte"),
+         #starts_with("instructions_per_cycle")
+  ) %>%
+  mutate(
+    mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med,digits=1)),
+    mibytes_per_sec_iqd = tex_format_percentage(mibytes_per_sec_iqd, digits=1, percentage_sign=FALSE),
+
+    instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
+    instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
+
+    instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
+    instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
+
+    branches_per_byte_val = tex_format_number(round(branches_per_byte_val, digits=2)),
+    branches_per_byte_se = tex_format_percentage(branches_per_byte_se, percentage_sign=FALSE),
+
+    branch_miss_percentage_val = tex_format_number(round(branch_miss_percentage_val, digits=2)),
+    branch_miss_percentage_se = tex_format_percentage(branch_miss_percentage_se, percentage_sign=FALSE),
+  )
+
+addtorow <- list()
+addtorow$pos <- list(0)
+addtorow$command <- '&& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{Branches/B}  & \\multicolumn{2}{c}{Branch Miss \\%}\\\\
+\\cmidrule(lr){3-4}
+\\cmidrule(lr){5-6}
+\\cmidrule(lr){7-8}
+\\cmidrule(lr){9-10}
+\\cmidrule(lr){11-12}
+Algorithm & Dataset & Median & IQR & Mean & SE & Mean & SE & Mean & SE & Mean & SE\\\\'
+
+print(
+  xtable(t, align=c("l","l","l","r","r","r","r","r","r","r","r","r","r")),
+  file="tab/perf_bfbc_vs_custom_bfbc_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE,
+  sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
+
+
+
+
+##########################################################################
+# Performance on different datasets etc
+
+d <- perf_data %>%
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
+  filter(event == "mibytes_per_sec") %>%
+  filter(target_chunk_size %in% POWER_OF_TWO_SIZES) %>%
+  rename_algorithms() %>%
+  rename_datasets() %>%
+  group_by(algorithm,target_chunk_size,dataset,event) %>%
+  summarize(dataset_size=mean(dataset_size), n=n(),
+            val=mean(value),
+            sd=sd(value),
+            se=standard_error(value),
+            mmd=mean_max_dev(value),
+            max=max(value),
+            med=median(value),
+            q25=quantile(value, probs=0.25, names=FALSE),
+            q75=quantile(value, probs=0.75, names=FALSE),
+            iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
+  )
+
+d %>%
+  mutate(target_chunk_size = as.factor(target_chunk_size)) %>%
+  ggplot(aes(x=target_chunk_size, y=med, ymin=q25, ymax=q75, linetype=dataset, group=dataset)) +
+  geom_line() +
+  geom_errorbar(width=.5) +
+  facet_wrap(~algorithm, scales="free_y")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

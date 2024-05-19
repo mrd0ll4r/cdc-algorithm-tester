@@ -59,20 +59,27 @@ rename_algorithms <- function(data_frame) {
     gear_nc_1 = "Gear NC-1", gear_nc_2 = "Gear NC-2", gear_nc_3 = "Gear NC-3",
     bfbc = "BFBC", bfbc_custom_div = "BFBC*",
     quick_2 = "Quick A-2", quick_3 = "Quick A-3",
-    quick_hash_2 = "Quick HM-2", quick_hash_3 = "Quick HM-3"
+    quick_hash_2 = "Quick HM-2", quick_hash_3 = "Quick HM-3",
+    quick_2_rabin_32 = "Quick A-2 Rabin", quick_3_rabin_32 = "Quick A-3 Rabin",
+    quick_hash_2_rabin_32 = "Quick HM-2 Rabin", quick_hash_3_rabin_32 = "Quick HM-3 Rabin"
   )))
 
   return(df)
 }
 
-rename_datasets <- function(data_frame) {
-  df <- data_frame
-  df$dataset <- as.factor(df$dataset)
-  df$dataset <- factor(recode(df$dataset, !!!c(
-    code = "CODE", lnx = "LNX", pdf = "PDF", random = "RAND", web = "WEB", zero = "ZERO"
-  )))
-  
-  return(df)
+rename_datasets <- function(df) {
+  df %>%
+    mutate(
+      dataset=as.factor(dataset),
+      dataset=fct_recode(
+        dataset,
+        CODE="code",
+        LNX="lnx",
+        PDF="pdf",
+        RAND="random",
+        WEB="web",
+        ZERO="zero",
+      ))
 }
 
 get_legend_plot <-function(p, ncols) {
@@ -85,13 +92,13 @@ get_legend_plot <-function(p, ncols) {
     ) +
     guides(color = guide_legend(ncol = ncols))
   legend <- cowplot::get_legend(dummy_plot)
-  
+
   if (!dev.cur()) dev.new()
   grid.newpage()
   grid.draw(legend)
   legend_plot <- recordPlot()
   dev.off()
   dev.new()
-  
+
   return(legend_plot)
 }
