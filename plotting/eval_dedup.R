@@ -44,7 +44,13 @@ dedup_data <- dedup_data %>%
   mutate(target_chunk_size = as.factor(target_chunk_size))
 
 d <- dedup_data %>%
-  filter(algorithm %in% ALGORITHMS_TO_COMPARE)
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>% 
+  filter(!(
+    algorithm %in% c("rabin_32", "buzhash_64", "gear") & target_chunk_size %in% c(737, 5152)
+  )) %>% 
+  filter(!(
+    algorithm == "mii" & target_chunk_size %in% POWER_OF_TWO_SIZES
+  ))
 
 ######################################################################
 # Dedup and metadata file size comparison with gzip compression
