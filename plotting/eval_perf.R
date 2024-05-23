@@ -133,15 +133,12 @@ p <- d %>%
                 position = position_dodge(.9)
   ) +
   labs(x = "Dataset", y = "Throughput (MiB/s)") +
-  theme(legend.position = "none") +
-  guides(fill = guide_legend(ncol = 5)) +
+  theme(legend.position = "right") +
+  guides(fill = guide_legend(ncol = 1)) +
   scale_fill_jama(name = "",
                   breaks = algos,
                   labels = algo_labels)
 print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib", height = 2)
-
-print_plot(get_legend_plot(p, 5), "perf_quickcdc_variants_different_datasets_2kib_legendonly", width=4, height=0.5)
-
 
 ######################################################################
 # The same, but around Gear
@@ -185,8 +182,8 @@ p <- d %>%
                 width=.3,
                 position=position_dodge(.9)) +
   labs(x="Dataset",y="Throughput (MiB/s)") +
-  theme(legend.position="none") +
-  guides(fill = guide_legend(ncol = 4)) +
+  theme(legend.position="right") +
+  guides(fill = guide_legend(ncol = 1)) +
   scale_fill_jama(name=NULL,
                   breaks=algos,
                   labels=algo_labels)
