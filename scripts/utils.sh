@@ -24,6 +24,37 @@ get_w_for_mii() {
   echo "$closest"
 }
 
+# Returns the best match for parameter w in AE to achieve given target chunk size.
+get_w_for_ae() {
+  case $1 in
+  512)
+    echo "348"
+    ;;
+  1024)
+    echo "793"
+    ;;
+  2048)
+    echo "1793"
+    ;;
+  4096)
+    echo "3840"
+    ;;
+  8192)
+    echo "7936"
+    ;;
+  737)
+    echo "533"
+    ;;
+  5152)
+    echo "4896"
+    ;;
+  *)
+    echo "Error: Target chunk size not supported for AE."
+    exit 1
+    ;;
+  esac
+}
+
 # Finds the best match for parameters w and t in PCI to achieve given target chunk size.
 get_w_and_t_for_pci() {
   case $1 in
@@ -204,8 +235,11 @@ get_cmd_args() {
   local args_and_algo="$1"
   local params="$3"
   case "$1" in
-  "pci")
-    params="$(get_w_and_t_for_pci "$3")"
+  "ae")
+    params="$(get_w_for_ram "$3")"
+    ;;
+  "ram")
+    params="$(python3 scripts/get-ram-param.py "$3")"
     ;;
   "mii")
     params="$(get_w_for_mii "$3")"

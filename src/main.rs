@@ -252,14 +252,14 @@ enum Commands {
 
     /// Chunks the input file using AE.
     AE {
-        /// The target chunk size.
-        target_chunk_size: usize,
+        /// The window size.
+        window_size: usize,
     },
 
     /// Chunks the input file using RAM.
     RAM {
-        /// The target chunk size.
-        target_chunk_size: usize,
+        /// The window size.
+        window_size: usize,
         /// Whether to use a potentially optimized version of the algorithm.
         #[arg(long)]
         use_optimized_version: bool,
@@ -374,8 +374,6 @@ enum BFBCCommands {
 fn main() -> anyhow::Result<()> {
     logging::set_up_logging().unwrap();
 
-    // For AE: windowSize := int(math.Round(float64(avgSize) / (math.E - 1)))
-
     debug!("parsing commandline...");
     let cli: Cli = Cli::parse();
 
@@ -448,12 +446,11 @@ fn main() -> anyhow::Result<()> {
                 256
             )
         }
-        Commands::AE { target_chunk_size } => {
+        Commands::AE { window_size } => {
             ensure!(
-                target_chunk_size > 0,
-                "target chunk size needs to be at least 1"
+                window_size > 0,
+                "window size needs to be at least 1"
             );
-            let window_size = (target_chunk_size as f64 / (consts::E - 1_f64)) as usize;
             let algo = cdchunking::AEChunker::new(window_size);
             chunk_with_algorithm_and_size_limit(
                 f,
@@ -467,14 +464,13 @@ fn main() -> anyhow::Result<()> {
             )
         }
         Commands::RAM {
-            target_chunk_size,
+            window_size,
             use_optimized_version,
         } => {
             ensure!(
-                target_chunk_size > 0,
-                "target chunk size needs to be at least 1"
+                window_size > 0,
+                "window size needs to be at least 1"
             );
-            let window_size = (target_chunk_size as f64 / (consts::E - 1_f64)) as usize;
             if use_optimized_version {
                 let algo = cdchunking::MaybeOptimizedRAMChunker::new(window_size);
                 chunk_with_algorithm_and_size_limit(
