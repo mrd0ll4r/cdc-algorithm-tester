@@ -235,8 +235,11 @@ get_cmd_args() {
   local args_and_algo="$1"
   local params="$3"
   case "$1" in
+  "pci")
+    params="$(get_w_and_t_for_pci "$3")"
+    ;;
   "ae")
-    params="$(get_w_for_ram "$3")"
+    params="$(get_w_for_ae "$3")"
     ;;
   "ram")
     params="$(python3 scripts/get-ram-param.py "$3")"
