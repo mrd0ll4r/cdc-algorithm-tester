@@ -17,7 +17,6 @@ use clap::{Parser, Subcommand};
 use log::debug;
 use sha1::{Digest, Sha1};
 use std::collections::HashMap;
-use std::f64::consts;
 use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
