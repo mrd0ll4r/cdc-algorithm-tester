@@ -59,25 +59,25 @@ get_w_for_ae() {
 get_w_and_t_for_pci() {
   case $1 in
   512)
-    echo "62 270"
+    echo "65 286"
     ;;
   1024)
-    echo "62 274"
+    echo "67 298"
     ;;
   2048)
-    echo "60 269"
+    echo "35 165"
     ;;
   4096)
-    echo "61 276"
+    echo "118 518"
     ;;
   8192)
-    echo "62 283"
+    echo "58 268"
     ;;
   770)
-    echo "66 289"
+    echo "76 334"
     ;;
   5482)
-    echo "69 311"
+    echo "80 360"
     ;;
   *)
     echo "Error: Target chunk size not supported for PCI."
