@@ -43,10 +43,10 @@ get_w_for_ae() {
     echo "7936"
     ;;
   770)
-    echo "533"
+    echo "562"
     ;;
   5482)
-    echo "4896"
+    echo "5225"
     ;;
   *)
     echo "Error: Target chunk size not supported for AE."
@@ -74,10 +74,10 @@ get_w_and_t_for_pci() {
     echo "62 283"
     ;;
   770)
-    echo "60 264"
+    echo "66 289"
     ;;
   5482)
-    echo "61 277"
+    echo "69 311"
     ;;
   *)
     echo "Error: Target chunk size not supported for PCI."

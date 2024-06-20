@@ -61,7 +61,7 @@ def simulate_chunker(chunker, iterations=10000, block_size=100):
     return positions
 
 if __name__ == "__main__":
-    for window_size in range(1, 1000):
+    for window_size in range(1, 10000):
       chunker = AEChunker(window_size=window_size)
       positions = simulate_chunker(chunker, iterations=10000)
       mean_position = sum(positions) / len(positions)
