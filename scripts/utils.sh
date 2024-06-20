@@ -2,7 +2,7 @@
 
 # Finds the best match for parameter w in MII to achieve given target chunk size.
 get_w_for_mii() {
-  MII_AVGS=(1 2 4 9 28 126 737 5152 41448 375910 3792352) # mapping from w to average chunk size for w=0..10
+  MII_AVGS=(1 2 4 9 29 130 770 5482 45037 418343 4335778) # mapping from w to average chunk size for w=0..10
   target=$1
   closest=0
   distance=$(($target - ${MII_AVGS[0]}))
@@ -42,10 +42,10 @@ get_w_for_ae() {
   8192)
     echo "7936"
     ;;
-  737)
+  770)
     echo "533"
     ;;
-  5152)
+  5482)
     echo "4896"
     ;;
   *)
@@ -73,10 +73,10 @@ get_w_and_t_for_pci() {
   8192)
     echo "62 283"
     ;;
-  737)
+  770)
     echo "60 264"
     ;;
-  5152)
+  5482)
     echo "61 277"
     ;;
   *)
@@ -283,7 +283,7 @@ export DATA_PATH=data
 export FAST_DATA_PATH=fast_data
 
 if [ -z "${TARGET_CHUNK_SIZES}" ]; then
-  TARGET_CHUNK_SIZES=(512 1024 2048 4096 8192 737 5152)
+  TARGET_CHUNK_SIZES=(512 1024 2048 4096 8192 770 5482)
 else
   # shellcheck disable=SC2207
   TARGET_CHUNK_SIZES=($(echo "$TARGET_CHUNK_SIZES" | tr ',' ' '))

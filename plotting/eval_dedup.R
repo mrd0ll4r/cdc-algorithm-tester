@@ -46,7 +46,7 @@ dedup_data <- dedup_data %>%
 d <- dedup_data %>%
   filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>% 
   filter(!(
-    algorithm %in% c("rabin_32", "buzhash_64", "gear") & target_chunk_size %in% c(737, 5152)
+    algorithm %in% c("rabin_32", "buzhash_64", "gear") & target_chunk_size %in% c(770, 5482)
   )) %>% 
   filter(!(
     algorithm == "mii" & target_chunk_size %in% POWER_OF_TWO_SIZES
@@ -66,7 +66,7 @@ chunk_counts <- open_dataset(sprintf("%s/parquet/csd_cat", csv_dir), hive_style=
 df <- d %>%
   mutate(target_chunk_size = as.integer(as.character(target_chunk_size))) %>% 
   left_join(chunk_counts, by = c("dataset", "target_chunk_size")) %>% 
-  filter(algorithm == 'rabin_32' & target_chunk_size != 737 & target_chunk_size != 5152 ) %>%
+  filter(algorithm == 'rabin_32' & target_chunk_size != 770 & target_chunk_size != 5482 ) %>%
   mutate(
     size = 0,
     algorithm = as.character(target_chunk_size),

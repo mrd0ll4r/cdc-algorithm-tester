@@ -48,7 +48,7 @@ process_data <- function(csd_data) {
       names_sep = "_"
     )
   
-  target_sizes <- c(512, 737, 1024, 2048, 4096, 5152, 8192)
+  target_sizes <- c(512, 770, 1024, 2048, 4096, 5482, 8192)
   col_order <- unlist(sapply(target_sizes, function(size) c(paste("mean", size, sep = "_"), paste("sd", size, sep = "_"))))
   
   as.data.frame(df[, c("algorithm", "dataset", col_order)])
@@ -69,16 +69,16 @@ df <- df %>%
   mutate(
     mean_512 = ifelse(algorithm == "mii", NA, mean_512),
     sd_512 = ifelse(algorithm == "mii", NA, sd_512),
-    mean_737 = ifelse(algorithm %in% c("rabin_32", "buzhash_64", "gear"), NA, mean_737),
-    sd_737 = ifelse(algorithm %in% c("rabin_32", "buzhash_64", "gear"), NA, sd_737),
+    mean_770 = ifelse(algorithm %in% c("rabin_32", "buzhash_64", "gear"), NA, mean_770),
+    sd_770 = ifelse(algorithm %in% c("rabin_32", "buzhash_64", "gear"), NA, sd_770),
     mean_1024 = ifelse(algorithm == "mii", NA, mean_1024),
     sd_1024 = ifelse(algorithm == "mii", NA, sd_1024),
     mean_2048 = ifelse(algorithm == "mii", NA, mean_2048),
     sd_2048 = ifelse(algorithm == "mii", NA, sd_2048),
     mean_4096 = ifelse(algorithm == "mii", NA, mean_4096),
     sd_4096 = ifelse(algorithm == "mii", NA, sd_4096),
-    mean_5152 = ifelse(algorithm %in% c("rabin_32", "buzhash_64", "gear"), NA, mean_5152),
-    sd_5152 = ifelse(algorithm %in% c("rabin_32", "buzhash_64", "gear"), NA, sd_5152),
+    mean_5482 = ifelse(algorithm %in% c("rabin_32", "buzhash_64", "gear"), NA, mean_5482),
+    sd_5482 = ifelse(algorithm %in% c("rabin_32", "buzhash_64", "gear"), NA, sd_5482),
     mean_8192 = ifelse(algorithm == "mii", NA, mean_8192),
     sd_8192 = ifelse(algorithm == "mii", NA, sd_8192),
   )
@@ -86,23 +86,23 @@ df <- df %>%
 color_scale_df <- df %>%
   mutate(
     sd_512 = ifelse(((df$sd_512 - df$mean_512) / df$mean_512 + 1) / 2 > 1, 1, ((df$sd_512 - df$mean_512) / df$mean_512 + 1) / 2),
-    sd_737 = ifelse(((df$sd_737 - df$mean_737) / df$mean_737 + 1) / 2 > 1, 1, ((df$sd_737 - df$mean_737) / df$mean_737 + 1) / 2),
+    sd_770 = ifelse(((df$sd_770 - df$mean_770) / df$mean_770 + 1) / 2 > 1, 1, ((df$sd_770 - df$mean_770) / df$mean_770 + 1) / 2),
     sd_1024 = ifelse(((df$sd_1024 - df$mean_1024) / df$mean_1024 + 1) / 2 > 1, 1, ((df$sd_1024 - df$mean_1024) / df$mean_1024 + 1) / 2),
     sd_2048 = ifelse(((df$sd_2048 - df$mean_2048) / df$mean_2048 + 1) / 2 > 1, 1, ((df$sd_2048 - df$mean_2048) / df$mean_2048 + 1) / 2),
     sd_4096 = ifelse(((df$sd_4096 - df$mean_4096) / df$mean_4096 + 1) / 2 > 1, 1, ((df$sd_4096 - df$mean_4096) / df$mean_4096 + 1) / 2),
-    sd_5152 = ifelse(((df$sd_5152 - df$mean_5152) / df$mean_5152 + 1) / 2 > 1, 1, ((df$sd_5152 - df$mean_5152) / df$mean_5152 + 1) / 2),
+    sd_5482 = ifelse(((df$sd_5482 - df$mean_5482) / df$mean_5482 + 1) / 2 > 1, 1, ((df$sd_5482 - df$mean_5482) / df$mean_5482 + 1) / 2),
     sd_8192 = ifelse(((df$sd_8192 - df$mean_8192) / df$mean_8192 + 1) / 2 > 1, 1, ((df$sd_8192 - df$mean_8192) / df$mean_8192 + 1) / 2),
     
     mean_512 = ifelse(abs(df$mean_512 - 512) > 512, 512, abs(df$mean_512 - 512)),
-    mean_737 = ifelse(abs(df$mean_737 - 737) > 737, 737, abs(df$mean_737 - 737)),
+    mean_770 = ifelse(abs(df$mean_770 - 770) > 770, 770, abs(df$mean_770 - 770)),
     mean_1024 = ifelse(abs(df$mean_1024 - 1024) > 1024, 1024, abs(df$mean_1024 - 1024)),
     mean_2048 = ifelse(abs(df$mean_2048 - 2048) > 2048, 2048, abs(df$mean_2048 - 2048)),
     mean_4096 = ifelse(abs(df$mean_4096 - 4096) > 4096, 4096, abs(df$mean_4096 - 4096)),
-    mean_5152 = ifelse(abs(df$mean_5152 - 5152) > 5152, 5152, abs(df$mean_5152 - 5152)),
+    mean_5482 = ifelse(abs(df$mean_5482 - 5482) > 5482, 5482, abs(df$mean_5482 - 5482)),
     mean_8192 = ifelse(abs(df$mean_8192 - 8192) > 8192, 8192, abs(df$mean_8192 - 8192)),
   )
 
-cgroup=c("Algorithm", "Dataset", "512 B", "737 B", "1 KB", "2 KB", "4 KB", "5152 B", "8 KB")
+cgroup=c("Algorithm", "Dataset", "512 B", "770 B", "1 KB", "2 KB", "4 KB", "5482 B", "8 KB")
 n.cgroup=c(1, 1, 2, 2, 2, 2, 2, 2, 2)
 
 rgroup=c("RANDOM", "LNX", "PDF", "WEB", "CODE")
@@ -115,7 +115,7 @@ ztab <- color_scale_df %>%
   addrgroup(rgroup=rgroup,n.rgroup=n.rgroup,cspan.rgroup=1) %>% 
   makeHeatmap(margin=2)
 
-for (col_name in c("mean_512", "sd_512", "mean_737", "sd_737", "mean_1024", "sd_1024", "mean_2048", "sd_2048", "mean_4096", "sd_4096", "mean_5152", "sd_5152", "mean_8192", "sd_8192")) {
+for (col_name in c("mean_512", "sd_512", "mean_770", "sd_770", "mean_1024", "sd_1024", "mean_2048", "sd_2048", "mean_4096", "sd_4096", "mean_5482", "sd_5482", "mean_8192", "sd_8192")) {
   ztab$x[[col_name]] <- as.character(as.integer(df[[col_name]]))
 }
 
@@ -131,11 +131,11 @@ get_cell_color <- function(att, algo, ds) {
   # Applying conditional selection of columns based on the algorithm name
   if (any(grepl("^gear", algo))) {
     # If the algorithm name starts with "gear", select columns starting with 'att'
-    # but not ending in '737' or '5152'
+    # but not ending in '770' or '5482'
     means_df <- means_df %>%
       select(matches(paste0("^", att)), 
-             -matches(paste0(att, "737$")), 
-             -matches(paste0(att, "5152$")))
+             -matches(paste0(att, "770$")), 
+             -matches(paste0(att, "5482$")))
   } else {
     # Otherwise, just select columns that start with 'att'
     means_df <- means_df %>%
@@ -306,49 +306,49 @@ rm(d,p,eval_target_cs,eval_dataset)
 gc()
 
 ################
-# All datasets on target 737
+# All datasets on target 770
 
 p <- csd_data %>%
   filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
-  filter(target_chunk_size == 737) %>%
+  filter(target_chunk_size == 770) %>%
   filter(dataset == "random") %>%
   csd_density_plot()
-print_plot(p,sprintf("csd_random_737",eval_dataset), height=8)
+print_plot(p,sprintf("csd_random_770",eval_dataset), height=8)
 
 p <- csd_data %>%
   filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
-  filter(target_chunk_size == 737) %>%
+  filter(target_chunk_size == 770) %>%
   filter(dataset == "code") %>%
   csd_density_plot()
-print_plot(p,sprintf("csd_code_737",eval_dataset),height=8)
+print_plot(p,sprintf("csd_code_770",eval_dataset),height=8)
 
 p <- csd_data %>%
   filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
-  filter(target_chunk_size == 737) %>%
+  filter(target_chunk_size == 770) %>%
   filter(dataset == "web") %>%
   csd_density_plot()
-print_plot(p,sprintf("csd_web_737",eval_dataset),height=8)
+print_plot(p,sprintf("csd_web_770",eval_dataset),height=8)
 
 p <- csd_data %>%
   filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
-  filter(target_chunk_size == 737) %>%
+  filter(target_chunk_size == 770) %>%
   filter(dataset == "pdf") %>%
   csd_density_plot()
-print_plot(p,sprintf("csd_pdf_737",eval_dataset),height=8)
+print_plot(p,sprintf("csd_pdf_770",eval_dataset),height=8)
 
 p <- csd_data %>%
   filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
-  filter(target_chunk_size == 737) %>%
+  filter(target_chunk_size == 770) %>%
   filter(dataset == "lnx") %>%
   csd_density_plot()
-print_plot(p,sprintf("csd_lnx_737",eval_dataset),height=8)
+print_plot(p,sprintf("csd_lnx_770",eval_dataset),height=8)
 
 p <- csd_data %>%
   filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
-  filter(target_chunk_size == 737) %>%
+  filter(target_chunk_size == 770) %>%
   filter(dataset == "zero") %>%
   csd_density_plot()
-print_plot(p,sprintf("csd_zero_737",eval_dataset),height=8)
+print_plot(p,sprintf("csd_zero_770",eval_dataset),height=8)
 
 
 ######################################################################
@@ -454,18 +454,18 @@ gc()
 
 
 ################
-# All datasets on target 1024 or 737
+# All datasets on target 1024 or 770
 
 ALGORITHMS_TO_COMPARE <- c("fsc","ae","ram","mii","pci","rabin_32","buzhash_64","gear","bfbc","bfbc_custom_div")
 
 df <- open_dataset(sprintf("%s/parquet/csd_cat", csv_dir), hive_style=TRUE, format="parquet") %>%
-  filter(target_chunk_size == 1024 | (target_chunk_size == 737 & algorithm == "mii")) %>%
+  filter(target_chunk_size == 1024 | (target_chunk_size == 770 & algorithm == "mii")) %>%
   filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
   filter(!(algorithm %in% c("fsc")))
 
 df_rand <- open_dataset(sprintf("%s/parquet/csd", csv_dir), hive_style=TRUE, format="parquet") %>%
   filter(dataset == 'random') %>%
-  filter(target_chunk_size == 1024 | (target_chunk_size == 737 & algorithm == "mii")) %>%
+  filter(target_chunk_size == 1024 | (target_chunk_size == 770 & algorithm == "mii")) %>%
   filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
   filter(!(algorithm %in% c("fsc")))
 
