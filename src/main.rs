@@ -575,9 +575,18 @@ fn main() -> anyhow::Result<()> {
                 3,
                 4,
                 5,
+                35,
+                58,
                 60,
                 61,
-                62
+                62,
+                65,
+                66,
+                67,
+                69,
+                76,
+                80,
+                118
             )
         }
         Commands::Gear { target_chunk_size } => {
