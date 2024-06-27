@@ -138,7 +138,7 @@ p <- d %>%
   scale_fill_jama(name = "",
                   breaks = algos,
                   labels = algo_labels)
-print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib", height = 2)
+print_plot(p,"perf_quickcdc_rabin_variants_different_datasets_2kib", height = 1.7)
 
 ######################################################################
 # The same, but around Gear
@@ -188,7 +188,7 @@ p <- d %>%
                   breaks=algos,
                   labels=algo_labels)
 
-print_plot(p,"perf_quickcdc_gear_variants_different_datasets_2kib", height = 2)
+print_plot(p,"perf_quickcdc_gear_variants_different_datasets_2kib", height = 1.7)
 
 ################
 #- Performance of QuickCDC variants on low/high entropy datasets, table
