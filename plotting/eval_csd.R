@@ -21,9 +21,6 @@ source("table_setup.R")
 source("tikz_setup.R")
 source("util.R")
 
-DATASET_ORDER <- c("random", "lnx", "pdf", "web", "code")
-ALGORITHM_ORDER <- c("rabin_32", "buzhash_64", "gear", "gear_nc_1", "gear_nc_2", "gear_nc_3", "ae", "ram", "pci", "mii", "bfbc", "bfbc_custom_div")
-
 ######################################################################
 # CHUNK SIZE DISTRIBUTIONS
 ######################################################################
@@ -456,12 +453,13 @@ gc()
 ################
 # All datasets on target 1024 or 770
 
-ALGORITHMS_TO_COMPARE <- c("fsc","ae","ram","mii","pci","rabin_32","buzhash_64","gear","bfbc","bfbc_custom_div")
+ALGORITHMS_TO_COMPARE <- c("ae","ram","mii","pci","rabin_32","bfbc","bfbc_custom_div")
 
 df <- open_dataset(sprintf("%s/parquet/csd_cat", csv_dir), hive_style=TRUE, format="parquet") %>%
   filter(target_chunk_size == 1024 | (target_chunk_size == 770 & algorithm == "mii")) %>%
   filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
-  filter(!(algorithm %in% c("fsc")))
+  filter(!(algorithm %in% c("fsc"))) %>% 
+  filter(dataset %in% DATASET_ORDER)
 
 df_rand <- open_dataset(sprintf("%s/parquet/csd", csv_dir), hive_style=TRUE, format="parquet") %>%
   filter(dataset == 'random') %>%
@@ -470,6 +468,7 @@ df_rand <- open_dataset(sprintf("%s/parquet/csd", csv_dir), hive_style=TRUE, for
   filter(!(algorithm %in% c("fsc")))
 
 combined_df <- rbind(collect(df), collect(df_rand))
+combined_df$algorithm <- factor(combined_df$algorithm, levels = ALGORITHM_ORDER)
 combined_df$dataset <- factor(combined_df$dataset, levels = DATASET_ORDER)
 
 # render per algorithm (lines are datasets)
@@ -503,10 +502,10 @@ for (dataset_name in DATASET_ORDER) {
     xlim(c(0, 1024 * 2)) +
     theme(legend.position = "none")
   
-  print_plot(p, paste("csd", dataset_name, sep="_"), height=2)
+  print_plot(p, paste("csd", dataset_name, sep="_"), height=1.6, width=2)
 }
 
-print_plot(get_legend_plot(p, 3), "csd_legendonly", width=4, height=2)
+print_plot(get_legend_plot(p, 4), "csd_legendonly", height=1, width=4)
 
 
 p <- combined_df %>% 

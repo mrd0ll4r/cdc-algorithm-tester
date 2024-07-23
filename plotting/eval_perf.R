@@ -577,8 +577,7 @@ gc()
 # Performance overview
 d <- perf_data %>%
   filter(dataset == "random") %>%
-  filter(algorithm %in% ALGORITHMS_TO_COMPARE)  %>%
-  rename_algorithms() %>%
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
   filter(target_chunk_size == 2048) %>%
   group_by(algorithm,target_chunk_size,event) %>%
   summarize(dataset_size=mean(dataset_size), n=n(),
@@ -593,7 +592,8 @@ d <- perf_data %>%
             iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
             )
 
-t <- d %>%
+t <- d %>% 
+  rename_algorithms() %>%
   filter(event %in% c("mibytes_per_sec",
                       "instructions_per_byte",
                       "instructions_per_cycle",
@@ -612,13 +612,13 @@ t <- d %>%
          mibytes_per_sec_med,
          mibytes_per_sec_iqd,
          instructions_per_byte_val,
-         instructions_per_byte_se,
+         #instructions_per_byte_se,
          instructions_per_cycle_val,
-         instructions_per_cycle_se,
+         #instructions_per_cycle_se,
          branches_per_byte_val,
-         branches_per_byte_se,
+         #branches_per_byte_se,
          branch_miss_percentage_val,
-         branch_miss_percentage_se
+         #branch_miss_percentage_se
          #starts_with("mibytes_per_sec"),
          #starts_with("instructions_per_byte"),
          #starts_with("instructions_per_cycle")
@@ -628,30 +628,26 @@ t <- d %>%
     mibytes_per_sec_iqd = tex_format_percentage(mibytes_per_sec_iqd, digits=1, percentage_sign=FALSE),
 
     instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
-    instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
+    #instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
 
     instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
-    instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
+    #instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
 
     branches_per_byte_val = tex_format_number(round(branches_per_byte_val, digits=2)),
-    branches_per_byte_se = tex_format_percentage(branches_per_byte_se, percentage_sign=FALSE),
+    #branches_per_byte_se = tex_format_percentage(branches_per_byte_se, percentage_sign=FALSE),
 
     branch_miss_percentage_val = tex_format_number(round(branch_miss_percentage_val, digits=2)),
-    branch_miss_percentage_se = tex_format_percentage(branch_miss_percentage_se, percentage_sign=FALSE),
+    #branch_miss_percentage_se = tex_format_percentage(branch_miss_percentage_se, percentage_sign=FALSE),
   )
 
 addtorow <- list()
 addtorow$pos <- list(0)
-addtorow$command <- '& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{Branches/B}  & \\multicolumn{2}{c}{Branch Miss \\%}\\\\
+addtorow$command <- '& \\multicolumn{2}{c}{Throughput (MiB/s)} & & & & \\\\
 \\cmidrule(lr){2-3}
-\\cmidrule(lr){4-5}
-\\cmidrule(lr){6-7}
-\\cmidrule(lr){8-9}
-\\cmidrule(lr){10-11}
-Algorithm & Median & IQR & Mean & SE & Mean & SE & Mean & SE & Mean & SE\\\\'
+Alg. & Median & IQR & Inst./B & IPC & Branches/B & Branch Miss \\% \\\\'
 
 print(
-  xtable(t, align=c("l","l","r","r","r","r","r","r","r","r","r","r")),
+  xtable(t, align=c("l","l","r","r","r","r","r","r")),
   file="tab/perf_overview_random_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE,
   sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
 
@@ -659,14 +655,14 @@ print(
 p <- d %>%
   filter(event == "mibytes_per_sec") %>%
   ungroup() %>%
-  mutate(algorithm=fct_reorder(algorithm, val)) %>%
-  ggplot(aes(x=med, y=algorithm)) +
-  geom_bar(stat="identity", linewidth=.3, fill="darkgray", colour="black") +
-  geom_errorbar(aes(xmin=q25, xmax=q75), width=0.5) +
-  labs(x="Throughput (MiB/s)", y=NULL) +
-  theme(legend.position="bottom")
+  mutate(algorithm = fct_reorder(algorithm, val, .desc = TRUE)) %>%
+  ggplot(aes(x = algorithm, y = med)) +  # Put algorithm on x-axis and med on y-axis
+  geom_bar(stat = "identity", linewidth = 0.3, fill = "darkgray", colour = "black") +
+  geom_errorbar(aes(ymin = q25, ymax = q75), width = 0.5) +  # Adjust error bars to fit vertical orientation
+  labs(x = NULL, y = "Throughput (MiB/s)") +  # Adjust labels
+  theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1))
 
-print_plot(p, "perf_overview_throughput_random_2kib")
+print_plot(p, "perf_overview_throughput_random_2kib", width=4, height=2)
 
 rm(d,t,p,addtorow)
 gc()

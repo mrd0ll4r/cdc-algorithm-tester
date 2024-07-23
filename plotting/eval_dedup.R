@@ -169,8 +169,8 @@ for (dataset_name in unique(d$dataset)) {
 }
 
 p %>% 
-  get_legend_plot(4) %>% 
-  print_plot("dedup_overview_legendonly", height=1)
+  get_legend_plot(8) %>% 
+  print_plot("dedup_overview_legendonly", height=1, width=6)
 
 rm(p,d)
 gc()

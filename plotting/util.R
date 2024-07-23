@@ -46,6 +46,8 @@ ADLER32_ALGORITHMS <- c("adler32_16","adler32_32","adler32_48","adler32_64","adl
 BFBC_ALGORITHMS <- c("bfbc","bfbc_custom_div")
 
 ALGORITHMS_TO_COMPARE <- c("fsc","ae","ram","mii","pci","rabin_32","buzhash_64","gear","bfbc","bfbc_custom_div")
+DATASET_ORDER <- c("random", "lnx", "pdf", "web", "code")
+ALGORITHM_ORDER <- c("rabin_32", "buzhash_64", "gear", "gear_nc_1", "gear_nc_2", "gear_nc_3", "ae", "ram", "pci", "mii", "bfbc", "bfbc_custom_div")
 
 POWER_OF_TWO_SIZES = c(512,1024,2048,4096,8192)
 
