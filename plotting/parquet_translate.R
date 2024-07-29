@@ -6,7 +6,7 @@ csv_dir = "./csv"
 output_dir= paste0(csv_dir, "/parquet/csd")
 output_dir_cat= paste0(csv_dir, "/parquet/csd_cat")
 
-csd_datasets=c("code","lnx","pdf","web","zero","random")
+csd_datasets=c("code","lnx","pdf","web","random")
 
 do_convert_csd = function(input_dataset_name, dataset_name, input_dir, output_dir) {
   outdir = paste0(output_dir, sprintf("/dataset=%s",dataset_name))
@@ -33,6 +33,7 @@ for (ds in csd_datasets) {
   print(paste("converting", ds))
 
   do_convert_csd(ds, ds,csv_dir, output_dir)
+  gc()
 }
 
 # The same, for cat datasets
@@ -41,4 +42,5 @@ for (ds in csd_datasets) {
   print(paste("converting", in_ds))
 
   do_convert_csd(in_ds, ds,csv_dir, output_dir_cat)
+  gc()
 }
