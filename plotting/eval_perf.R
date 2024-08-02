@@ -265,7 +265,7 @@ addtorow$command <- '&&& \\multicolumn{2}{c}{Throughput (MiB/s)} &
 \\cmidrule(lr){6-7}
 \\cmidrule(lr){8-9}
 \\cmidrule(lr){10-11}
-Algorithm & Dataset & Target CS & Median & IQR & Mean & SE & Mean & SE & Mean & SE\\\\'
+Algorithm & Dataset & Target (B) & Median & IQR & Mean & SE & Mean & SE & Mean & SE\\\\'
 
 print(
   xtable(t, align = c("r", "l", "l", "r", "r", "r","r", "r","r", "r","r", "r")),
@@ -483,6 +483,7 @@ t <- d %>%
                       "instructions_per_byte",
                       "instructions_per_cycle")) %>%
   ungroup() %>%
+  filter(target_chunk_size %in% c(512, 8192)) %>%
   mutate(dataset=NULL,dataset_size=NULL,n=NULL) %>%
   pivot_wider(
     id_cols=c(algorithm,target_chunk_size),
@@ -497,46 +498,44 @@ t <- d %>%
          #`task-clock_val`,
          #`task-clock_mmd`,
          instructions_per_byte_val,
-         instructions_per_byte_se,
+         #instructions_per_byte_se,
          instructions_per_cycle_val,
-         instructions_per_cycle_se,
+         #instructions_per_cycle_se,
          #starts_with("task-clock"),
          #starts_with("instructions_per_byte"),
          #starts_with("instructions_per_cycle")#,
          #starts_with("branches"),
          #starts_with("branch_miss_percentage")
          gbranches_val,
-         gbranches_se
+         #gbranches_se
   ) %>%
   mutate(
     algorithm=recode(algorithm, gear64="Scalar", gear64_simd="SIMD")
   ) %>%
   mutate(
     target_chunk_size = tex_format_number(target_chunk_size),
+
     mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med,digits=1)),
     mibytes_per_sec_iqd = tex_format_percentage(mibytes_per_sec_iqd, digits=1, percentage_sign=FALSE),
 
     instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
-    instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
+    #instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
 
     instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
-    instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
+    #instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
 
     gbranches_val = tex_format_number(round(gbranches_val, digits=2)),
-    gbranches_se = tex_format_percentage(gbranches_se, percentage_sign=FALSE),
+    #gbranches_se = tex_format_percentage(gbranches_se, percentage_sign=FALSE),
   )
 
 addtorow <- list()
 addtorow$pos <- list(0)
-addtorow$command <- '&& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{Branches ($\\times 10^9$)}\\\\
+addtorow$command <- '&& \\multicolumn{2}{c}{\\makecell{Throughput\\\\(MiB/s)}} &&&\\\\
 \\cmidrule(lr){3-4}
-\\cmidrule(lr){5-6}
-\\cmidrule(lr){7-8}
-\\cmidrule(lr){9-10}
-Algorithm & Target (B) & Median & IQR & Mean & SE & Mean & SE & Mean & SE\\\\'
+Alg. & $\\mu$ (B) & Median & IQR & Inst./B & IPC & \\makecell{Br.\\\\($\\times 10^9$)} \\\\'
 
 print(
-  xtable(t, align=c("l","l","r","r","r","r","r","r","r","r","r")),
+  xtable(t, align=c("l","l","r","r","r","r","r","r")),
   file="tab/perf_gear_simd_comparison_random.tex",
   add.to.row=addtorow,include.colnames=F,floating=FALSE,
   sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
@@ -563,11 +562,11 @@ p <- d %>%
                 position = position_dodge(1),
                 linewidth=.5,    # Thinner lines
                 width=.3,) +
-  labs(x="Target Chunk Size",y="Throughput (MiB/s)") +
-  theme(legend.position="bottom") +
-  scale_fill_jama(name="")
+  labs(x="Target Chunk Size (B)",y="Throughput (MiB/s)", fill=NULL) +
+  theme(legend.position="right") +
+  scale_fill_brewer(type="div", palette = 4, direction = -1)
 
-print_plot(p, "perf_gear_simd_throughput_comparison_chunk_sizes_random")
+print_plot(p, "perf_gear_simd_throughput_comparison_chunk_sizes_random", height=2, width=4)
 
 rm(d,t,p,addtorow)
 gc()
@@ -592,7 +591,7 @@ d <- perf_data %>%
             iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
             )
 
-t <- d %>% 
+t <- d %>%
   rename_algorithms() %>%
   filter(event %in% c("mibytes_per_sec",
                       "instructions_per_byte",
@@ -624,7 +623,7 @@ t <- d %>%
          #starts_with("instructions_per_cycle")
   ) %>%
   mutate(
-    mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med,digits=1)),
+    mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med,digits=0)),
     mibytes_per_sec_iqd = tex_format_percentage(mibytes_per_sec_iqd, digits=1, percentage_sign=FALSE),
 
     instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
@@ -642,17 +641,18 @@ t <- d %>%
 
 addtorow <- list()
 addtorow$pos <- list(0)
-addtorow$command <- '& \\multicolumn{2}{c}{Throughput (MiB/s)} & & & & \\\\
+addtorow$command <- '& \\multicolumn{2}{c}{\\makecell{Throughput \\\\ (MiB/s)}} & & & & \\\\
 \\cmidrule(lr){2-3}
-Alg. & Median & IQR & Inst./B & IPC & Branches/B & Branch Miss \\% \\\\'
+Alg. & Median & IQR & Inst./B & IPC & Br./B & BM-\\% \\\\'
 
 print(
-  xtable(t, align=c("l","l","r","r","r","r","r","r")),
+  xtable(t, align=c("l","l@{}","r","r","r","r","r","r")),
   file="tab/perf_overview_random_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE,
   sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
 
 # Plot throughput as an overview
 p <- d %>%
+  rename_algorithms() %>%
   filter(event == "mibytes_per_sec") %>%
   ungroup() %>%
   mutate(algorithm = fct_reorder(algorithm, val, .desc = TRUE)) %>%
@@ -711,13 +711,13 @@ t <- d %>%
          mibytes_per_sec_med,
          mibytes_per_sec_iqd,
          instructions_per_byte_val,
-         instructions_per_byte_se,
+         #instructions_per_byte_se,
          instructions_per_cycle_val,
-         instructions_per_cycle_se,
+         #instructions_per_cycle_se,
          branches_per_byte_val,
-         branches_per_byte_se,
+         #branches_per_byte_se,
          branch_miss_percentage_val,
-         branch_miss_percentage_se
+         #branch_miss_percentage_se
          #starts_with("mibytes_per_sec"),
          #starts_with("instructions_per_byte"),
          #starts_with("instructions_per_cycle")
@@ -727,30 +727,26 @@ t <- d %>%
     mibytes_per_sec_iqd = tex_format_percentage(mibytes_per_sec_iqd, digits=1, percentage_sign=FALSE),
 
     instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
-    instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
+    #instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
 
     instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
-    instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
+    #instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
 
     branches_per_byte_val = tex_format_number(round(branches_per_byte_val, digits=2)),
-    branches_per_byte_se = tex_format_percentage(branches_per_byte_se, percentage_sign=FALSE),
+    #branches_per_byte_se = tex_format_percentage(branches_per_byte_se, percentage_sign=FALSE),
 
     branch_miss_percentage_val = tex_format_number(round(branch_miss_percentage_val, digits=2)),
-    branch_miss_percentage_se = tex_format_percentage(branch_miss_percentage_se, percentage_sign=FALSE),
+    #branch_miss_percentage_se = tex_format_percentage(branch_miss_percentage_se, percentage_sign=FALSE),
   )
 
 addtorow <- list()
 addtorow$pos <- list(0)
-addtorow$command <- '&& \\multicolumn{2}{c}{Throughput (MiB/s)} & \\multicolumn{2}{c}{Inst./B} & \\multicolumn{2}{c}{IPC} & \\multicolumn{2}{c}{Branches/B}  & \\multicolumn{2}{c}{Branch Miss \\%}\\\\
+addtorow$command <- '&& \\multicolumn{2}{c}{\\makecell{Throughput\\\\(MiB/s)}} & & &  & \\\\
 \\cmidrule(lr){3-4}
-\\cmidrule(lr){5-6}
-\\cmidrule(lr){7-8}
-\\cmidrule(lr){9-10}
-\\cmidrule(lr){11-12}
-Algorithm & Dataset & Median & IQR & Mean & SE & Mean & SE & Mean & SE & Mean & SE\\\\'
+Alg. & Dataset & \\rotatebox{90}{Median} & \\rotatebox{90}{IQR} & \\rotatebox{90}{Inst./B} & \\rotatebox{90}{IPC} & \\rotatebox{90}{Br./B} & \\rotatebox{90}{BM-\\%} \\\\'
 
 print(
-  xtable(t, align=c("l","l","l","r","r","r","r","r","r","r","r","r","r")),
+  xtable(t, align=c("l","l","l","r","r","r","r","r","r")),
   file="tab/perf_bfbc_vs_custom_bfbc_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE,
   sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
 
