@@ -26,10 +26,11 @@ tex_format_number <- function(n, scientific=FALSE) {
   if (scientific) {
     # TODO
   } else {
-    sprintf("$%s$",
+    sprintf("\\num{%s}",
             format(
               n,
-              big.mark="{,}", trim=TRUE, scientific=FALSE)
+              trim=TRUE,
+              scientific=FALSE)
     )
   }
 }
