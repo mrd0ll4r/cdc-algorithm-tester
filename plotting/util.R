@@ -58,6 +58,7 @@ rename_algorithms <- function(data_frame) {
     fsc = "FSC", ae = "AE", ram = "RAM",
     mii = "MII", pci = "PCI", rabin_32 = "Rabin",
     buzhash_64 = "Buzhash", gear = "Gear",
+    gear64 = "Gear64", gear64_simd = "Gear64+",
     gear_nc_1 = "Gear NC-1", gear_nc_2 = "Gear NC-2", gear_nc_3 = "Gear NC-3",
     bfbc = "BFBC", bfbc_custom_div = "BFBC*",
     quick_2 = "Quick A-2", quick_3 = "Quick A-3",
@@ -104,3 +105,4 @@ get_legend_plot <-function(p, ncols) {
 
   return(legend_plot)
 }
+
