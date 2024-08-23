@@ -574,15 +574,11 @@ gc()
 
 ######################################################################
 # Performance overview
-ALGORITHMS_TO_COMPARE <- ALGORITHMS_TO_COMPARE <- c("fsc","ae","ram","mii","pci","rabin_32","buzhash_64","gear", "gear64", "gear64_simd","bfbc","bfbc_custom_div")
+algorithms_to_compare_tmp <- c("fsc","ae","ram","mii","pci","rabin_32","buzhash_64","gear", "gear64", "gear64_simd","bfbc","bfbc_custom_div")
 d <- perf_data %>%
   filter(dataset == "random" | (algorithm == "bfbc" & dataset == "code")) %>%
-  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
+  filter(algorithm %in% algorithms_to_compare_tmp) %>%
   filter(target_chunk_size == 2048) %>%
-  mutate(algorithm = case_when(
-    algorithm == "bfbc" & dataset == "code" ~ "BFBC-L",
-    TRUE ~ algorithm
-  )) %>%
   mutate(algorithm = case_when(
     algorithm == "bfbc" & dataset == "code" ~ "BFBC-L",
     TRUE ~ algorithm
@@ -669,7 +665,7 @@ gc()
 # BFBC vs BFBC* on CODE/RAND
 
 d <- perf_data %>%
-  filter(dataset == "code") %>%
+  filter(dataset %in% c("random", "code")) %>%
   filter(algorithm %in% c("bfbc","bfbc_custom_div"))  %>%
   rename_algorithms() %>%
   rename_datasets() %>%
@@ -694,29 +690,45 @@ t <- d %>%
                       "branches_per_byte",
                       "branch_miss_percentage")) %>%
   ungroup() %>%
-  mutate(n=NULL, target_chunk_size=NULL,dataset_size = NULL) %>%
+  mutate(n=NULL, target_chunk_size=NULL, dataset_size = NULL) %>%
   pivot_wider(
-    id_cols=c(algorithm),
+    id_cols=c(algorithm, dataset),
     names_from=event,
     values_from=c("iqd", "val","med","se","max"),
     names_glue = "{event}_{.value}",
     names_vary="slowest") %>%
-  arrange(-mibytes_per_sec_med) %>%
+  arrange(dataset, algorithm) %>%
   select(algorithm,
+         dataset,
          mibytes_per_sec_med,
          mibytes_per_sec_iqd,
          instructions_per_byte_val,
+         #instructions_per_byte_se,
          instructions_per_cycle_val,
+         #instructions_per_cycle_se,
          branches_per_byte_val,
-         branch_miss_percentage_val
+         #branches_per_byte_se,
+         branch_miss_percentage_val,
+         #branch_miss_percentage_se
+         #starts_with("mibytes_per_sec"),
+         #starts_with("instructions_per_byte"),
+         #starts_with("instructions_per_cycle")
   ) %>%
   mutate(
     mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med,digits=1)),
     mibytes_per_sec_iqd = tex_format_percentage(mibytes_per_sec_iqd, digits=1, percentage_sign=FALSE),
+
     instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
+    #instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
+
     instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
+    #instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
+
     branches_per_byte_val = tex_format_number(round(branches_per_byte_val, digits=2)),
+    #branches_per_byte_se = tex_format_percentage(branches_per_byte_se, percentage_sign=FALSE),
+
     branch_miss_percentage_val = tex_format_number(round(branch_miss_percentage_val, digits=2)),
+    #branch_miss_percentage_se = tex_format_percentage(branch_miss_percentage_se, percentage_sign=FALSE),
   )
 
 addtorow <- list()
@@ -729,6 +741,8 @@ print(
   xtable(t, align=c("l","l","l","r","r","r","r","r","r")),
   file="tab/perf_bfbc_vs_custom_bfbc_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE,
   sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
+
+
 
 
 ##########################################################################
@@ -759,7 +773,6 @@ d %>%
   geom_line() +
   geom_errorbar(width=.5) +
   facet_wrap(~algorithm, scales="free_y")
-
 
 
 
