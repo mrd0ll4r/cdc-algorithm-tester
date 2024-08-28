@@ -125,7 +125,7 @@ The algorithms are, whenever applicable, implemented as described or shown in th
 It was sometimes necessary to modify the implementations for correctness, which we have always done.
 In some cases we have taken the liberty of implementing obvious performance improvements, which can be enabled with respective flags.
 
-In general, we chose to operate on a single file, which in practice means that we TAR our datasets and chunk the tarballs.
+In general, we chose to operate on a single file, which in practice means that we concatenate all files in our datasets and chunk the resulting dataset file.
 Keep in mind that there is considerable overhead implied with launching a process, which could affect results when chunking many (small) files.
 
 By default, we produce SHA1 fingerprints for the chunks.
