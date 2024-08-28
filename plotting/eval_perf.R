@@ -585,7 +585,7 @@ d <- perf_data %>%
   )) %>%
   group_by(algorithm, target_chunk_size, event) %>%
   summarize(
-    dataset_size = mean(dataset_size), 
+    dataset_size = mean(dataset_size),
     n = n(),
     val = mean(value),
     sd = sd(value),
@@ -599,7 +599,7 @@ d <- perf_data %>%
   ) %>%
   rename_algorithms()
 
-t <- d %>% 
+t <- d %>%
   filter(event %in% c("mibytes_per_sec",
                       "instructions_per_byte",
                       "instructions_per_cycle",
@@ -623,12 +623,12 @@ t <- d %>%
          branch_miss_percentage_val
   ) %>%
   mutate(
-    mibytes_per_sec_med = format(round(mibytes_per_sec_med), big.mark="", nsmall=0),  # Round to integer
-    mibytes_per_sec_iqd = tex_format_percentage(mibytes_per_sec_iqd, digits=1, percentage_sign=FALSE),
-    instructions_per_byte_val = format(round(instructions_per_byte_val, digits=2), big.mark="", nsmall=2),
-    instructions_per_cycle_val = format(round(instructions_per_cycle_val, digits=2), big.mark="", nsmall=2),
-    branches_per_byte_val = format(round(branches_per_byte_val, digits=2), big.mark="", nsmall=2),
-    branch_miss_percentage_val = format(round(branch_miss_percentage_val, digits=2), big.mark="", nsmall=2)
+    mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med)),  # Round to integer
+    mibytes_per_sec_iqd = tex_format_number(round(mibytes_per_sec_iqd)), # Round to integer
+    instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
+    instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
+    branches_per_byte_val = tex_format_number(round(branches_per_byte_val, digits=2)),
+    branch_miss_percentage_val = tex_format_number(round(branch_miss_percentage_val, digits=2))
   )
 
 addtorow <- list()
@@ -638,13 +638,13 @@ addtorow$command <- '& \\multicolumn{2}{c}{\\makecell{Throughput\\\\(MiB/s)}} & 
 Alg. & Median & IQR & Inst./B & IPC & Br./B & BM-\\% \\\\'
 
 print(
-  xtable(t, align=c("l","l@{}","r","r","r","r","r","r")),
+  xtable(t, align=c("l","l","r","r","r","r","r","r")),
   file="tab/perf_overview_random_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE,
   sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
 
 # Plot throughput as an overview
 p <- d %>%
-  filter(algorithm != "FSC") %>% 
+  filter(algorithm != "FSC") %>%
   filter(event == "mibytes_per_sec") %>%
   ungroup() %>%
   mutate(algorithm = fct_reorder(algorithm, val, .desc = TRUE)) %>%
