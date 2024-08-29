@@ -16,7 +16,7 @@ ENV RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo PATH=/usr/local/ca
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > install-rust.sh
 RUN chmod +x install-rust.sh
 RUN ./install-rust.sh -y
-RUN rustup install nightly-2024-04-25
+RUN rustup install nightly-2024-08-21
 
 # Cargo-chef is used to build dependencies and cache them, for faster
 # incremental builds.
@@ -41,9 +41,9 @@ FROM chef AS builder
 COPY --from=planner /cdc-algo-tester/recipe.json recipe.json
 
 # Build dependencies - this should be cached by docker.
-RUN cargo +nightly-2024-04-25 chef cook --release --recipe-path recipe.json
+RUN cargo +nightly-2024-08-21 chef cook --release --recipe-path recipe.json
 
 # Build our project.
 COPY . .
 ENV RUSTFLAGS="-C target-cpu=native"
-RUN cargo +nightly-2024-04-25 build --release --locked
+RUN cargo +nightly-2024-08-21 build --release --locked
