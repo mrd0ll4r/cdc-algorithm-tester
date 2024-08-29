@@ -446,10 +446,7 @@ fn main() -> anyhow::Result<()> {
             )
         }
         Commands::AE { window_size } => {
-            ensure!(
-                window_size > 0,
-                "window size needs to be at least 1"
-            );
+            ensure!(window_size > 0, "window size needs to be at least 1");
             let algo = cdchunking::AEChunker::new(window_size);
             chunk_with_algorithm_and_size_limit(
                 f,
@@ -466,10 +463,7 @@ fn main() -> anyhow::Result<()> {
             window_size,
             use_optimized_version,
         } => {
-            ensure!(
-                window_size > 0,
-                "window size needs to be at least 1"
-            );
+            ensure!(window_size > 0, "window size needs to be at least 1");
             if use_optimized_version {
                 let algo = cdchunking::MaybeOptimizedRAMChunker::new(window_size);
                 chunk_with_algorithm_and_size_limit(
