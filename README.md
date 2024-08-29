@@ -1,6 +1,17 @@
 # CDC Algorithm Tester
 
-Rust Binary to Test Various CDC Algorithms. Requires Bash 4+.
+Rust Binary to Test Various CDC Algorithms.
+Accompanying code repository to the paper "A Thorough Investigation of Content-Defined Chunking Algorithms for Data Deduplication".
+
+#### Structure
+
+This repo consists of multiple parts:
+- The code, build instructions, and documentation about the `cdc-algorithm-tester` binary which is used to evaluate CDC algorithms.
+    That's **this README file**.
+- Scripts to replicate the experiments from the paper, in the [scripts/](scripts) directory.
+- Evaluation code in R to produce the figures, tables, and numbers from the paper, in the [plotting/](plotting) directory.
+
+# CDC Algorithm Tester Binary
 
 ```
 A program that invokes a selectable chunking algorithm with given configuration on a provided file.
@@ -141,6 +152,7 @@ In particular, we use constants for:
 ## Building
 
 MSRV: `nightly`, because we use `#![feature(generic_const_exprs)]`.
+See the tracking issue for that [here](https://github.com/rust-lang/rust/issues/76560).
 
 The code is built with link-time optimization and `codegen-units=1` for the `release` profile, which is used to measure performance.
 This will take a while to build, but should produce fast code.
@@ -163,7 +175,7 @@ The binary will be placed in `target/debug/` in this case.
 
 ## Implemented Algorithms
 
-We implement various state-of-the-art rolling has functions our fork of the `cdchunking-rs` crate [here](https://github.com/mrd0ll4r/cdchunking-rs/tree/new-algorithms).
+We implement various state-of-the-art rolling has functions our fork of the `cdchunking-rs` crate [here](https://github.com/mrd0ll4r/cdchunking-rs).
 These are original implementations derived from their respective publications:
 
 - Fixed-size chunking (FSC)
@@ -174,7 +186,7 @@ These are original implementations derived from their respective publications:
 - Byte Frequency-Based Chunking (BFBC), including functionality to derive byte frequencies from an input file.
   We extend the invocation of this algorithm with functionality to specify the indices to use, including skipping most-frequent byte pairs.
   Our implementation stores the list of most-frequent byte pairs as a bitmap of 8KiB on the stack, which makes it run
-  in constant time irregardless of the number of byte pairs.
+  in constant time regardless of the number of byte pairs.
 - Minimal Incremental Interval (MII)
 - Parity Check of Interval (PCI), implemented in a way that calculates a running popcount, instead of re-calculating the popcount of the window for each byte.
 
