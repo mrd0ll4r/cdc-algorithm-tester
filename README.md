@@ -1,7 +1,12 @@
 # CDC Algorithm Tester
 
 Rust Binary to Test Various CDC Algorithms.
-Accompanying code repository to the paper "A Thorough Investigation of Content-Defined Chunking Algorithms for Data Deduplication".
+
+Accompanying code repository to the paper **"A Thorough Investigation of Content-Defined Chunking Algorithms for Data Deduplication"**.
+Please cite our work if you use this code or binary:
+```bibtex
+TODO
+```
 
 #### Structure
 
@@ -10,6 +15,7 @@ This repo consists of multiple parts:
     That's **this README file**.
 - Scripts to replicate the experiments from the paper, in the [scripts/](scripts) directory.
 - Evaluation code in R to produce the figures, tables, and numbers from the paper, in the [plotting/](plotting) directory.
+- The accompanying website to our paper (**TODO LINK**), in the [website/](website) directory.
 
 # CDC Algorithm Tester Binary
 
@@ -169,19 +175,22 @@ These are original implementations derived from their respective publications:
 Additionally, we adapt a range of pre-existing rolling hash functions to interoperate with our testing framework.
 These implementations are not original, but rather translated from other languages, or existing implementations in Rust.
 They are contained in this repository (see [src/](src)).
-Currently, we implement:
+Currently, we include:
 
 - Rabin fingerprinting, following popular implementations in [C](https://github.com/fd0/rabin-cdc), [Rust](https://github.com/rustic-rs/rustic/tree/main/src/cdc) (adapted from [Rust](https://github.com/green-coder/cdc)), [C++](https://github.com/lemire/rollinghashcpp).
   This uses some optimizations in pre-computing two tables of constants.
 - 64-bit Gear (Gear64), with optional SIMD implementation.
   This uses the [gearhash](https://crates.io/crates/gearhash) crate, licensed MIT.
   In contrast to the algorithm described in the DDelta paper, this version uses a 64-bit internal hash (and 64-bit table entries).
-  This implementation is optionally SIMD-accelerated on CPUs supporting SSE4.2 or AVX2, controlled via a flag.
+  This implementation is SIMD-accelerated on CPUs supporting SSE4.2 or AVX2.
+- 64-bit Gear (Gear64) without manual vectorization.
+  This is an implementation of Gearhash using 64-bit state and table entries.
+  We use the same table as the `gearhash` crate.
 - Adler32, using the [adler32 crate](https://crates.io/crates/adler32).
   This is a port of the [original implementation in zlib](https://github.com/madler/zlib/blob/2fa463bacfff79181df1a5270fb67cc679a53e71/adler32.c).
   The original zlib license applies, and is included in [src/adler.rs](src/adler.rs).
 - Buzhash, adapted from an implementation in the [bitar crate](https://crates.io/crates/bitar), licensed MIT.
-- A no-op chunker, that produces one huge chunk (NOP)
+- A no-op chunker (NOP) that produces one huge chunk.
 
 ### QuickCDC
 
