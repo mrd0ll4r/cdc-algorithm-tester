@@ -5,20 +5,21 @@
 		<link rel="icon" href="./favicon.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		
-		<link rel="modulepreload" href="./_app/immutable/entry/start.C3z2jCMv.js">
-		<link rel="modulepreload" href="./_app/immutable/chunks/entry.4RpjxQVL.js">
+		<link href="./_app/immutable/assets/2.CZwmpT93.css" rel="stylesheet">
+		<link rel="modulepreload" href="./_app/immutable/entry/start.CBjNZD5O.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/entry.DE2-_IZq.js">
 		<link rel="modulepreload" href="./_app/immutable/chunks/scheduler.0YVsYd9s.js">
-		<link rel="modulepreload" href="./_app/immutable/entry/app.B-_Lu5Af.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/app.CgjCXhlN.js">
 		<link rel="modulepreload" href="./_app/immutable/chunks/index.ILc-GHTl.js">
 		<link rel="modulepreload" href="./_app/immutable/nodes/0.86AnZIRb.js">
-		<link rel="modulepreload" href="./_app/immutable/nodes/2.3i5Y9yKb.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/2.B3-eFULj.js">
 	</head>
 	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">  <main><label for="dataset-select" data-svelte-h="svelte-1syrgqb">Dataset:</label> <select id="dataset-select"><option value="RAND">RAND</option><option value="LNX">LNX</option><option value="PDF">PDF</option><option value="WEB">WEB</option><option value="CODE">CODE</option></select> <label for="target-chunk-size-select" data-svelte-h="svelte-hkqadf">Target chunk size:</label> <select id="target-chunk-size-select"><option value="512">512</option><option value="770">770</option><option value="1024">1024</option><option value="2048">2048</option><option value="4096">4096</option><option value="5482">5482</option><option value="8192">8192</option></select> <canvas></canvas> <canvas></canvas></main> 
+		<div style="display: contents">  <main class="svelte-1rj8656"><label for="dataset-select" data-svelte-h="svelte-1syrgqb">Dataset:</label> <select id="dataset-select"><option value="RAND">RAND</option><option value="LNX">LNX</option><option value="PDF">PDF</option><option value="WEB">WEB</option><option value="CODE">CODE</option></select> <label for="target-chunk-size-select" data-svelte-h="svelte-hkqadf">Target chunk size:</label> <select id="target-chunk-size-select"><option value="512">512</option><option value="770">770</option><option value="1024">1024</option><option value="2048">2048</option><option value="4096">4096</option><option value="5482">5482</option><option value="8192">8192</option></select> <h2 data-svelte-h="svelte-1m1oxv">Chunk Size Distributions</h2> <canvas></canvas> <h2 data-svelte-h="svelte-hnt9ql">Deduplication Ratios</h2> <canvas></canvas></main> 
 			
 			<script>
 				{
-					__sveltekit_13x9cjf = {
+					__sveltekit_aoucze = {
 						base: new URL(".", location).pathname.slice(0, -1)
 					};
 
@@ -27,8 +28,8 @@
 					const data = [null,null];
 
 					Promise.all([
-						import("./_app/immutable/entry/start.C3z2jCMv.js"),
-						import("./_app/immutable/entry/app.B-_Lu5Af.js")
+						import("./_app/immutable/entry/start.CBjNZD5O.js"),
+						import("./_app/immutable/entry/app.CgjCXhlN.js")
 					]).then(([kit, app]) => {
 						kit.start(app, element, {
 							node_ids: [0, 2],
