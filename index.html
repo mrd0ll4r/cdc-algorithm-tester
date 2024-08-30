@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="./favicon.png" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		
+		<link rel="modulepreload" href="./_app/immutable/entry/start.Dk4i9V6m.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/entry.BhpZuPge.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/scheduler.0YVsYd9s.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/app.D2oafT4L.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/index.ILc-GHTl.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/0.86AnZIRb.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/2.3i5Y9yKb.js">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">  <main><label for="dataset-select" data-svelte-h="svelte-1syrgqb">Dataset:</label> <select id="dataset-select"><option value="RAND">RAND</option><option value="LNX">LNX</option><option value="PDF">PDF</option><option value="WEB">WEB</option><option value="CODE">CODE</option></select> <label for="target-chunk-size-select" data-svelte-h="svelte-hkqadf">Target chunk size:</label> <select id="target-chunk-size-select"><option value="512">512</option><option value="770">770</option><option value="1024">1024</option><option value="2048">2048</option><option value="4096">4096</option><option value="5482">5482</option><option value="8192">8192</option></select> <canvas></canvas> <canvas></canvas></main> 
+			
+			<script>
+				{
+					__sveltekit_m7l778 = {
+						base: new URL(".", location).pathname.slice(0, -1)
+					};
+
+					const element = document.currentScript.parentElement;
+
+					const data = [null,null];
+
+					Promise.all([
+						import("./_app/immutable/entry/start.Dk4i9V6m.js"),
+						import("./_app/immutable/entry/app.D2oafT4L.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 2],
+							data,
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>
