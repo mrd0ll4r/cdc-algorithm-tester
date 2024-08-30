@@ -1,7 +1,7 @@
 require(dplyr)
 require(forcats)
 
-# Number of significat digits to print
+# Number of significant digits to print
 options(pillar.sigfig = 4)
 
 # ggplot theme

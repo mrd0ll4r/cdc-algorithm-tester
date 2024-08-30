@@ -86,6 +86,329 @@ perf_data %>%
   print(n=Inf)
 
 ######################################################################
+#- Performance of Gear-variations, probably table
+#- Idea: How much does manual Vectorization (SIMD) help?
+d <- perf_data %>%
+  filter(dataset == "random") %>%
+  filter(algorithm %in% c("gear64","gear64_simd")) %>%
+  filter(target_chunk_size %in% POWER_OF_TWO_SIZES)
+
+# Compute statistics
+d <- d %>%
+  group_by(algorithm,dataset,target_chunk_size,event) %>%
+  summarize(dataset_size=mean(dataset_size), n=n(),
+            val=mean(value), sd=sd(value),
+            se=standard_error(value),
+            max=max(value),
+            mmd=mean_max_dev(value),
+            med=median(value),
+            q25=quantile(value,probs=0.25,names=FALSE),
+            q75=quantile(value, probs=0.75, names=FALSE),
+            iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
+  )
+
+# Create table
+t <- d %>%
+  filter(event %in% c('mibytes_per_sec',
+                      #"task-clock",
+                      "gbranches",
+                      #"branch_miss_percentage",
+                      "cache_miss_percentage",
+                      "instructions_per_byte",
+                      "instructions_per_cycle")) %>%
+  ungroup() %>%
+  filter(target_chunk_size %in% c(512, 8192)) %>%
+  mutate(dataset=NULL,dataset_size=NULL,n=NULL) %>%
+  pivot_wider(
+    id_cols=c(algorithm,target_chunk_size),
+    names_from=event,
+    values_from=c("med","iqd", "val","se","max"),
+    names_glue = "{event}_{.value}",
+    names_vary="slowest") %>%
+  arrange(target_chunk_size,algorithm) %>%
+  select(algorithm,target_chunk_size,
+         mibytes_per_sec_med,
+         mibytes_per_sec_iqd,
+         #`task-clock_val`,
+         #`task-clock_mmd`,
+         instructions_per_byte_val,
+         #instructions_per_byte_se,
+         instructions_per_cycle_val,
+         #instructions_per_cycle_se,
+         #starts_with("task-clock"),
+         #starts_with("instructions_per_byte"),
+         #starts_with("instructions_per_cycle")#,
+         #starts_with("branches"),
+         #starts_with("branch_miss_percentage")
+         gbranches_val,
+         #gbranches_se
+  ) %>%
+  mutate(
+    algorithm=recode(algorithm, gear64="Scalar", gear64_simd="SIMD")
+  ) %>%
+  mutate(
+    target_chunk_size = tex_format_number(target_chunk_size),
+
+    mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med,digits=1)),
+    mibytes_per_sec_iqd = tex_format_percentage(mibytes_per_sec_iqd, digits=1, percentage_sign=FALSE),
+
+    instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
+    #instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
+
+    instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
+    #instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
+
+    gbranches_val = tex_format_number(round(gbranches_val, digits=2)),
+    #gbranches_se = tex_format_percentage(gbranches_se, percentage_sign=FALSE),
+  )
+
+addtorow <- list()
+addtorow$pos <- list(0)
+addtorow$command <- '&& \\multicolumn{2}{c}{\\makecell{Throughput\\\\(MiB/s)}} &&&\\\\
+\\cmidrule(lr){3-4}
+Alg. & $\\mu$ (B) & Median & IQR & Inst./B & IPC & \\makecell{Br.\\\\($\\times 10^9$)} \\\\'
+
+print(
+  xtable(t, align=c("l","l","r","r","r","r","r","r")),
+  file="tab/perf_gear_simd_comparison_random.tex",
+  add.to.row=addtorow,include.colnames=F,floating=FALSE,
+  sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
+
+p <- d %>%
+  filter(event %in% c('mibytes_per_sec'
+                      #"task-clock",
+                      #"gbranches",
+                      #"branch_miss_percentage",
+                      #"cache_miss_percentage",
+                      #"instructions_per_byte",
+                      #"instructions_per_cycle"
+  )) %>%
+  ungroup() %>%
+  mutate(target_chunk_size = as.factor(target_chunk_size)) %>%
+  mutate(dataset=NULL,dataset_size=NULL,n=NULL) %>%
+  mutate(algorithm = fct_recode(algorithm, Scalar="gear64",SIMD="gear64_simd")) %>%
+  ggplot(aes(group=algorithm, x=target_chunk_size, y=med, fill=algorithm)) +
+  geom_bar(stat="identity",
+           position = position_dodge(1),
+           colour="black", # Use black outlines,
+           linewidth=.3) +      # Thinner lines
+  geom_errorbar(aes(ymin=q25, ymax = q75),
+                position = position_dodge(1),
+                linewidth=.5,    # Thinner lines
+                width=.3,) +
+  labs(x="Target Chunk Size (B)",y="Throughput (MiB/s)", fill=NULL) +
+  theme(legend.position="right") +
+  scale_fill_brewer(type="div", palette = 4, direction = -1)
+
+print_plot(p, "perf_gear_simd_throughput_comparison_chunk_sizes_random", height=2, width=4)
+
+rm(d,t,p,addtorow)
+gc()
+
+
+######################################################################
+# Performance overview
+algorithms_to_compare_tmp <- c("fsc","ae","ram","mii","pci","rabin_32","buzhash_64","gear", "gear64", "gear64_simd","bfbc","bfbc_custom_div")
+d <- perf_data %>%
+  filter(dataset == "random" | (algorithm == "bfbc" & dataset == "code")) %>%
+  filter(algorithm %in% algorithms_to_compare_tmp) %>%
+  filter(target_chunk_size == 2048) %>%
+  mutate(algorithm = case_when(
+    algorithm == "bfbc" & dataset == "code" ~ "BFBC-L",
+    TRUE ~ algorithm
+  )) %>%
+  group_by(algorithm, target_chunk_size, event) %>%
+  summarize(
+    dataset_size = mean(dataset_size),
+    n = n(),
+    val = mean(value),
+    sd = sd(value),
+    se = standard_error(value),
+    mmd = mean_max_dev(value),
+    max = max(value),
+    med = median(value),
+    q25 = quantile(value, probs = 0.25, names = FALSE),
+    q75 = quantile(value, probs = 0.75, names = FALSE),
+    iqd = (quantile(value, probs = 0.75, names = FALSE) - quantile(value, probs = 0.25, names = FALSE))
+  ) %>%
+  rename_algorithms()
+
+t <- d %>%
+  filter(event %in% c("mibytes_per_sec",
+                      "instructions_per_byte",
+                      "instructions_per_cycle",
+                      "branches_per_byte",
+                      "branch_miss_percentage")) %>%
+  ungroup() %>%
+  mutate(n=NULL, target_chunk_size=NULL, dataset_size=NULL) %>%
+  pivot_wider(
+    id_cols=c(algorithm),
+    names_from=event,
+    values_from=c("iqd", "val", "med", "se", "max"),
+    names_glue = "{event}_{.value}",
+    names_vary="slowest") %>%
+  arrange(-mibytes_per_sec_med) %>%
+  select(algorithm,
+         mibytes_per_sec_med,
+         mibytes_per_sec_iqd,
+         instructions_per_byte_val,
+         instructions_per_cycle_val,
+         branches_per_byte_val,
+         branch_miss_percentage_val
+  ) %>%
+  mutate(
+    mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med)),  # Round to integer
+    mibytes_per_sec_iqd = tex_format_number(round(mibytes_per_sec_iqd)), # Round to integer
+    instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
+    instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
+    branches_per_byte_val = tex_format_number(round(branches_per_byte_val, digits=2)),
+    branch_miss_percentage_val = tex_format_number(round(branch_miss_percentage_val, digits=2))
+  )
+
+addtorow <- list()
+addtorow$pos <- list(0)
+addtorow$command <- '& \\multicolumn{2}{c}{\\makecell{Throughput\\\\(MiB/s)}} & & & & \\\\
+\\cmidrule(lr){2-3}
+Alg. & Median & IQR & Inst./B & IPC & Br./B & BM-\\% \\\\'
+
+print(
+  xtable(t, align=c("l","l","r","r","r","r","r","r")),
+  file="tab/perf_overview_random_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE,
+  sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
+
+# Plot throughput as an overview
+p <- d %>%
+  filter(algorithm != "FSC") %>%
+  filter(event == "mibytes_per_sec") %>%
+  ungroup() %>%
+  mutate(algorithm = fct_reorder(algorithm, val, .desc = TRUE)) %>%
+  ggplot(aes(x = algorithm, y = med)) +  # Put algorithm on x-axis and med on y-axis
+  geom_bar(stat = "identity", linewidth = 0.3, fill = "darkgray", colour = "black") +
+  geom_errorbar(aes(ymin = q25, ymax = q75), width = 0.5) +  # Adjust error bars to fit vertical orientation
+  labs(x = NULL, y = "Throughput (MiB/s)") +  # Adjust labels
+  theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1))
+
+print_plot(p, "perf_overview_throughput_random_2kib", width=4, height=2)
+
+rm(d,t,p,addtorow)
+gc()
+
+
+##########################################################################
+# BFBC vs BFBC* on CODE/RAND
+
+d <- perf_data %>%
+  filter(dataset %in% c("random", "code")) %>%
+  filter(algorithm %in% c("bfbc","bfbc_custom_div"))  %>%
+  rename_algorithms() %>%
+  rename_datasets() %>%
+  filter(target_chunk_size == 2048) %>%
+  group_by(algorithm, dataset, target_chunk_size,event) %>%
+  summarize(dataset_size=mean(dataset_size), n=n(),
+            val=mean(value),
+            sd=sd(value),
+            se=standard_error(value),
+            mmd=mean_max_dev(value),
+            max=max(value),
+            med=median(value),
+            q25=quantile(value, probs=0.25, names=FALSE),
+            q75=quantile(value, probs=0.75, names=FALSE),
+            iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
+  )
+
+t <- d %>%
+  filter(event %in% c("mibytes_per_sec",
+                      "instructions_per_byte",
+                      "instructions_per_cycle",
+                      "branches_per_byte",
+                      "branch_miss_percentage")) %>%
+  ungroup() %>%
+  mutate(n=NULL, target_chunk_size=NULL, dataset_size = NULL) %>%
+  pivot_wider(
+    id_cols=c(algorithm, dataset),
+    names_from=event,
+    values_from=c("iqd", "val","med","se","max"),
+    names_glue = "{event}_{.value}",
+    names_vary="slowest") %>%
+  arrange(dataset, algorithm) %>%
+  select(algorithm,
+         dataset,
+         mibytes_per_sec_med,
+         mibytes_per_sec_iqd,
+         instructions_per_byte_val,
+         #instructions_per_byte_se,
+         instructions_per_cycle_val,
+         #instructions_per_cycle_se,
+         branches_per_byte_val,
+         #branches_per_byte_se,
+         branch_miss_percentage_val,
+         #branch_miss_percentage_se
+         #starts_with("mibytes_per_sec"),
+         #starts_with("instructions_per_byte"),
+         #starts_with("instructions_per_cycle")
+  ) %>%
+  mutate(
+    mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med,digits=1)),
+    mibytes_per_sec_iqd = tex_format_percentage(mibytes_per_sec_iqd, digits=1, percentage_sign=FALSE),
+
+    instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
+    #instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
+
+    instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
+    #instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
+
+    branches_per_byte_val = tex_format_number(round(branches_per_byte_val, digits=2)),
+    #branches_per_byte_se = tex_format_percentage(branches_per_byte_se, percentage_sign=FALSE),
+
+    branch_miss_percentage_val = tex_format_number(round(branch_miss_percentage_val, digits=2)),
+    #branch_miss_percentage_se = tex_format_percentage(branch_miss_percentage_se, percentage_sign=FALSE),
+  )
+
+addtorow <- list()
+addtorow$pos <- list(0)
+addtorow$command <- '&& \\multicolumn{2}{c}{\\makecell{Throughput\\\\(MiB/s)}} & & &  & \\\\
+\\cmidrule(lr){3-4}
+Alg. & Dataset & \\rotatebox{90}{Median} & \\rotatebox{90}{IQR} & \\rotatebox{90}{Inst./B} & \\rotatebox{90}{IPC} & \\rotatebox{90}{Br./B} & \\rotatebox{90}{BM-\\%} \\\\'
+
+print(
+  xtable(t, align=c("l","l","l","r","r","r","r","r","r")),
+  file="tab/perf_bfbc_vs_custom_bfbc_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE,
+  sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
+
+
+
+##########################################################################
+# Performance on different datasets etc
+
+d <- perf_data %>%
+  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
+  filter(event == "mibytes_per_sec") %>%
+  filter(target_chunk_size %in% POWER_OF_TWO_SIZES) %>%
+  rename_algorithms() %>%
+  rename_datasets() %>%
+  group_by(algorithm,target_chunk_size,dataset,event) %>%
+  summarize(dataset_size=mean(dataset_size), n=n(),
+            val=mean(value),
+            sd=sd(value),
+            se=standard_error(value),
+            mmd=mean_max_dev(value),
+            max=max(value),
+            med=median(value),
+            q25=quantile(value, probs=0.25, names=FALSE),
+            q75=quantile(value, probs=0.75, names=FALSE),
+            iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
+  )
+
+d %>%
+  mutate(target_chunk_size = as.factor(target_chunk_size)) %>%
+  ggplot(aes(x=target_chunk_size, y=med, ymin=q25, ymax=q75, linetype=dataset, group=dataset)) +
+  geom_line() +
+  geom_errorbar(width=.5) +
+  facet_wrap(~algorithm, scales="free_y")
+
+
+
+######################################################################
 #- Computational efficiency of QuickCDC variants on different Datasets in a bar plot
 #  - x = Datasets, y = Bytes per second
 #- Algorithms: QUICK_*
@@ -450,348 +773,3 @@ print_plot(p,"perf_quickcdc_gear_variants_different_targets_code", height=2, wid
 
 rm(d,p)
 gc()
-
-######################################################################
-#- Performance of Gear-variations, probably table
-#- Idea: How much does manual Vectorization (SIMD) help?
-d <- perf_data %>%
-  filter(dataset == "random") %>%
-  filter(algorithm %in% c("gear64","gear64_simd")) %>%
-  filter(target_chunk_size %in% POWER_OF_TWO_SIZES)
-
-# Compute statistics
-d <- d %>%
-  group_by(algorithm,dataset,target_chunk_size,event) %>%
-  summarize(dataset_size=mean(dataset_size), n=n(),
-            val=mean(value), sd=sd(value),
-            se=standard_error(value),
-            max=max(value),
-            mmd=mean_max_dev(value),
-            med=median(value),
-            q25=quantile(value,probs=0.25,names=FALSE),
-            q75=quantile(value, probs=0.75, names=FALSE),
-            iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
-  )
-
-# Create table
-t <- d %>%
-  filter(event %in% c('mibytes_per_sec',
-                      #"task-clock",
-                      "gbranches",
-                      #"branch_miss_percentage",
-                      "cache_miss_percentage",
-                      "instructions_per_byte",
-                      "instructions_per_cycle")) %>%
-  ungroup() %>%
-  filter(target_chunk_size %in% c(512, 8192)) %>%
-  mutate(dataset=NULL,dataset_size=NULL,n=NULL) %>%
-  pivot_wider(
-    id_cols=c(algorithm,target_chunk_size),
-    names_from=event,
-    values_from=c("med","iqd", "val","se","max"),
-    names_glue = "{event}_{.value}",
-    names_vary="slowest") %>%
-  arrange(target_chunk_size,algorithm) %>%
-  select(algorithm,target_chunk_size,
-         mibytes_per_sec_med,
-         mibytes_per_sec_iqd,
-         #`task-clock_val`,
-         #`task-clock_mmd`,
-         instructions_per_byte_val,
-         #instructions_per_byte_se,
-         instructions_per_cycle_val,
-         #instructions_per_cycle_se,
-         #starts_with("task-clock"),
-         #starts_with("instructions_per_byte"),
-         #starts_with("instructions_per_cycle")#,
-         #starts_with("branches"),
-         #starts_with("branch_miss_percentage")
-         gbranches_val,
-         #gbranches_se
-  ) %>%
-  mutate(
-    algorithm=recode(algorithm, gear64="Scalar", gear64_simd="SIMD")
-  ) %>%
-  mutate(
-    target_chunk_size = tex_format_number(target_chunk_size),
-
-    mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med,digits=1)),
-    mibytes_per_sec_iqd = tex_format_percentage(mibytes_per_sec_iqd, digits=1, percentage_sign=FALSE),
-
-    instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
-    #instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
-
-    instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
-    #instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
-
-    gbranches_val = tex_format_number(round(gbranches_val, digits=2)),
-    #gbranches_se = tex_format_percentage(gbranches_se, percentage_sign=FALSE),
-  )
-
-addtorow <- list()
-addtorow$pos <- list(0)
-addtorow$command <- '&& \\multicolumn{2}{c}{\\makecell{Throughput\\\\(MiB/s)}} &&&\\\\
-\\cmidrule(lr){3-4}
-Alg. & $\\mu$ (B) & Median & IQR & Inst./B & IPC & \\makecell{Br.\\\\($\\times 10^9$)} \\\\'
-
-print(
-  xtable(t, align=c("l","l","r","r","r","r","r","r")),
-  file="tab/perf_gear_simd_comparison_random.tex",
-  add.to.row=addtorow,include.colnames=F,floating=FALSE,
-  sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
-
-p <- d %>%
-  filter(event %in% c('mibytes_per_sec'
-                      #"task-clock",
-                      #"gbranches",
-                      #"branch_miss_percentage",
-                      #"cache_miss_percentage",
-                      #"instructions_per_byte",
-                      #"instructions_per_cycle"
-  )) %>%
-  ungroup() %>%
-  mutate(target_chunk_size = as.factor(target_chunk_size)) %>%
-  mutate(dataset=NULL,dataset_size=NULL,n=NULL) %>%
-  mutate(algorithm = fct_recode(algorithm, Scalar="gear64",SIMD="gear64_simd")) %>%
-  ggplot(aes(group=algorithm, x=target_chunk_size, y=med, fill=algorithm)) +
-  geom_bar(stat="identity",
-           position = position_dodge(1),
-           colour="black", # Use black outlines,
-           linewidth=.3) +      # Thinner lines
-  geom_errorbar(aes(ymin=q25, ymax = q75),
-                position = position_dodge(1),
-                linewidth=.5,    # Thinner lines
-                width=.3,) +
-  labs(x="Target Chunk Size (B)",y="Throughput (MiB/s)", fill=NULL) +
-  theme(legend.position="right") +
-  scale_fill_brewer(type="div", palette = 4, direction = -1)
-
-print_plot(p, "perf_gear_simd_throughput_comparison_chunk_sizes_random", height=2, width=4)
-
-rm(d,t,p,addtorow)
-gc()
-
-
-######################################################################
-# Performance overview
-algorithms_to_compare_tmp <- c("fsc","ae","ram","mii","pci","rabin_32","buzhash_64","gear", "gear64", "gear64_simd","bfbc","bfbc_custom_div")
-d <- perf_data %>%
-  filter(dataset == "random" | (algorithm == "bfbc" & dataset == "code")) %>%
-  filter(algorithm %in% algorithms_to_compare_tmp) %>%
-  filter(target_chunk_size == 2048) %>%
-  mutate(algorithm = case_when(
-    algorithm == "bfbc" & dataset == "code" ~ "BFBC-L",
-    TRUE ~ algorithm
-  )) %>%
-  group_by(algorithm, target_chunk_size, event) %>%
-  summarize(
-    dataset_size = mean(dataset_size),
-    n = n(),
-    val = mean(value),
-    sd = sd(value),
-    se = standard_error(value),
-    mmd = mean_max_dev(value),
-    max = max(value),
-    med = median(value),
-    q25 = quantile(value, probs = 0.25, names = FALSE),
-    q75 = quantile(value, probs = 0.75, names = FALSE),
-    iqd = (quantile(value, probs = 0.75, names = FALSE) - quantile(value, probs = 0.25, names = FALSE))
-  ) %>%
-  rename_algorithms()
-
-t <- d %>%
-  filter(event %in% c("mibytes_per_sec",
-                      "instructions_per_byte",
-                      "instructions_per_cycle",
-                      "branches_per_byte",
-                      "branch_miss_percentage")) %>%
-  ungroup() %>%
-  mutate(n=NULL, target_chunk_size=NULL, dataset_size=NULL) %>%
-  pivot_wider(
-    id_cols=c(algorithm),
-    names_from=event,
-    values_from=c("iqd", "val", "med", "se", "max"),
-    names_glue = "{event}_{.value}",
-    names_vary="slowest") %>%
-  arrange(-mibytes_per_sec_med) %>%
-  select(algorithm,
-         mibytes_per_sec_med,
-         mibytes_per_sec_iqd,
-         instructions_per_byte_val,
-         instructions_per_cycle_val,
-         branches_per_byte_val,
-         branch_miss_percentage_val
-  ) %>%
-  mutate(
-    mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med)),  # Round to integer
-    mibytes_per_sec_iqd = tex_format_number(round(mibytes_per_sec_iqd)), # Round to integer
-    instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
-    instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
-    branches_per_byte_val = tex_format_number(round(branches_per_byte_val, digits=2)),
-    branch_miss_percentage_val = tex_format_number(round(branch_miss_percentage_val, digits=2))
-  )
-
-addtorow <- list()
-addtorow$pos <- list(0)
-addtorow$command <- '& \\multicolumn{2}{c}{\\makecell{Throughput\\\\(MiB/s)}} & & & & \\\\
-\\cmidrule(lr){2-3}
-Alg. & Median & IQR & Inst./B & IPC & Br./B & BM-\\% \\\\'
-
-print(
-  xtable(t, align=c("l","l","r","r","r","r","r","r")),
-  file="tab/perf_overview_random_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE,
-  sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
-
-# Plot throughput as an overview
-p <- d %>%
-  filter(algorithm != "FSC") %>%
-  filter(event == "mibytes_per_sec") %>%
-  ungroup() %>%
-  mutate(algorithm = fct_reorder(algorithm, val, .desc = TRUE)) %>%
-  ggplot(aes(x = algorithm, y = med)) +  # Put algorithm on x-axis and med on y-axis
-  geom_bar(stat = "identity", linewidth = 0.3, fill = "darkgray", colour = "black") +
-  geom_errorbar(aes(ymin = q25, ymax = q75), width = 0.5) +  # Adjust error bars to fit vertical orientation
-  labs(x = NULL, y = "Throughput (MiB/s)") +  # Adjust labels
-  theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1))
-
-print_plot(p, "perf_overview_throughput_random_2kib", width=4, height=2)
-
-rm(d,t,p,addtorow)
-gc()
-
-
-
-##########################################################################
-# BFBC vs BFBC* on CODE/RAND
-
-d <- perf_data %>%
-  filter(dataset %in% c("random", "code")) %>%
-  filter(algorithm %in% c("bfbc","bfbc_custom_div"))  %>%
-  rename_algorithms() %>%
-  rename_datasets() %>%
-  filter(target_chunk_size == 2048) %>%
-  group_by(algorithm, dataset, target_chunk_size,event) %>%
-  summarize(dataset_size=mean(dataset_size), n=n(),
-            val=mean(value),
-            sd=sd(value),
-            se=standard_error(value),
-            mmd=mean_max_dev(value),
-            max=max(value),
-            med=median(value),
-            q25=quantile(value, probs=0.25, names=FALSE),
-            q75=quantile(value, probs=0.75, names=FALSE),
-            iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
-  )
-
-t <- d %>%
-  filter(event %in% c("mibytes_per_sec",
-                      "instructions_per_byte",
-                      "instructions_per_cycle",
-                      "branches_per_byte",
-                      "branch_miss_percentage")) %>%
-  ungroup() %>%
-  mutate(n=NULL, target_chunk_size=NULL, dataset_size = NULL) %>%
-  pivot_wider(
-    id_cols=c(algorithm, dataset),
-    names_from=event,
-    values_from=c("iqd", "val","med","se","max"),
-    names_glue = "{event}_{.value}",
-    names_vary="slowest") %>%
-  arrange(dataset, algorithm) %>%
-  select(algorithm,
-         dataset,
-         mibytes_per_sec_med,
-         mibytes_per_sec_iqd,
-         instructions_per_byte_val,
-         #instructions_per_byte_se,
-         instructions_per_cycle_val,
-         #instructions_per_cycle_se,
-         branches_per_byte_val,
-         #branches_per_byte_se,
-         branch_miss_percentage_val,
-         #branch_miss_percentage_se
-         #starts_with("mibytes_per_sec"),
-         #starts_with("instructions_per_byte"),
-         #starts_with("instructions_per_cycle")
-  ) %>%
-  mutate(
-    mibytes_per_sec_med = tex_format_number(round(mibytes_per_sec_med,digits=1)),
-    mibytes_per_sec_iqd = tex_format_percentage(mibytes_per_sec_iqd, digits=1, percentage_sign=FALSE),
-
-    instructions_per_byte_val = tex_format_number(round(instructions_per_byte_val, digits=2)),
-    #instructions_per_byte_se = tex_format_percentage(instructions_per_byte_se, percentage_sign=FALSE),
-
-    instructions_per_cycle_val = tex_format_number(round(instructions_per_cycle_val, digits=2)),
-    #instructions_per_cycle_se = tex_format_percentage(instructions_per_cycle_se, percentage_sign=FALSE),
-
-    branches_per_byte_val = tex_format_number(round(branches_per_byte_val, digits=2)),
-    #branches_per_byte_se = tex_format_percentage(branches_per_byte_se, percentage_sign=FALSE),
-
-    branch_miss_percentage_val = tex_format_number(round(branch_miss_percentage_val, digits=2)),
-    #branch_miss_percentage_se = tex_format_percentage(branch_miss_percentage_se, percentage_sign=FALSE),
-  )
-
-addtorow <- list()
-addtorow$pos <- list(0)
-addtorow$command <- '&& \\multicolumn{2}{c}{\\makecell{Throughput\\\\(MiB/s)}} & & &  & \\\\
-\\cmidrule(lr){3-4}
-Alg. & Dataset & \\rotatebox{90}{Median} & \\rotatebox{90}{IQR} & \\rotatebox{90}{Inst./B} & \\rotatebox{90}{IPC} & \\rotatebox{90}{Br./B} & \\rotatebox{90}{BM-\\%} \\\\'
-
-print(
-  xtable(t, align=c("l","l","l","r","r","r","r","r","r")),
-  file="tab/perf_bfbc_vs_custom_bfbc_2kib.tex", add.to.row=addtorow,include.colnames=F,floating=FALSE,
-  sanitize.text.function=function(s){s}, sanitize.colnames.function=NULL)
-
-
-
-
-##########################################################################
-# Performance on different datasets etc
-
-d <- perf_data %>%
-  filter(algorithm %in% ALGORITHMS_TO_COMPARE) %>%
-  filter(event == "mibytes_per_sec") %>%
-  filter(target_chunk_size %in% POWER_OF_TWO_SIZES) %>%
-  rename_algorithms() %>%
-  rename_datasets() %>%
-  group_by(algorithm,target_chunk_size,dataset,event) %>%
-  summarize(dataset_size=mean(dataset_size), n=n(),
-            val=mean(value),
-            sd=sd(value),
-            se=standard_error(value),
-            mmd=mean_max_dev(value),
-            max=max(value),
-            med=median(value),
-            q25=quantile(value, probs=0.25, names=FALSE),
-            q75=quantile(value, probs=0.75, names=FALSE),
-            iqd=(quantile(value, probs=0.75, names=FALSE) - quantile(value, probs=0.25, names=FALSE))
-  )
-
-d %>%
-  mutate(target_chunk_size = as.factor(target_chunk_size)) %>%
-  ggplot(aes(x=target_chunk_size, y=med, ymin=q25, ymax=q75, linetype=dataset, group=dataset)) +
-  geom_line() +
-  geom_errorbar(width=.5) +
-  facet_wrap(~algorithm, scales="free_y")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
