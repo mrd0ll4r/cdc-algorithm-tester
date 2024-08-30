@@ -2,15 +2,20 @@
 
 source scripts/utils.sh
 
-first_iter=true
-
 for dataset in "${DATASETS[@]}"; do
-    res=$(ent -t "$DATA_PATH/$dataset")
+    gzip -k "$DATA_PATH/$dataset"
 
-    if [ "$first_iter" = true ] ; then
-        echo "dataset,$(echo "$res" | head -n 1 | cut -c 3-)"
-        first_iter=false
+    # Capture the byte sizes
+    compressed_size=$(du -b "$DATA_PATH/$dataset.gz" | cut -f1)
+    original_size=$(du -b "$DATA_PATH/$dataset" | cut -f1)
+
+    # Perform the division
+    if [ "$original_size" -ne 0 ]; then
+        ratio=$((compressed_size * 100 / original_size))
+        echo "Compression ratio of $dataset (as a percentage): $ratio%"
+    else
+        echo "Original file size is zero, cannot perform division."
     fi
 
-    echo "$dataset,$(echo "$res" | tail -n 1 | cut -c 3-)"
+    rm "$DATA_PATH/$dataset.gz"
 done
