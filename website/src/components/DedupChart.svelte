@@ -55,6 +55,7 @@
         }
         dataByAlgorithm[item.algorithm].push(item);
     });
+
     
     $: maxChunkSize = target;
     $: binSize = Math.ceil(maxChunkSize / 200);

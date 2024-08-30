@@ -28,8 +28,8 @@ ChartJS.register(
 const datasets = ['RAND', 'LNX', 'PDF', 'WEB', 'CODE'];
 const targets = [512, 770, 1024, 2048, 4096, 5482, 8192];
 
-let dataset = 'RAND';
-let target = 512;
+let dataset = 'CODE';
+let target = 1024;
 
 const algorithms = {
     'Rabin': '#E6194B',    // Red

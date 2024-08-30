@@ -47,7 +47,7 @@ const algorithms = {
 };
 
 $: maxChunkSize = target * 3;
-$: binSize = Math.ceil(maxChunkSize / 200);
+$: binSize = Math.ceil(maxChunkSize / 100);
 $: numBins = Math.ceil(maxChunkSize / binSize);
 
 
@@ -66,6 +66,8 @@ $: data = {
         tension: 0.1
     }))
 };
+$: console.log(new Set(csdData.filter(item =>
+        item.dataset === 'LNX').map(item => item.target)))
 
 </script>
     
