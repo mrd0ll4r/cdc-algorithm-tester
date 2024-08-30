@@ -121,34 +121,6 @@ Options:
   -V, --version  Print version
 ```
 
-## Performance Considerations
-
-We use the [cdchunking](https://crates.io/crates/cdchunking) crate as a framework to implement and use chunking algorithms.
-Specifically, we iterate over the file in buffered blocks, which avoids frequent `read()` operations and does not allocate.
-The CDC algorithms are fed these blocks and update their internal state accordingly.
-They produce cut-point indices.
-
-On a higher level, we iterate over the file using _the same_ buffered blocks, re-sliced according to the chunk boundaries produced by the chosen algorithm.
-This allows us to then compute fingerprints and collect metadata about chunks without allocating.
-On an even higher level, it is then possible to load the file into a RAMDisk before chunking, to isolate from disk performance.
-
-The algorithms are, whenever applicable, implemented as described or shown in the respective publications.
-It was sometimes necessary to modify the implementations for correctness, which we have always done.
-In some cases we have taken the liberty of implementing obvious performance improvements, which can be enabled with respective flags.
-
-In general, we chose to operate on a single file, which in practice means that we concatenate all files in our datasets and chunk the resulting dataset file.
-Keep in mind that there is considerable overhead implied with launching a process, which could affect results when chunking many (small) files.
-
-By default, we produce SHA1 fingerprints for the chunks.
-The `--quiet` flag can be provided to skip the computation of the fingerprint and omit output to std, to isolate the performance of the CDC algorithms.
-We use [std::hints::black_box](https://doc.rust-lang.org/std/hint/fn.black_box.html) to ensure that the compiler still assumes chunk data to be used in either case.
-
-We use compile-time constants whenever applicable with reasonable effort.
-In particular, we use constants for:
-
-- the feature vector sizes of QuickCDC
-- the size of the window for Rabin, Buzhash, Adler32, and PCI. These are implemented using stack-allocated arrays.
-
 ## Building
 
 MSRV: `nightly`, because we use `#![feature(generic_const_exprs)]`.
@@ -160,10 +132,14 @@ Furthermore, binaries used for testing are produced with `RUSTFLAGS="-C target-c
 
 Preferably and most easily: build id docker using the [build-in-docker.sh](./build-in-docker.sh) script.
 The binary will be placed in `out/`.
+The same can be achieved using
+```bash
+make build
+```
+which also sets up correct permissions for the `scripts/` directory, in case they get lost in transit.
 
 Alternatively, on a host with an up-to-date __nightly__ Rust installed:
-
-```
+```bash
 RUSTFLAGS="-C target-cpu=native" cargo +nightly build --release --locked
 ```
 
@@ -229,6 +205,34 @@ There are two implementations:
    This, of course, comes at the expense of more frequent collisions.
    A possible performance optimization here would be to limit chunk sizes to `2^16=64K`, which would reduce the size of the tables by half.
    This might not be acceptable in all situations.
+
+## Performance Considerations
+
+We use the [cdchunking](https://crates.io/crates/cdchunking) crate as a framework to implement and use chunking algorithms.
+Specifically, we iterate over the file in buffered blocks, which avoids frequent `read()` operations and does not allocate.
+The CDC algorithms are fed these blocks and update their internal state accordingly.
+They produce cut-point indices.
+
+On a higher level, we iterate over the file using _the same_ buffered blocks, re-sliced according to the chunk boundaries produced by the chosen algorithm.
+This allows us to then compute fingerprints and collect metadata about chunks without allocating.
+On an even higher level, it is then possible to load the file into a RAMDisk before chunking, to isolate from disk performance.
+
+The algorithms are, whenever applicable, implemented as described or shown in the respective publications.
+It was sometimes necessary to modify the implementations for correctness, which we have always done.
+In some cases we have taken the liberty of implementing obvious performance improvements, which can be enabled with respective flags.
+
+In general, we chose to operate on a single file, which in practice means that we concatenate all files in our datasets and chunk the resulting dataset file.
+Keep in mind that there is considerable overhead implied with launching a process, which could affect results when chunking many (small) files.
+
+By default, we produce SHA1 fingerprints for the chunks.
+The `--quiet` flag can be provided to skip the computation of the fingerprint and omit output to std, to isolate the performance of the CDC algorithms.
+We use [std::hints::black_box](https://doc.rust-lang.org/std/hint/fn.black_box.html) to ensure that the compiler still assumes chunk data to be used in either case.
+
+We use compile-time constants whenever applicable with reasonable effort.
+In particular, we use constants for:
+
+- the feature vector sizes of QuickCDC
+- the size of the window for Rabin, Buzhash, Adler32, and PCI. These are implemented using stack-allocated arrays.
 
 ## License
 

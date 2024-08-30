@@ -28,16 +28,6 @@ echo "compressing..."
 gzip -9 csv/perf_*.csv
 
 ########################
-# File sizes
-
-echo "Analyzing file sizes in parallel..."
-
-bash -c 'DATASET="code.tar" make sizes > csv/sizes_code.txt' &
-bash -c 'DATASET="web.tar" make sizes > csv/sizes_web.txt' &
-bash -c 'DATASET="pdf.tar" make sizes > csv/sizes_pdf.txt' &
-bash -c 'DATASET="lnx.tar" make sizes > csv/sizes_lnx.txt' &
-
-########################
 # Chunk size distributions
 
 echo "Starting chunk size distribution measurements..."
