@@ -1,4 +1,6 @@
 <script>
+import '../style.css';
+
 import { Line } from 'svelte-chartjs';
 import csdData from '../data/csd.json'
 import {
@@ -28,8 +30,8 @@ ChartJS.register(
 const datasets = ['RAND', 'LNX', 'PDF', 'WEB', 'CODE'];
 const targets = [512, 770, 1024, 2048, 4096, 5482, 8192];
 
-let dataset = 'CODE';
-let target = 1024;
+let dataset = 'RAND';
+let target = 512;
 
 const algorithms = {
     'Rabin': '#E6194B',    // Red
@@ -47,23 +49,35 @@ const algorithms = {
 };
 
 </script>
+
+<style>
+    main {
+        width: 100%;
+        max-width: 1220px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+</style>
   
 <main>
-    <label for="dataset-select">Dataset:</label>
-    <select id="dataset-select" bind:value={dataset}>
-        {#each datasets as dataset}
-            <option value={dataset}>{dataset}</option>
-        {/each}
-    </select>
+        <label for="dataset-select">Dataset:</label>
+        <select id="dataset-select" bind:value={dataset}>
+            {#each datasets as dataset}
+                <option value={dataset}>{dataset}</option>
+            {/each}
+        </select>
 
-    <label for="target-chunk-size-select">Target chunk size:</label>
-    <select id="target-chunk-size-select" bind:value={target}>
-        {#each targets as target}
-            <option value={target}>{target}</option>
-        {/each}
-    </select>
+        <label for="target-chunk-size-select">Target chunk size:</label>
+        <select id="target-chunk-size-select" bind:value={target}>
+            {#each targets as target}
+                <option value={target}>{target}</option>
+            {/each}
+        </select>
 
-    <CsdChart {dataset} {target} />
-    <DedupChart {dataset} {target} />
+        <h2>Chunk Size Distributions</h2>
+        <CsdChart {dataset} {target} />
+
+        <h2>Deduplication Ratios</h2>
+        <DedupChart {dataset} {target} />
 </main>
   

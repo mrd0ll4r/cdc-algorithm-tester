@@ -66,9 +66,6 @@ $: data = {
         tension: 0.1
     }))
 };
-$: console.log(new Set(csdData.filter(item =>
-        item.dataset === 'LNX').map(item => item.target)))
-
 </script>
     
 
