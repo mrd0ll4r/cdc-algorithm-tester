@@ -5,7 +5,15 @@ Rust Binary to Test Various CDC Algorithms.
 Accompanying code repository to the paper **"A Thorough Investigation of Content-Defined Chunking Algorithms for Data Deduplication"**.
 Please cite our work if you use this code or binary:
 ```bibtex
-TODO
+@misc{gregoriadis2024thorough,
+      title={A Thorough Investigation of Content-Defined Chunking Algorithms for Data Deduplication}, 
+      author={Marcel Gregoriadis and Leonhard Balduf and Björn Scheuermann and Johan Pouwelse},
+      year={2024},
+      eprint={2409.06066},
+      archivePrefix={arXiv},
+      primaryClass={cs.DC},
+      url={https://arxiv.org/abs/2409.06066}, 
+}
 ```
 
 #### Structure
