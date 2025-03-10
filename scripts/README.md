@@ -20,6 +20,7 @@ You can adjust any of these paths in the [`utils.sh`](utils.sh) script.
 ### Datasets
 
 First, collect the datasets using the following scripts:
+- `get-vmb.sh` generates the VMB dataset. This requires QEMU and is intended to be run on a Debian host.
 - `get-code.sh` downloads the CODE dataset.
 - `get-lnx.sh` downloads the LNX dataset.
 - `get-pdf.sh` downloads the PDF dataset.

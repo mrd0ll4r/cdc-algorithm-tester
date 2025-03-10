@@ -1,0 +1,4 @@
+project,uri
+mail-server,https://github.com/stalwartlabs/mail-server.git
+typst,https://github.com/typst/typst.git
+uv,https://github.com/astral-sh/uv.git
