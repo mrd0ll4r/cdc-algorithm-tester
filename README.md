@@ -38,6 +38,7 @@ Commands:
   rabin    Chunks the input file using Rabin
   ae       Chunks the input file using AE
   ram      Chunks the input file using RAM
+  seq      Chunks the input file using SeqCDC
   bfbc     Subcommands relating to BFBC chunking
   mii      Chunks the input file using MII
   pci      Chunks the input file using PCI

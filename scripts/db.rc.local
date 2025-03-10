@@ -1,0 +1,51 @@
+#!/bin/sh
+
+set -e
+
+w=10
+
+# First boot setup
+if [ ! -d "tpcc-mysql" ]; then
+  while ! ping -c1 dns.google; do
+    echo "waiting for network"
+    sleep 1
+  done
+
+  apt-get -y update
+    DEBIAN_FRONTEND=noninteractive apt-get -y install gcc make autoconf automake libtool \
+    git autopoint gperf texinfo help2man wget gnupg ca-certificates lsb-release cloud-utils
+  growpart /dev/sda 1
+  resize2fs /dev/sda1
+
+  mkdir -p /srv/build
+  cd /srv/build
+  
+  # Install mysql
+  wget https://dev.mysql.com/get/mysql-apt-config_0.8.29-1_all.deb
+  echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.0" | debconf-set-selections
+  DEBIAN_FRONTEND=noninteractive dpkg -i mysql-apt-config_0.8.29-1_all.deb
+  rm mysql-apt-config_0.8.29-1_all.deb
+  apt-get -y update
+  DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server libmysqlclient-dev zlib1g-dev libssl-dev
+
+  # Install tpcc-mysql
+  git clone https://github.com/Percona-Lab/tpcc-mysql
+  cd tpcc-mysql/src
+  make
+
+  # Setup database
+  mysqladmin create tpcc1000
+  cd ..
+  mysql tpcc1000 < create_table.sql
+  mysql tpcc1000 < add_fkey_idx.sql
+  chmod +x tpcc_load tpcc_start load.sh
+  ./tpcc_load -h localhost -d tpcc1000 -u root -p "" -w $w
+  echo "Finished loading!"
+
+  mysql -u root --password="" -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '123';"
+else 
+  cd /srv/build/tpcc-mysql
+  ./tpcc_start -h 127.0.0.1 -d tpcc1000 -u root -p'123' -w $w -c 32 -r 10 -l 300
+fi
+
+poweroff

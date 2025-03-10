@@ -15,7 +15,7 @@ codegen-units = 1
 
 [dependencies]
 # Chunking algorithms we implemented ourselves
-cdchunking = { git = "https://github.com/mrd0ll4r/cdchunking-rs", rev = "3b9f2caf9edc45acb12b6d6461a053c9d05db93c" }
+cdchunking = { git = "https://github.com/mrd0ll4r/cdchunking-rs", rev = "06e9a82f7e6575b47aeefcc005ed5a3393a79ff6" }
 
 # Gearhash, SIMD-optimized
 gearhash = "^0.1"

@@ -287,6 +287,18 @@ enum Commands {
         one_bits_threshold: u32,
     },
 
+    /// Chunks the input file using SeqCDC.
+    SeqCDC {
+        /// Length of incrementing run required to trigger a chunk boundary.
+        seq_length: usize,
+
+        /// Length of opposing slope required to trigger a chunk boundary.
+        skip_trigger: usize,
+
+        /// The number of bytes to skip ahead when the skip trigger is met.
+        skip_size: usize
+    },
+
     /// Chunks the input file using Gear.
     Gear {
         /// The target chunk size.
@@ -576,6 +588,22 @@ fn main() -> anyhow::Result<()> {
                 57,
                 58,
                 61
+            )
+        }
+        Commands::SeqCDC { seq_length, skip_trigger, skip_size } => {
+            ensure!(seq_length > 0, "seq length needs to be at least 1");
+            ensure!(skip_trigger > 0, "skip trigger needs to be at least 1");
+            ensure!(skip_size > 0, "skip size needs to be at least 1");
+            let algo = cdchunking::SeqChunker::new(seq_length, skip_trigger, skip_size);
+            chunk_with_algorithm_and_size_limit(
+                f,
+                algo,
+                cli.max_chunk_size,
+                cli.quiet,
+                cli.quickcdc_min_chunk_size,
+                cli.quickcdc_use_hashmap,
+                cli.quickcdc_front_feature_vector_length,
+                cli.quickcdc_end_feature_vector_length,
             )
         }
         Commands::Gear { target_chunk_size } => {

@@ -86,6 +86,37 @@ get_w_and_t_for_pci() {
   esac
 }
 
+# TODO: Implement this
+get_params_for_seq() {
+  case $1 in
+  512)
+    echo "5 50 64"
+    ;;
+  1024)
+    echo "5 50 128"
+    ;;
+  2048)
+    echo "5 55 128"
+    ;;
+  4096)
+    echo "5 55 256"
+    ;;
+  8192)
+    echo "5 50 256"
+    ;;
+  770)
+    echo "5 50 64"
+    ;;
+  5482)
+    echo "5 55 256"
+    ;;
+  *)
+    echo "Error: Target chunk size not supported for SeqCDC."
+    exit 1
+    ;;
+  esac
+}
+
 get_subalgos() {
   local subalgos=()
   case $1 in
@@ -247,6 +278,9 @@ get_cmd_args() {
   "mii")
     params="$(get_w_for_mii "$3")"
     ;;
+  "seq")
+    params="$(get_params_for_seq "$3")"
+    ;;
   "nop")
     params=""
     ;;
@@ -290,7 +324,7 @@ else
 fi
 
 if [ -z "${ALGOS}" ]; then
-  ALGOS=("fsc" "ae" "ram" "mii" "pci" "rabin" "adler32" "buzhash" "gear" "nc-gear" "gear64" "quickcdc" "bfbc")
+  ALGOS=("fsc" "ae" "ram" "mii" "pci" "rabin" "adler32" "buzhash" "gear" "nc-gear" "gear64" "quickcdc" "bfbc" "seq")
   # detect if we are running speed tests
   if [[ "$0" == *"speed"* ]]; then
     ALGOS=("nop" "${ALGOS[@]}")
