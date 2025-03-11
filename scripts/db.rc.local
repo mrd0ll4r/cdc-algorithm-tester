@@ -5,7 +5,7 @@ set -e
 w=10
 
 # First boot setup
-if [ ! -d "tpcc-mysql" ]; then
+if [ ! -d "/srv/build/tpcc-mysql" ]; then
   while ! ping -c1 dns.google; do
     echo "waiting for network"
     sleep 1
@@ -42,9 +42,17 @@ if [ ! -d "tpcc-mysql" ]; then
   ./tpcc_load -h localhost -d tpcc1000 -u root -p "" -w $w
   echo "Finished loading!"
 
-  mysql -u root --password="" -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '123';"
+  mysql -u root --password="" -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '123'; FLUSH PRIVILEGES;"
 else 
   cd /srv/build/tpcc-mysql
+  # Wait for MySQL to be fully ready before starting tpcc
+  echo "Waiting for MySQL to be ready..."
+  until mysqladmin ping -h 127.0.0.1 --silent; do
+    echo "MySQL is not ready yet. Waiting..."
+    sleep 2
+  done
+
+  echo "Starting TPCC"
   ./tpcc_start -h 127.0.0.1 -d tpcc1000 -u root -p'123' -w $w -c 32 -r 10 -l 300
 fi
 

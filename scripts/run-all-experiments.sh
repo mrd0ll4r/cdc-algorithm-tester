@@ -10,19 +10,19 @@ make bfbc
 # Computational Performance Measurements
 
 echo "evaluating on random..."
-DATASETS="random.bin" make speed > csv/perf_random.csv
+DATASETS="random" make speed > csv/perf_random.csv
 
 echo "evaluating on code..."
-DATASETS="code.cat" make speed > csv/perf_code.csv
+DATASETS="code" make speed > csv/perf_code.csv
 
 echo "evaluating on web..."
-DATASETS="web.cat" make speed > csv/perf_web.csv
+DATASETS="web" make speed > csv/perf_web.csv
 
-echo "evaluating on pdf..."
-DATASETS="pdf.cat" make speed > csv/perf.csv
+echo "evaluating on DB..."
+DATASETS="db" make speed > csv/perf_db.csv
 
-echo "evaluating on LNX..."
-DATASETS="lnx.cat" make speed > csv/perf_lnx.csv
+echo "evaluating on VMB..."
+DATASETS="vmb" make speed > csv/perf_vmb.csv
 
 echo "compressing..."
 gzip -9 csv/perf_*.csv
@@ -33,10 +33,10 @@ gzip -9 csv/perf_*.csv
 echo "Starting chunk size distribution measurements..."
 
 bash -c 'DATASETS="random.bin" make csd | gzip -9 > csv/csd_random.csv.gz' &
-bash -c 'DATASETS="code.cat" make csd | gzip -9 > csv/csd_code.csv.gz' &
-bash -c 'DATASETS="web.cat" make csd | gzip -9 > csv/csd_web.csv.gz' &
-bash -c 'DATASETS="pdf.cat" make csd | gzip -9 > csv/csd_pdf.csv.gz' &
-bash -c 'DATASETS="lnx.cat" make csd | gzip -9 > csv/csd_lnx.csv.gz' &
+bash -c 'DATASETS="code" make csd | gzip -9 > csv/csd_code.csv.gz' &
+bash -c 'DATASETS="web" make csd | gzip -9 > csv/csd_web.csv.gz' &
+bash -c 'DATASETS="db" make csd | gzip -9 > csv/csd_db.csv.gz' &
+bash -c 'DATASETS="vmb" make csd | gzip -9 > csv/csd_vmb.csv.gz' &
 
 ########################
 # Deduplication ratios
@@ -44,10 +44,10 @@ bash -c 'DATASETS="lnx.cat" make csd | gzip -9 > csv/csd_lnx.csv.gz' &
 echo "Starting deduplication ratio measurements..."
 
 bash -c 'DATASETS="random.bin" make dedup | gzip -9 > csv/dedup_random.csv.gz' &
-bash -c 'DATASETS="code.cat" make dedup | gzip -9 > csv/dedup_code.csv.gz' &
-bash -c 'DATASETS="web.cat" make dedup | gzip -9 > csv/dedup_web.csv.gz' &
-bash -c 'DATASETS="pdf.cat" make dedup | gzip -9 > csv/dedup_pdf.csv.gz' &
-bash -c 'DATASETS="lnx.cat" make dedup | gzip -9 > csv/dedup_lnx.csv.gz' &
+bash -c 'DATASETS="code" make dedup | gzip -9 > csv/dedup_code.csv.gz' &
+bash -c 'DATASETS="web" make dedup | gzip -9 > csv/dedup_web.csv.gz' &
+bash -c 'DATASETS="db" make dedup | gzip -9 > csv/dedup_db.csv.gz' &
+bash -c 'DATASETS="vmb" make dedup | gzip -9 > csv/dedup_vmb.csv.gz' &
 
 ########################
 # Hash value distributions

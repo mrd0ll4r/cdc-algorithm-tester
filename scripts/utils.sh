@@ -335,7 +335,7 @@ else
 fi
 
 if [ -z "${DATASETS}" ]; then
-  DATASETS=("random.bin" "web.cat" "code.cat" "pdf.cat" "lnx.cat")
+  DATASETS=("random.bin" "web" "code" "db" "vmb")
 else
   # shellcheck disable=SC2207
   DATASETS=($(echo "$DATASETS" | tr ',' ' '))

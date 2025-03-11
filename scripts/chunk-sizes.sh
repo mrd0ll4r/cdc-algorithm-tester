@@ -14,13 +14,18 @@ for dataset in "${DATASETS[@]}"; do
       subalgo_name=$(get_algo_name "$subalgo")
 
       for cs in "${TARGET_CHUNK_SIZES[@]}"; do
-        prefix=$(printf "%s,%s,%d" "$subalgo_name" "$dataset_name" "$cs")
-        cmd=$(get_cmd "$subalgo" "$dataset" "$cs")
-        # cut last chunk| get size
-        # for each produced chunk
-        for l in $($cmd | head -n -1 | awk -F, '{print $2}'); do
-          echo "$prefix,$l"
-        done
+        # Iterate over each file in the dataset directory
+        for file in "$DATA_PATH/$dataset"/*; do
+          if [ -f "$file" ]; then
+            rel_path="${file#"$DATA_PATH"/}"
+            prefix=$(printf "%s,%s,%d" "$subalgo_name" "$dataset_name" "$cs")
+            cmd=$(get_cmd "$subalgo" "$rel_path" "$cs")
+            # for each produced chunk
+            for l in $($cmd | awk -F, '{print $2}'); do
+              echo "$prefix,$l"
+            done
+          fi
+        done    
       done
     done
   done
