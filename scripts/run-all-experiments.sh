@@ -4,7 +4,7 @@ mkdir -p csv
 
 ########################
 # Prepare BFBC Divisors
-make bfbc
+# make bfbc
 
 ########################
 # Computational Performance Measurements
@@ -18,10 +18,10 @@ DATASETS="code" make speed > csv/perf_code.csv
 echo "evaluating on web..."
 DATASETS="web" make speed > csv/perf_web.csv
 
-echo "evaluating on DB..."
+echo "evaluating on db..."
 DATASETS="db" make speed > csv/perf_db.csv
 
-echo "evaluating on VMB..."
+echo "evaluating on vmb..."
 DATASETS="vmb" make speed > csv/perf_vmb.csv
 
 echo "compressing..."
@@ -32,7 +32,7 @@ gzip -9 csv/perf_*.csv
 
 echo "Starting chunk size distribution measurements..."
 
-bash -c 'DATASETS="random.bin" make csd | gzip -9 > csv/csd_random.csv.gz' &
+bash -c 'DATASETS="random" make csd | gzip -9 > csv/csd_random.csv.gz' &
 bash -c 'DATASETS="code" make csd | gzip -9 > csv/csd_code.csv.gz' &
 bash -c 'DATASETS="web" make csd | gzip -9 > csv/csd_web.csv.gz' &
 bash -c 'DATASETS="db" make csd | gzip -9 > csv/csd_db.csv.gz' &
@@ -43,7 +43,7 @@ bash -c 'DATASETS="vmb" make csd | gzip -9 > csv/csd_vmb.csv.gz' &
 
 echo "Starting deduplication ratio measurements..."
 
-bash -c 'DATASETS="random.bin" make dedup | gzip -9 > csv/dedup_random.csv.gz' &
+bash -c 'DATASETS="random" make dedup | gzip -9 > csv/dedup_random.csv.gz' &
 bash -c 'DATASETS="code" make dedup | gzip -9 > csv/dedup_code.csv.gz' &
 bash -c 'DATASETS="web" make dedup | gzip -9 > csv/dedup_web.csv.gz' &
 bash -c 'DATASETS="db" make dedup | gzip -9 > csv/dedup_db.csv.gz' &

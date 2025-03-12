@@ -90,25 +90,25 @@ get_w_and_t_for_pci() {
 get_params_for_seq() {
   case $1 in
   512)
-    echo "5 50 64"
+    echo "4 65 512"
     ;;
   1024)
-    echo "5 50 128"
+    echo "5 85 32"
     ;;
   2048)
-    echo "5 55 128"
+    echo "5 85 256"
     ;;
   4096)
-    echo "5 55 256"
+    echo "5 120 1024"
     ;;
   8192)
-    echo "5 50 256"
+    echo "5 55 1024"
     ;;
   770)
-    echo "5 50 64"
+    echo "4 70 1024"
     ;;
   5482)
-    echo "5 55 256"
+    echo "5 90 1024"
     ;;
   *)
     echo "Error: Target chunk size not supported for SeqCDC."
@@ -324,7 +324,7 @@ else
 fi
 
 if [ -z "${ALGOS}" ]; then
-  ALGOS=("fsc" "ae" "ram" "mii" "pci" "rabin" "adler32" "buzhash" "gear" "nc-gear" "gear64" "quickcdc" "bfbc" "seq")
+  ALGOS=("fsc" "ae" "ram" "mii" "pci" "rabin" "buzhash" "gear" "gear64" "seq")
   # detect if we are running speed tests
   if [[ "$0" == *"speed"* ]]; then
     ALGOS=("nop" "${ALGOS[@]}")
@@ -335,7 +335,7 @@ else
 fi
 
 if [ -z "${DATASETS}" ]; then
-  DATASETS=("random.bin" "web" "code" "db" "vmb")
+  DATASETS=("random" "web" "code" "db" "vmb")
 else
   # shellcheck disable=SC2207
   DATASETS=($(echo "$DATASETS" | tr ',' ' '))
