@@ -278,7 +278,7 @@ get_cmd_args() {
   "mii")
     params="$(get_w_for_mii "$3")"
     ;;
-  "seq")
+  "seq-cdc")
     params="$(get_params_for_seq "$3")"
     ;;
   "nop")
@@ -324,7 +324,7 @@ else
 fi
 
 if [ -z "${ALGOS}" ]; then
-  ALGOS=("fsc" "ae" "ram" "mii" "pci" "rabin" "buzhash" "gear" "gear64" "seq")
+  ALGOS=("fsc" "ae" "ram" "mii" "pci" "rabin" "buzhash" "gear" "gear64" "seq-cdc")
   # detect if we are running speed tests
   if [[ "$0" == *"speed"* ]]; then
     ALGOS=("nop" "${ALGOS[@]}")
