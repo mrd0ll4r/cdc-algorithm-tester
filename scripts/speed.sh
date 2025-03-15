@@ -14,11 +14,6 @@ if [ -z "${ITER}" ]; then
   ITER=10
 fi
 
-# clean up on ramdisk from previous runs
-#for dataset in "${DATASETS[@]}"; do
-#  rm -f "$FAST_DATA_PATH/$dataset" "$FAST_DATA_PATH/$dataset.stats"
-#done
-
 # CSV header
 echo "algorithm,dataset,dataset_size,target_chunk_size,iteration,event,value"
 
