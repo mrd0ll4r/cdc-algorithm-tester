@@ -16,3 +16,4 @@
 
 # Vim undo files
 *.un~
+.Rproj.user
