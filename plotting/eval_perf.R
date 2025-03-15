@@ -208,7 +208,17 @@ gc()
 
 ######################################################################
 # Performance overview
-algorithms_to_compare_tmp <- c("fsc","ae","ram","mii","pci","rabin_32","buzhash_64","gear", "gear64", "gear64_simd","bfbc","bfbc_custom_div")
+algorithms_to_compare_tmp <- c("fsc",
+                               "ae",
+                               "ram",
+                               "mii",
+                               "pci",
+                               "rabin_32",
+                               "buzhash_64",
+                               "gear",
+                               "gear64",
+                               "gear64_simd",
+                               "seq-cdc")
 d <- perf_data %>%
   filter(dataset == "random" | (algorithm == "bfbc" & dataset == "code")) %>%
   filter(algorithm %in% algorithms_to_compare_tmp) %>%
@@ -292,6 +302,12 @@ print_plot(p, "perf_overview_throughput_random_2kib", width=4, height=2)
 
 rm(d,t,p,addtorow)
 gc()
+
+##########################################################################
+##########################################################################
+# Below here: not used for current paper
+quit()
+
 
 
 ##########################################################################
