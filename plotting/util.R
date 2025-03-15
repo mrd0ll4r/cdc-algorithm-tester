@@ -45,9 +45,9 @@ BUZHASH_ALGORITHMS <- c("buzhash_16","buzhash_32","buzhash_48","buzhash_64","buz
 ADLER32_ALGORITHMS <- c("adler32_16","adler32_32","adler32_48","adler32_64","adler32_128","adler32_256")
 BFBC_ALGORITHMS <- c("bfbc","bfbc_custom_div")
 
-ALGORITHMS_TO_COMPARE <- c("fsc","ae","ram","mii","pci","rabin_32","buzhash_64","gear","bfbc","bfbc_custom_div")
-DATASET_ORDER <- c("random", "lnx", "pdf", "web", "code")
-ALGORITHM_ORDER <- c("rabin_32", "buzhash_64", "gear", "gear_nc_1", "gear_nc_2", "gear_nc_3", "ae", "ram", "pci", "mii", "bfbc", "bfbc_custom_div")
+ALGORITHMS_TO_COMPARE <- c("fsc","ae","ram","mii","pci","rabin_32","buzhash_64","gear","seq-cdc")
+DATASET_ORDER <- c("random", "lnx", "pdf", "web", "code", "db", "vmb")
+ALGORITHM_ORDER <- c("rabin_32", "buzhash_64", "gear", "gear_nc_1", "gear_nc_2", "gear_nc_3", "ae", "ram", "pci", "mii", "bfbc", "bfbc_custom_div", "seq-cdc")
 
 POWER_OF_TWO_SIZES = c(512,1024,2048,4096,8192)
 
@@ -55,16 +55,30 @@ rename_algorithms <- function(data_frame) {
   df <- data_frame
   df$algorithm <- as.factor(df$algorithm)
   df$algorithm <- factor(recode(df$algorithm, !!!c(
-    fsc = "FSC", ae = "AE", ram = "RAM",
-    mii = "MII", pci = "PCI", rabin_32 = "Rabin",
-    buzhash_64 = "Buzhash", gear = "Gear",
-    gear64 = "Gear64", gear64_simd = "Gear64+",
-    gear_nc_1 = "Gear NC-1", gear_nc_2 = "Gear NC-2", gear_nc_3 = "Gear NC-3",
-    bfbc = "BFBC", bfbc_custom_div = "BFBC*",
-    quick_2 = "Quick A-2", quick_3 = "Quick A-3",
-    quick_hash_2 = "Quick HM-2", quick_hash_3 = "Quick HM-3",
-    quick_2_rabin_32 = "Quick A-2 Rabin", quick_3_rabin_32 = "Quick A-3 Rabin",
-    quick_hash_2_rabin_32 = "Quick HM-2 Rabin", quick_hash_3_rabin_32 = "Quick HM-3 Rabin"
+    fsc = "FSC",
+    ae = "AE",
+    ram = "RAM",
+    mii = "MII",
+    pci = "PCI",
+    rabin_32 = "Rabin",
+    buzhash_64 = "Buzhash",
+    gear = "Gear",
+    gear64 = "Gear64",
+    gear64_simd = "Gear64+",
+    gear_nc_1 = "Gear NC-1",
+    gear_nc_2 = "Gear NC-2",
+    gear_nc_3 = "Gear NC-3",
+    bfbc = "BFBC",
+    bfbc_custom_div = "BFBC*",
+    quick_2 = "Quick A-2",
+    quick_3 = "Quick A-3",
+    quick_hash_2 = "Quick HM-2",
+    quick_hash_3 = "Quick HM-3",
+    quick_2_rabin_32 = "Quick A-2 Rabin",
+    quick_3_rabin_32 = "Quick A-3 Rabin",
+    quick_hash_2_rabin_32 = "Quick HM-2 Rabin",
+    quick_hash_3_rabin_32 = "Quick HM-3 Rabin",
+    `seq-cdc` = "SeqCDC"
   )))
 
   return(df)
@@ -78,6 +92,8 @@ rename_datasets <- function(df) {
         dataset,
         CODE="code",
         LNX="lnx",
+        DB="db",
+        VMB="vmb",
         PDF="pdf",
         RAND="random",
         WEB="web",
