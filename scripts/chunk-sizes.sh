@@ -20,10 +20,7 @@ for dataset in "${DATASETS[@]}"; do
             rel_path="${file#"$DATA_PATH"/}"
             prefix=$(printf "%s,%s,%d" "$subalgo_name" "$dataset_name" "$cs")
             cmd=$(get_cmd "$subalgo" "$rel_path" "$cs")
-            # for each produced chunk
-            for l in $($cmd | awk -F, '{print $2}'); do
-              echo "$prefix,$l"
-            done
+            $cmd | awk -v prefix="$prefix" -F, '{print prefix "," $2}'
           fi
         done    
       done
