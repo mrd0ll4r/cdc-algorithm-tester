@@ -2,7 +2,7 @@
 
 # Finds the best match for parameter w in MII to achieve given target chunk size.
 get_w_for_mii() {
-  MII_AVGS=(1 2 4 9 29 130 770 5482 45037 418343 4335778) # mapping from w to average chunk size for w=0..10
+  MII_AVGS=(1 2 4 8 26 114 676 4809 39507 366969 3803315) # mapping from w to average chunk size for w=0..10
   target=$1
   closest=0
   distance=$(($target - ${MII_AVGS[0]}))
@@ -42,12 +42,6 @@ get_w_for_ae() {
   8192)
     echo "7936"
     ;;
-  770)
-    echo "562"
-    ;;
-  5482)
-    echo "5225"
-    ;;
   *)
     echo "Error: Target chunk size not supported for AE."
     exit 1
@@ -73,12 +67,6 @@ get_w_and_t_for_pci() {
   8192)
     echo "57 262"
     ;;
-  770)
-    echo "40 181"
-    ;;
-  5482)
-    echo "56 256"
-    ;;
   *)
     echo "Error: Target chunk size not supported for PCI."
     exit 1
@@ -86,7 +74,6 @@ get_w_and_t_for_pci() {
   esac
 }
 
-# TODO: Implement this
 get_params_for_seq() {
   case $1 in
   512)
@@ -103,12 +90,6 @@ get_params_for_seq() {
     ;;
   8192)
     echo "5 55 1024"
-    ;;
-  770)
-    echo "4 70 1024"
-    ;;
-  5482)
-    echo "5 90 1024"
     ;;
   *)
     echo "Error: Target chunk size not supported for SeqCDC."
@@ -148,12 +129,12 @@ get_subalgos() {
     ;;
   "rabin")
     subalgos=(
-      "rabin 16"
+      # "rabin 16"
       "rabin 32"
-      "rabin 48"
-      "rabin 64"
-      "rabin 128"
-      "rabin 256"
+      # "rabin 48"
+      # "rabin 64"
+      # "rabin 128"
+      # "rabin 256"
     )
     ;;
   "adler32")
@@ -168,12 +149,12 @@ get_subalgos() {
     ;;
   "buzhash")
     subalgos=(
-      "buzhash 16"
+      # "buzhash 16"
       "buzhash 32"
-      "buzhash 48"
-      "buzhash 64"
-      "buzhash 128"
-      "buzhash 256"
+      # "buzhash 48"
+      # "buzhash 64"
+      # "buzhash 128"
+      # "buzhash 256"
     )
     ;;
   "bfbc")
@@ -317,14 +298,14 @@ export DATA_PATH=data
 export FAST_DATA_PATH=fast_data
 
 if [ -z "${TARGET_CHUNK_SIZES}" ]; then
-  TARGET_CHUNK_SIZES=(512 1024 2048 4096 8192 770 5482)
+  TARGET_CHUNK_SIZES=(512 1024 2048 4096 8192)
 else
   # shellcheck disable=SC2207
   TARGET_CHUNK_SIZES=($(echo "$TARGET_CHUNK_SIZES" | tr ',' ' '))
 fi
 
 if [ -z "${ALGOS}" ]; then
-  ALGOS=("fsc" "ae" "ram" "mii" "pci" "rabin" "buzhash" "gear" "gear64" "seq-cdc")
+  ALGOS=("fsc" "ae" "ram" "mii" "pci" "rabin" "buzhash" "gear" "seq-cdc")
   # detect if we are running speed tests
   if [[ "$0" == *"speed"* ]]; then
     ALGOS=("nop" "${ALGOS[@]}")

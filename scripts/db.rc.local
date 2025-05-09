@@ -2,14 +2,11 @@
 
 set -e
 
-w=10
+w=15
 
 # First boot setup
 if [ ! -d "/srv/build/tpcc-mysql" ]; then
-  while ! ping -c1 dns.google; do
-    echo "waiting for network"
-    sleep 1
-  done
+  sleep 10
 
   apt-get -y update
     DEBIAN_FRONTEND=noninteractive apt-get -y install gcc make autoconf automake libtool \
@@ -53,7 +50,7 @@ else
   done
 
   echo "Starting TPCC"
-  ./tpcc_start -h 127.0.0.1 -d tpcc1000 -u root -p'123' -w $w -c 32 -r 10 -l 300
+  ./tpcc_start -h 127.0.0.1 -d tpcc1000 -u root -p'123' -w $w -c 500 -r 10 -l 1800
 fi
 
 poweroff

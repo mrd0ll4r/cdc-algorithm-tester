@@ -1,10 +1,7 @@
 #!/bin/bash -e
 
+source .venv/bin/activate
 mkdir -p csv
-
-########################
-# Prepare BFBC Divisors
-# make bfbc
 
 ########################
 # Computational Performance Measurements
@@ -52,8 +49,8 @@ bash -c 'DATASETS="vmb" make dedup | gzip -9 > csv/dedup_vmb.csv.gz' &
 ########################
 # Hash value distributions
 
-echo "Starting hash value distribution experiments in the background..."
-./scripts/hash-value-distributions.sh &
+# echo "Starting hash value distribution experiments in the background..."
+# ./scripts/hash-value-distributions.sh &
 
 ########################
 
@@ -84,9 +81,6 @@ done
 echo "Splitting chunk size distribution measurements by algorithm..."
 
 for f in csv/csd_*.csv.gz; do
-        if [[ "$f" == *_770.csv.gz ]]; then
-                continue
-        fi
         echo "splitting $f..."
         header=$(zcat "$f" | head -n 1)
         b=$(basename "$f" ".csv.gz")
