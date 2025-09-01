@@ -4,9 +4,6 @@ require(forcats)
 # Number of significant digits to print
 options(pillar.sigfig = 4)
 
-# ggplot theme
-theme_set(theme_bw())
-
 # Function to calculate standard error
 standard_error <- function(x) sd(x) / sqrt(length(x))
 
@@ -61,7 +58,7 @@ rename_algorithms <- function(data_frame) {
     mii = "MII",
     pci = "PCI",
     rabin_32 = "Rabin",
-    buzhash_64 = "Buzhash",
+    buzhash_32 = "Buzhash",
     gear = "Gear",
     gear64 = "Gear64",
     gear64_simd = "Gear64+",

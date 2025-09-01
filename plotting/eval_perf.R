@@ -55,7 +55,7 @@ perf_derive_metrics <- function(df) {
 # COMPUTATIONAL PERFORMANCE
 ######################################################################
 perf_data <- tibble()
-infiles <- Sys.glob(sprintf("%s/perf_*",csv_dir))
+infiles <- Sys.glob(sprintf("%s/perf_*", csv_dir))
 for (f in infiles) {
   tmp <- read_csv(f,col_types = "fcIiicd")
 
@@ -72,11 +72,10 @@ perf_data <- perf_data %>%
 
 # Check for asymmetry, as per https://lemire.me/blog/2023/04/06/are-your-memory-bound-benchmarking-timings-normally-distributed/
 perf_data %>%
-  filter(dataset != "zero" & dataset != "empty") %>%
   filter(event=="usec_per_byte" & target_chunk_size==2048) %>%
+  select(algorithm, dataset, value) %>%
   group_by(algorithm,dataset) %>%
-  summarize(dataset_size=mean(dataset_size),target_chunk_size=mean(target_chunk_size),
-            sd=sd(value),
+  summarize(sd=sd(value),
             mean=mean(value),
             min=min(value),
             max=max(value),
@@ -214,23 +213,17 @@ algorithms_to_compare_tmp <- c("fsc",
                                "mii",
                                "pci",
                                "rabin_32",
-                               "buzhash_64",
+                               "buzhash_32",
                                "gear",
-                               "gear64",
-                               "gear64_simd",
+                               #"gear64",
+                               #"gear64_simd",
                                "seq-cdc")
 d <- perf_data %>%
-  filter(dataset == "random" | (algorithm == "bfbc" & dataset == "code")) %>%
+  filter(dataset == "random") %>%
   filter(algorithm %in% algorithms_to_compare_tmp) %>%
   filter(target_chunk_size == 2048) %>%
-  mutate(algorithm = case_when(
-    algorithm == "bfbc" & dataset == "code" ~ "BFBC-L",
-    TRUE ~ algorithm
-  )) %>%
-  group_by(algorithm, target_chunk_size, event) %>%
+  group_by(algorithm, event) %>%
   summarize(
-    dataset_size = mean(dataset_size),
-    n = n(),
     val = mean(value),
     sd = sd(value),
     se = standard_error(value),
