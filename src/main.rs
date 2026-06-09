@@ -904,7 +904,7 @@ macro_rules! impl_chunk_consumer {
                 }
                 ChunkInput::End => {
                     if !$quiet {
-                        let digest = format!("{:x}", chunk_hasher.finalize_reset());
+                        let digest = format!("{}", hex::encode(chunk_hasher.finalize_reset()));
                         debug!("chunk complete, size: {}, digest: {}", chunk_size, digest);
                         println!("{},{}", digest, chunk_size);
                     } else {

@@ -23,18 +23,16 @@ gearhash = "^0.1"
 # Error handling
 anyhow = "^1"
 
-# Timestamps
-chrono = "^0.4"
-
 # Logging
 log = "^0.4"
-flexi_logger = "0.29"
+flexi_logger = "0.31"
 
 # CLI parser
 clap = { version = "^4", features = ["cargo", "derive"] }
 
-# SHA1 for fingerprinting
-sha1 = "^0.10"
+# SHA1 for fingerprinting, hex for formatting those as hex strings
+sha1 = "^0.11"
+hex = "0.4.3"
 
 # For reading/writing BFBC state with specified endianness.
 byteorder = "^1"
