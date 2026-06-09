@@ -1,6 +1,6 @@
-# CDC Algorithm Tester
+# CDCBench
 
-Rust Binary to Test Various CDC Algorithms.
+Rust Binary to Benchmark Various CDC Algorithms.
 
 Accompanying code repository to the paper **"A Thorough Investigation of Content-Defined Chunking Algorithms for Data Deduplication"**.
 Please cite our work if you use this code or binary:
