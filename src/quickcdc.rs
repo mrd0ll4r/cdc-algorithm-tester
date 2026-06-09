@@ -233,7 +233,7 @@ impl<const N: usize, const M: usize, R: Read, T: ChunkerImpl>
         }
     }
 
-    pub(crate) fn read(&mut self) -> Option<std::io::Result<ChunkInput>> {
+    pub(crate) fn read(&mut self) -> Option<std::io::Result<ChunkInput<'_>>> {
         debug!(
             "current state is {:?}, buffer has {} byte remaining",
             self.state,
@@ -581,7 +581,7 @@ where
         }
     }
 
-    pub(crate) fn read(&mut self) -> Option<std::io::Result<ChunkInput>> {
+    pub(crate) fn read(&mut self) -> Option<std::io::Result<ChunkInput<'_>>> {
         debug!(
             "current state is {:?}, buffer has {} byte remaining",
             self.state,

@@ -296,7 +296,7 @@ enum Commands {
         skip_trigger: usize,
 
         /// The number of bytes to skip ahead when the skip trigger is met.
-        skip_size: usize
+        skip_size: usize,
     },
 
     /// Chunks the input file using Gear.
@@ -590,7 +590,11 @@ fn main() -> anyhow::Result<()> {
                 61
             )
         }
-        Commands::SeqCDC { seq_length, skip_trigger, skip_size } => {
+        Commands::SeqCDC {
+            seq_length,
+            skip_trigger,
+            skip_size,
+        } => {
             ensure!(seq_length > 0, "seq length needs to be at least 1");
             ensure!(skip_trigger > 0, "skip trigger needs to be at least 1");
             ensure!(skip_size > 0, "skip size needs to be at least 1");
